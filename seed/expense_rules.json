@@ -1,0 +1,18 @@
+[
+  { "id": "er-anthropic", "pattern": "anthropic", "category": "Contenu & IA", "kind": "api", "app": null },
+  { "id": "er-openai", "pattern": "openai", "category": "Contenu & IA", "kind": "api", "app": null },
+  { "id": "er-gcloud", "pattern": "google cloud", "category": "Contenu & IA", "kind": "api", "app": null },
+  { "id": "er-apify", "pattern": "apify", "category": "Contenu & IA", "kind": "api", "app": null },
+  { "id": "er-fal", "pattern": "fal", "category": "Contenu & IA", "kind": "api", "app": null },
+  { "id": "er-elevenlabs", "pattern": "elevenlabs", "category": "Contenu & IA", "kind": "api", "app": null },
+  { "id": "er-supabase", "pattern": "supabase", "category": "Outils & abonnements", "kind": "abonnement", "app": null },
+  { "id": "er-lovable", "pattern": "lovable", "category": "Outils & abonnements", "kind": "abonnement", "app": null },
+  { "id": "er-vercel", "pattern": "vercel", "category": "Outils & abonnements", "kind": "abonnement", "app": null },
+  { "id": "er-notion", "pattern": "notion", "category": "Outils & abonnements", "kind": "abonnement", "app": null },
+  { "id": "er-slack", "pattern": "slack", "category": "Outils & abonnements", "kind": "abonnement", "app": null },
+  { "id": "er-upwork", "pattern": "upwork", "category": "Posteurs", "kind": "posteurs", "app": null },
+  { "id": "er-ruul", "pattern": "ruul", "category": "Posteurs", "kind": "posteurs", "app": null },
+  { "id": "er-dougs", "pattern": "dougs", "category": "Admin & compta", "kind": "admin", "app": null },
+  { "id": "er-impact", "pattern": "impact audit", "category": "Admin & compta", "kind": "admin", "app": null },
+  { "id": "er-meta", "pattern": "facebook", "category": "Pubs", "kind": "pub", "app": null }
+]

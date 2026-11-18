@@ -156,6 +156,15 @@ const routines: Table = {
   })),
 };
 
+// Règles de rangement des dépenses : un point de départ, à ajuster dans l'app (surtout l'app concernée).
+type SeedRule = { id: string; pattern: string; category: string | null; kind: string | null; app: string | null };
+const expenseRules: Table = {
+  name: "expense_rules",
+  conflict: "id",
+  columns: { id: "text", pattern: "text", category: "text", kind: "text", app: "text", sort_order: "double precision" },
+  rows: read<SeedRule[]>("expense_rules.json").map((r, i) => ({ ...r, sort_order: i + 1 })),
+};
+
 const legal: Table = { name: "legal", conflict: "id", columns: { id: "boolean" }, rows: [{ id: true }] };
 
 // ----------------------------------------------------------- liste blanche
@@ -173,7 +182,7 @@ const allowedEmails: Table = {
   })),
 };
 
-const TABLES = [items, decisions, links, access, metrics, processes, routines, legal];
+const TABLES = [items, decisions, links, access, metrics, processes, routines, expenseRules, legal];
 // La liste blanche suit toujours ALLOWED_EMAILS, même sans --reset.
 const ALWAYS_UPDATE = new Set(["allowed_emails"]);
 if (allowedEmails.rows.length) TABLES.push(allowedEmails);

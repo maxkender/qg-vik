@@ -92,6 +92,15 @@
   --glass-strong: rgb(255 255 255 / 0.86);
   --glass-shine: rgb(255 255 255 / 0.9);
   --glass-shadow: 0 1px 2px rgb(20 20 25 / 0.04), 0 12px 32px -12px rgb(20 20 25 / 0.12);
+  /* Séries des graphiques (palette validée daltonisme, thème clair) */
+  --viz-1: #2a78d6;
+  --viz-2: #eb6834;
+  --viz-3: #1baf7a;
+  --viz-4: #eda100;
+  --viz-5: #e87ba4;
+  --viz-6: #008300;
+  --viz-other: #a3a5ab;
+  --viz-surface: #fbfaf8;
   --ambient-a: rgb(217 96 27 / 0.1);
   --ambient-b: rgb(14 143 126 / 0.09);
 
@@ -156,6 +165,14 @@
   --glass-strong: rgb(34 35 39 / 0.78);
   --glass-shine: rgb(255 255 255 / 0.06);
   --glass-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 40px -16px rgb(0 0 0 / 0.55);
+  --viz-1: #3987e5;
+  --viz-2: #d95926;
+  --viz-3: #199e70;
+  --viz-4: #c98500;
+  --viz-5: #d55181;
+  --viz-6: #0ca30c;
+  --viz-other: #6f727b;
+  --viz-surface: #17181b;
   --ambient-a: rgb(242 118 46 / 0.13);
   --ambient-b: rgb(56 198 176 / 0.09);
 
