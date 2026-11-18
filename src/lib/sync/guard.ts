@@ -2,7 +2,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 
-/** Vérifie que l'appel vient d'un des 2 membres connectés. Renvoie une réponse 401 sinon. */
+/** Vérifie que l'appel vient d'un des 2 membres connectés. Renvoie une réponse d'erreur sinon. */
 export async function requireMember(): Promise<NextResponse | null> {
   const supabase = await supabaseServer();
   const { data } = await supabase.auth.getUser();
@@ -11,6 +11,3 @@ export async function requireMember(): Promise<NextResponse | null> {
   if (!profile) return NextResponse.json({ error: "Accès réservé aux membres du QG." }, { status: 403 });
   return null;
 }
-
-export const notConfigured = (missing: string[]) =>
-  NextResponse.json({ error: "Pas encore configuré.", missing }, { status: 501 });

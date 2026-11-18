@@ -216,3 +216,31 @@ export type ReadRow = {
   created_at: string;
   read_at: string | null;
 };
+
+// ------------------------------------------------ données des vraies sources
+export type AppRow = { key: string; name: string; rc_project_id: string | null; color: string | null; sort_order: number; active: boolean };
+export type SourceName = "revenuecat" | "qonto" | "meta" | "os";
+export type SyncRun = { id: string; source: SourceName; started_at: string; finished_at: string | null; ok: boolean | null; rows: number; error: string | null; trigger: string };
+export type RcDaily = {
+  date: string; app: string; revenue: number | null; new_subs: number | null; trials: number | null; trial_conversions: number | null;
+  refunds: number | null; refund_count: number | null; actives: number | null; mrr: number | null;
+};
+export type RcCountryWeekly = { week: string; app: string; country: string; country_name: string | null; revenue: number | null; new_users: number | null };
+export type CountryVerdict = { code: string; zone: string | null; verdict: string | null };
+export type QontoTx = {
+  id: string; date: string; amount: number; side: "debit" | "credit"; operation_type: string | null; counterparty: string; label: string | null;
+  reference: string | null; qonto_category: string | null; poste: string; app: string | null; poste_locked: boolean;
+};
+export type QontoBalance = { date: string; balance: number };
+export type ExpenseFlag = {
+  id: string; kind: "new_vendor" | "unknown_vendor" | "spike" | "big_transfer"; title: string; detail: string | null; vendor: string | null;
+  amount: number | null; tx_id: string | null; month: string | null; created_at: string; checked: boolean; checked_by: string | null; checked_at: string | null; comment: string | null;
+};
+export type MetaSpend = { date: string; campaign_id: string; campaign_name: string | null; app: string | null; spend: number; currency: string | null };
+export type OsDaily = {
+  date: string; app: string; comptes_actifs: number | null; posts_faits: number | null; posts_prevus: number | null; posts_viraux: number | null;
+  vues_total: number | null; vues_mediane: number | null; nouveaux_posteurs: number | null; kills: number | null; doubles: number | null;
+  tickets_ouverts: number | null; tickets_resolus: number | null; paie_upwork: number | null; paie_ruul: number | null;
+  /** Seulement pour les chiffres repris du seed (pas de détail par post ni par ticket). */
+  viraux_pct?: number | null; support_pct?: number | null;
+};

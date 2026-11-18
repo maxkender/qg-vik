@@ -51,12 +51,17 @@ export class TableStore<T extends Row> {
   private channel: RealtimeChannel | null = null;
   loaded = false;
 
+  /**
+   * `pk` : la colonne clé. `keyOf` : pour les tables à clé composée (date + app…),
+   * lues seulement, on fabrique la clé à partir de la ligne.
+   */
   constructor(
     readonly table: string,
     readonly pk: keyof T & string,
+    private readonly keyOf?: (row: T) => string,
   ) {}
 
-  private key = (row: Row) => String(row[this.pk]);
+  private key = (row: Row) => (this.keyOf ? this.keyOf(row as T) : String(row[this.pk]));
 
   private emit() {
     this.snapshot = [...this.rows.values()];
@@ -99,12 +104,18 @@ export class TableStore<T extends Row> {
   }
 
   async load() {
-    const { data, error } = await supabaseBrowser().from(this.table).select("*");
-    if (error) {
-      setSync({ error: `Impossible de charger « ${this.table} ».` });
-      return;
+    // L'API renvoie 1 000 lignes au plus à la fois : on lit page par page.
+    const all: T[] = [];
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await supabaseBrowser().from(this.table).select("*").range(from, from + 999);
+      if (error) {
+        setSync({ error: `Impossible de charger « ${this.table} ».` });
+        return;
+      }
+      all.push(...(data as T[]));
+      if (!data || data.length < 1000) break;
     }
-    this.rows = new Map((data as T[]).map((r) => [this.key(r), r]));
+    this.rows = new Map(all.map((r) => [this.key(r), r]));
     this.loaded = true;
     this.emit();
   }

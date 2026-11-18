@@ -47,16 +47,24 @@ Prévu pour plus tard (le code est déjà là, routes `/auth/callback` et `/auth
 
 En local, dans certains environnements derrière un proxy, lancer le serveur avec `NODE_USE_ENV_PROXY=1`.
 
-## Phase 2 : chiffres en direct
+## Sources de données (lecture seule)
 
-Deux intégrations **en lecture seule** (uniquement des `GET`, aucun virement, aucune écriture ailleurs que dans la base du QG) :
+Le QG ne fait que **lire** RevenueCat, Qonto, Meta et l'OS (uniquement des `GET`), et range ce qu'il lit dans **sa propre base**. Le dashboard ne lit que cette base : il reste rapide et marche même si une source est en panne.
 
-- `src/lib/integrations/qonto.ts` : soldes et sorties d'argent ;
-- `src/lib/integrations/revenuecat.ts` : revenus par app et par pays.
+| Source | Code | Tables | Variables Vercel |
+|---|---|---|---|
+| RevenueCat | `src/lib/sync/revenuecat.ts` | `rc_daily`, `rc_country_weekly` | `REVENUECAT_KEY_SOPHIA`, `_MICABO`, `_UNSWIPE` |
+| Qonto | `src/lib/sync/qonto.ts`, `flags.ts` | `qonto_transactions`, `qonto_balance_daily`, `expense_flags` | `QONTO_LOGIN`, `QONTO_SECRET_KEY` |
+| Meta Ads | `src/lib/sync/meta.ts` | `meta_spend_daily` | `META_ACCESS_TOKEN`, `META_AD_ACCOUNT_ID` |
+| OS | `src/lib/sync/os.ts` | `os_daily` | `OS_STATS_URL`, `OS_STATS_TOKEN` |
 
-`POST /api/snapshot` (bouton « Mettre à jour » du dashboard) et `GET /api/cron/snapshot` (Vercel, chaque lundi à 6h UTC, soit 7h à Paris en hiver) créent un nouveau snapshot et importent les nouvelles dépenses. Les chiffres qui viennent de l'OS (vues, posts viraux, comptes, kills, support) ne sont pas encore branchés : ils sont repris du snapshot précédent.
-
-Variables à poser dans Vercel pour l'activer : `SUPABASE_SECRET_KEY`, `QONTO_LOGIN`, `QONTO_SECRET_KEY`, `REVENUECAT_KEY_SOPHIA`, `REVENUECAT_KEY_MICABO`, `REVENUECAT_KEY_UNSWIPE`, `CRON_SECRET`. Tant qu'elles manquent, les routes répondent « pas encore configuré » et le dashboard reste sur le dernier snapshot.
+- Il faut aussi `SUPABASE_SECRET_KEY` (le serveur écrit dans la base du QG) et `CRON_SECRET`.
+- Chaque synchro laisse une ligne dans `sync_runs`. Première synchro : tout depuis le 1er septembre 2026. Ensuite : les 10 derniers jours.
+- Tous les jours à 6h, heure de Paris : `vercel.json` déclenche `/api/cron/sync` à 4h et 5h UTC, et seul l'appel qui tombe à 6h à Paris travaille.
+- Bouton « Rafraîchir » du dashboard : `POST /api/sync?source=…`, réservé aux 2 membres.
+- Tant qu'une source n'est pas branchée, le dashboard garde pour elle les chiffres du seed du 18/11.
+- Ajouter une app (Runvik) : une ligne dans la table `apps` (clé, nom, identifiant de projet RevenueCat) et la variable `REVENUECAT_KEY_RUNVIK`.
+- Postes de dépense : table `vendor_rules`, modifiable dans la page Dépenses. Un poste changé à la main sur une transaction n'est plus touché par la synchro.
 
 ## Base de données
 
