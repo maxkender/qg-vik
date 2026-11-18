@@ -52,7 +52,7 @@ const flat = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").t
 // Quelques noms que RevenueCat écrit autrement que la norme.
 const BY_NAME = new Map<string, string>([
   ["turkey", "TR"], ["turkiye", "TR"], ["czech republic", "CZ"], ["usa", "US"], ["uk", "GB"], ["south korea", "KR"], ["russian federation", "RU"],
-  ["kosovo", "XK"], ["macao", "MO"], ["palestine state of", "PS"], ["congo", "CG"], ["congo the democratic republic of the", "CD"],
+  ["kosovo", "XK"], ["macao", "MO"], ["hong kong", "HK"], ["palestine state of", "PS"], ["congo", "CG"], ["congo the democratic republic of the", "CD"],
   ["brunei darussalam", "BN"], ["cabo verde", "CV"], ["virgin islands british", "VG"], ["virgin islands u s", "VI"],
   ["saint martin french part", "MF"], ["bonaire sint eustatius and saba", "BQ"], ["korea republic of", "KR"], ["viet nam", "VN"],
   ["iran islamic republic of", "IR"], ["moldova republic of", "MD"], ["tanzania united republic of", "TZ"], ["taiwan province of china", "TW"],
@@ -63,6 +63,8 @@ for (let a = 65; a <= 90; a++) {
   for (let b = 65; b <= 90; b++) {
     const code = String.fromCharCode(a, b);
     try {
+      // On écarte les anciens codes (DD, BU, YU…) : la norme les ramène à un code actuel différent.
+      if (new Intl.Locale(`und-${code}`).region !== code) continue;
       const n = EN.of(code);
       if (n && n !== code && !BY_NAME.has(flat(n))) BY_NAME.set(flat(n), code);
     } catch {}
