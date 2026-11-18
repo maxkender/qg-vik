@@ -1,37 +1,24 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Inter, JetBrains_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
-const bricolage = Bricolage_Grotesque({
-  variable: "--font-bricolage",
-  subsets: ["latin"],
-  weight: ["600", "800"],
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
-
-const jetbrains = JetBrains_Mono({
-  variable: "--font-jetbrains",
-  subsets: ["latin"],
-  weight: ["500"],
-});
+// Les polices du site vikstudios.com.
+const geist = Geist({ variable: "--font-geist", subsets: ["latin"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: { default: "QG Vik", template: "%s · QG Vik" },
   description: "Le QG privé de Vik Studios.",
   // App privée : rien à indexer.
   robots: { index: false, follow: false },
-  appleWebApp: { capable: true, title: "QG Vik", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "QG Vik", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#101113",
-  colorScheme: "dark light",
+  themeColor: "#fbfcff",
+  colorScheme: "light dark",
   viewportFit: "cover",
 };
 
@@ -40,13 +27,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="fr"
       suppressHydrationWarning
-      className={`${bricolage.variable} ${inter.variable} ${jetbrains.variable} dark h-full antialiased`}
+      className={`${geist.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
         {/* Applique le thème choisi avant le premier affichage (pas de flash). */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{if(localStorage.getItem("qg-theme")==="light"){document.documentElement.classList.remove("dark");document.querySelector('meta[name="theme-color"]')?.setAttribute("content","#f6f5f2")}}catch(e){}`,
+            __html: `try{if(localStorage.getItem("qg-theme")==="dark"){document.documentElement.classList.add("dark");document.querySelector('meta[name="theme-color"]')?.setAttribute("content","#000a26")}}catch(e){}`,
           }}
         />
       </head>

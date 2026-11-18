@@ -200,7 +200,7 @@ export default function DashboardPage() {
 function SectionTitle({ children, link }: { children: ReactNode; link?: { href: string; label: string } }) {
   return (
     <div className="mt-6 mb-0.5 flex items-baseline justify-between gap-3">
-      <h2 className="text-[20px] font-extrabold tracking-[-0.01em]">{children}</h2>
+      <h2 className="text-[20px] font-semibold tracking-[-0.01em]">{children}</h2>
       {link && (
         <Link href={link.href} className="inline-flex items-center gap-1 text-[12.5px] text-muted-foreground hover:text-foreground">
           {link.label} <ArrowRight className="size-3.5" aria-hidden />
@@ -241,7 +241,7 @@ function Kpi({
         <span className="truncate">{label}{hint && <span className="ml-1.5 text-faint max-sm:hidden">{hint}</span>}</span>
         <Src s={src} seedDate={seedDate} />
       </p>
-      <p className={cn("font-heading leading-tight font-extrabold tracking-[-0.02em] tabular-nums", hero ? "text-[30px]" : "text-[26px]", warn && "text-bad")}>{value}</p>
+      <p className={cn("font-heading leading-tight font-semibold tracking-[-0.02em] tabular-nums", hero ? "text-[30px]" : "text-[26px]", warn && "text-bad")}>{value}</p>
       {delta !== null ? (
         <p className={cn("num inline-flex items-center gap-0.5 text-[11.5px]", flat ? "text-muted-foreground" : good ? "text-good" : "text-bad")}>
           {Icon && <Icon className="size-3.5" aria-hidden />}

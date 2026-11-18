@@ -14,6 +14,7 @@ import { itemsStore } from "@/lib/data";
 import { DAYS_SHORT, MONTHS_SHORT, isoWeek } from "@/lib/dates";
 import { NAV_ALL, NAV_PILOTAGE, NAV_PLANNING, type NavItem } from "@/lib/nav";
 import { useRows, useSync } from "@/lib/store";
+import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
 
 function isActive(pathname: string, href: string) {
@@ -87,8 +88,9 @@ function Rail({ pathname, pagesNav }: { pathname: string; pagesNav?: ReactNode }
   return (
     <aside className="glass m-2 mr-0 hidden w-[232px] shrink-0 flex-col rounded-2xl md:flex">
       <div className="px-4 pt-4 pb-3">
-        <Link href="/" className="font-heading text-[21px] leading-none font-extrabold tracking-[-0.02em]">
-          QG Vik<span className="text-now">.</span>
+        <Link href="/" aria-label="QG Vik Studios, accueil" className="flex items-center gap-2">
+          <Logo className="h-[19px]" />
+          <span className="eyebrow rounded-full bg-now-soft px-1.5 py-0.5 text-[9.5px] font-medium text-now">QG</span>
         </Link>
         <p className="num mt-1.5 text-[11px] text-muted-foreground">
           {DAYS_SHORT[today.getDay()]} {today.getDate()} {MONTHS_SHORT[today.getMonth()]} · S{isoWeek(today)[1]}
@@ -213,7 +215,7 @@ export function ThemeToggle() {
     try {
       localStorage.setItem("qg-theme", next ? "dark" : "light");
     } catch {}
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", next ? "#101113" : "#f6f5f2");
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", next ? "#000a26" : "#fbfcff");
   }
   return (
     <button
@@ -264,8 +266,9 @@ function TopBar({ pathname }: { pathname: string }) {
   return (
     <header className="glass sticky top-0 z-30 shrink-0 rounded-none border-x-0 border-t-0 pt-[env(safe-area-inset-top)] md:hidden">
       <div className="flex items-center gap-2 px-4 pt-2.5">
-        <Link href="/" className="font-heading text-[19px] font-extrabold tracking-[-0.02em]">
-          QG Vik<span className="text-now">.</span>
+        <Link href="/" aria-label="QG Vik Studios, accueil" className="flex items-center gap-2">
+          <Logo className="h-[17px]" />
+          <span className="eyebrow rounded-full bg-now-soft px-1.5 py-0.5 text-[9.5px] font-medium text-now">QG</span>
         </Link>
         <SyncDot />
         <span className="flex-1" />
@@ -328,8 +331,8 @@ export function ViewHeader({ title, sub, children, eyebrow }: { title: ReactNode
   return (
     <div className="flex shrink-0 flex-wrap items-end justify-between gap-x-4 gap-y-2.5 px-4 pt-3.5 pb-3 md:px-6 md:pt-6 md:pb-4">
       <div className="min-w-0">
-        {eyebrow && <p className="mb-1 font-heading text-[13px] font-extrabold text-muted-foreground md:text-[14px]">{eyebrow}</p>}
-        <h1 className="text-[24px] leading-[1.05] font-extrabold md:text-[32px]">{title}</h1>
+        {eyebrow && <p className="mb-1 font-heading text-[13px] font-semibold text-muted-foreground md:text-[14px]">{eyebrow}</p>}
+        <h1 className="text-[24px] leading-[1.05] font-semibold md:text-[32px]">{title}</h1>
         {sub && <p className="mt-1.5 text-[13.5px] text-muted-foreground max-md:hidden">{sub}</p>}
       </div>
       {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}

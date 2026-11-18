@@ -18,7 +18,7 @@ export type ColumnDef = {
   id: string;
   title: ReactNode;
   subtitle?: string;
-  /** Colonne « maintenant » : en orange. */
+  /** Colonne « maintenant » : en bleu Vik. */
   now?: boolean;
   wide?: boolean;
   /** Tâches de la colonne, déjà triées. */
@@ -177,7 +177,7 @@ function Column({
     >
       <header className="flex items-start justify-between gap-2 px-4 pt-4 pb-2">
         <div className="min-w-0">
-          <h2 className={cn("flex items-center gap-2 text-[19px] leading-tight font-extrabold tracking-[-0.01em]", col.now && "text-now")}>
+          <h2 className={cn("flex items-center gap-2 text-[19px] leading-tight font-semibold tracking-[-0.01em]", col.now && "text-now")}>
             {col.dot && <span className={cn("size-2 shrink-0 rounded-full", col.dot)} aria-hidden />}
             <span className="truncate">{col.title}</span>
             {col.showCount && <span className="num text-[12px] font-medium text-faint">{openCount}</span>}

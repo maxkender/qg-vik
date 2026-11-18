@@ -51,7 +51,7 @@ export default function ProcessPage() {
         <ViewHeader title="Process" sub="Qui fait quoi, quand, et comment ça marche." />
         <div className="flex flex-col gap-3 px-4 pb-16 md:px-6">
           {/* ------------------------------------------------ la semaine type */}
-          <h2 className="text-[20px] font-extrabold">La semaine type</h2>
+          <h2 className="text-[20px] font-semibold">La semaine type</h2>
           <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
             <div className="grid min-w-[860px] grid-cols-7 gap-2">
               {DAY_NAMES.map((name, i) => (
@@ -80,7 +80,7 @@ export default function ProcessPage() {
           </ul>
 
           {/* ---------------------------------------------- comment ça marche */}
-          <h2 className="mt-6 text-[20px] font-extrabold">Comment ça marche</h2>
+          <h2 className="mt-6 text-[20px] font-semibold">Comment ça marche</h2>
           <div role="tablist" aria-label="Process" className="flex flex-wrap gap-1.5">
             {processes.map((p, i) => (
               <button

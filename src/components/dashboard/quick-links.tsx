@@ -18,7 +18,7 @@ function Icon({ url, title }: { url: string; title: string }) {
   const [failed, setFailed] = useState(false);
   const h = host(url);
   return (
-    <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-muted font-heading text-[16px] font-extrabold text-muted-foreground">
+    <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-muted font-heading text-[16px] font-semibold text-muted-foreground">
       {failed || !h ? (
         title[0]?.toUpperCase()
       ) : (
@@ -46,7 +46,7 @@ export function QuickLinks() {
         >
           <Icon url={l.url} title={l.title} />
           <span className="min-w-0 flex-1">
-            <span className="flex items-start gap-1 font-heading text-[15.5px] leading-tight font-extrabold tracking-[-0.01em]">
+            <span className="flex items-start gap-1 font-heading text-[15.5px] leading-tight font-semibold tracking-[-0.01em]">
               <span className="line-clamp-2">{l.title}</span>
               <ArrowUpRight className="size-4 shrink-0 text-faint transition-colors duration-100 group-hover:text-now" aria-hidden />
             </span>

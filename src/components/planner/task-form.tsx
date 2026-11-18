@@ -120,7 +120,7 @@ export function NewTaskForm({ onDone }: { onDone: () => void }) {
         onKeyDown={(e) => e.stopPropagation()}
         placeholder="Titre de la tâche"
         aria-label="Titre de la tâche"
-        className="w-full bg-transparent font-heading text-[22px] font-extrabold tracking-[-0.02em] outline-none placeholder:text-faint"
+        className="w-full bg-transparent font-heading text-[22px] font-semibold tracking-[-0.02em] outline-none placeholder:text-faint"
       />
       <textarea
         value={notes}

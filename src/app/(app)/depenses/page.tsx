@@ -38,13 +38,13 @@ export default function ExpensesPage() {
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <div className="glass flex min-w-0 flex-col gap-1 rounded-2xl p-4">
             <p className="text-[12.5px] text-muted-foreground">Total</p>
-            <p className="font-heading text-[30px] leading-tight font-extrabold tracking-[-0.02em] tabular-nums">{eur(sum)}</p>
+            <p className="font-heading text-[30px] leading-tight font-semibold tracking-[-0.02em] tabular-nums">{eur(sum)}</p>
             <p className="text-[11.5px] text-faint">Qonto {eur(total(debits))}{dash.live.meta ? ` · Meta ${eur(meta)}` : ""}</p>
           </div>
           {tiles.map(({ p, v }) => (
             <div key={p} className="glass flex min-w-0 flex-col gap-1 rounded-2xl p-4">
               <p className="truncate text-[12.5px] text-muted-foreground">{p}</p>
-              <p className="font-heading text-[24px] leading-tight font-extrabold tracking-[-0.02em] tabular-nums">{eur(v)}</p>
+              <p className="font-heading text-[24px] leading-tight font-semibold tracking-[-0.02em] tabular-nums">{eur(v)}</p>
               <p className="text-[11.5px] text-faint">{sum ? Math.round((v / sum) * 100) : 0} % du total</p>
             </div>
           ))}

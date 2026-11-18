@@ -70,11 +70,11 @@ function PagesIndex() {
         )}
         {recent.length > 0 && (
           <>
-            <h2 className="text-[20px] font-extrabold">Modifiées récemment</h2>
+            <h2 className="text-[20px] font-semibold">Modifiées récemment</h2>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {recent.map((p) => <Card key={p.id} page={p} kids={childrenOf(pages, p.id).length} by={nameOf(p.updated_by)} />)}
             </div>
-            <h2 className="mt-6 text-[20px] font-extrabold">Toutes les pages</h2>
+            <h2 className="mt-6 text-[20px] font-semibold">Toutes les pages</h2>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {roots.map((p) => <Card key={p.id} page={p} kids={childrenOf(pages, p.id).length} by={nameOf(p.updated_by)} />)}
             </div>

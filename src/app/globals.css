@@ -6,14 +6,14 @@
 
 /* ------------------------------------------------------------------
    QG Vik — jetons de design
-   Sombre par défaut, surfaces en verre dépoli (sobre, façon Notion),
-   orange = « maintenant », teal = Max, rose = Adrien, gris = les deux.
+   Direction artistique Vik Studios (clair par défaut), surfaces en verre dépoli (sobre, façon Notion),
+   bleu Vik = « maintenant », teal = Max, rose = Adrien, gris = les deux.
    ------------------------------------------------------------------ */
 
 @theme inline {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -79,19 +79,28 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Thème clair (option) */
+/* Thème clair (par défaut) : la direction artistique de vikstudios.com */
 :root {
-  --radius: 0.75rem;
+  --radius: 0.875rem;
 
-  --background: #f6f5f2;
-  --foreground: #1a1b1e;
-  --faint: #a3a5ab;
-  --line: rgb(20 20 25 / 0.08);
-  --line-strong: rgb(20 20 25 / 0.14);
-  --glass: rgb(255 255 255 / 0.62);
-  --glass-strong: rgb(255 255 255 / 0.86);
-  --glass-shine: rgb(255 255 255 / 0.9);
-  --glass-shadow: 0 1px 2px rgb(20 20 25 / 0.04), 0 12px 32px -12px rgb(20 20 25 / 0.12);
+  /* Couleurs de la marque */
+  --brand-navy: #00113d;
+  --brand-blue: #004dff;
+  --brand-violet: #8b45ff;
+  --brand-cyan: #21afff;
+  --brand-amber: #ffbb45;
+  --brand-coral: #ff5050;
+  --brand-gradient: linear-gradient(100deg, var(--brand-blue), var(--brand-violet) 70%);
+
+  --background: #fbfcff;
+  --foreground: #00113d;
+  --faint: #8e96ad;
+  --line: rgb(0 17 61 / 0.1);
+  --line-strong: rgb(0 17 61 / 0.2);
+  --glass: rgb(255 255 255 / 0.74);
+  --glass-strong: rgb(255 255 255 / 0.93);
+  --glass-shine: rgb(255 255 255 / 0.95);
+  --glass-shadow: 0 1px 2px rgb(0 17 61 / 0.04), 0 14px 36px -14px rgb(0 17 61 / 0.14);
   /* Séries des graphiques (palette validée daltonisme, thème clair) */
   --viz-1: #2a78d6;
   --viz-2: #eb6834;
@@ -99,39 +108,41 @@
   --viz-4: #eda100;
   --viz-5: #e87ba4;
   --viz-6: #008300;
-  --viz-other: #a3a5ab;
-  --viz-surface: #fbfaf8;
-  --ambient-a: rgb(217 96 27 / 0.1);
-  --ambient-b: rgb(14 143 126 / 0.09);
+  --viz-other: #a3a9bb;
+  --viz-surface: #ffffff;
+  --ambient-a: rgb(33 175 255 / 0.13);
+  --ambient-b: rgb(139 69 255 / 0.08);
+  --ambient-c: rgb(255 187 69 / 0.08);
+  --grid-line: rgb(0 17 61 / 0.035);
 
-  --now: #d9601b;
-  --now-soft: #fbe7da;
+  --now: #004dff;
+  --now-soft: #e4ecff;
   --max: #0e8f7e;
   --max-soft: #dcf2ee;
-  --adrien: #b5419c;
-  --adrien-soft: #f7e1f2;
-  --both: #5f6168;
-  --both-soft: #ececea;
-  --good: #1e9a5b;
-  --good-soft: #ddf3e7;
-  --bad: #d13d3d;
-  --bad-soft: #fbe2e2;
-  --warn: #b98410;
-  --warn-soft: #faf0d6;
-  --info: #2f5fe0;
-  --info-soft: #e2e9fd;
+  --adrien: #c2378f;
+  --adrien-soft: #fbe3f2;
+  --both: #5b6480;
+  --both-soft: #eceef4;
+  --good: #12925a;
+  --good-soft: #dcf4e8;
+  --bad: #e0363c;
+  --bad-soft: #ffe4e4;
+  --warn: #b27a00;
+  --warn-soft: #fff1d6;
+  --info: #0a7fc4;
+  --info-soft: #dff2ff;
 
   --card: var(--glass);
   --card-foreground: var(--foreground);
   --popover: #ffffff;
   --popover-foreground: var(--foreground);
-  --primary: #1a1b1e;
-  --primary-foreground: #f6f5f2;
-  --secondary: rgb(20 20 25 / 0.05);
+  --primary: #00113d;
+  --primary-foreground: #ffffff;
+  --secondary: rgb(0 17 61 / 0.05);
   --secondary-foreground: var(--foreground);
-  --muted: rgb(20 20 25 / 0.05);
-  --muted-foreground: #686a71;
-  --accent: rgb(20 20 25 / 0.06);
+  --muted: rgb(0 17 61 / 0.045);
+  --muted-foreground: #5c6584;
+  --accent: rgb(0 17 61 / 0.06);
   --accent-foreground: var(--foreground);
   --destructive: var(--bad);
   --border: var(--line);
@@ -154,52 +165,54 @@
   color-scheme: light;
 }
 
-/* Thème sombre (par défaut) */
+/* Thème sombre (option) : le bleu nuit de la marque */
 .dark {
-  --background: #101113;
-  --foreground: #ececee;
-  --faint: #62646b;
-  --line: rgb(255 255 255 / 0.07);
-  --line-strong: rgb(255 255 255 / 0.13);
-  --glass: rgb(255 255 255 / 0.035);
-  --glass-strong: rgb(34 35 39 / 0.78);
-  --glass-shine: rgb(255 255 255 / 0.06);
-  --glass-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 40px -16px rgb(0 0 0 / 0.55);
+  --background: #000a26;
+  --foreground: #eef2ff;
+  --faint: #6875a1;
+  --line: rgb(190 210 255 / 0.1);
+  --line-strong: rgb(190 210 255 / 0.2);
+  --glass: rgb(160 190 255 / 0.055);
+  --glass-strong: rgb(8 24 74 / 0.86);
+  --glass-shine: rgb(200 220 255 / 0.07);
+  --glass-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 40px -16px rgb(0 0 0 / 0.6);
   --viz-1: #3987e5;
   --viz-2: #d95926;
   --viz-3: #199e70;
   --viz-4: #c98500;
   --viz-5: #d55181;
   --viz-6: #0ca30c;
-  --viz-other: #6f727b;
-  --viz-surface: #17181b;
-  --ambient-a: rgb(242 118 46 / 0.13);
-  --ambient-b: rgb(56 198 176 / 0.09);
+  --viz-other: #6f7aa0;
+  --viz-surface: #06143f;
+  --ambient-a: rgb(0 77 255 / 0.3);
+  --ambient-b: rgb(139 69 255 / 0.16);
+  --ambient-c: rgb(33 175 255 / 0.1);
+  --grid-line: rgb(190 210 255 / 0.03);
 
-  --now: #f2762e;
-  --now-soft: rgb(242 118 46 / 0.14);
+  --now: #6d97ff;
+  --now-soft: rgb(60 120 255 / 0.2);
   --max: #38c6b0;
   --max-soft: rgb(56 198 176 / 0.14);
-  --adrien: #e68ad2;
-  --adrien-soft: rgb(230 138 210 / 0.14);
-  --both: #a9abb2;
-  --both-soft: rgb(169 171 178 / 0.12);
+  --adrien: #f08ad0;
+  --adrien-soft: rgb(240 138 208 / 0.14);
+  --both: #a9b3d1;
+  --both-soft: rgb(169 179 209 / 0.12);
   --good: #3dbe7c;
   --good-soft: rgb(61 190 124 / 0.14);
-  --bad: #f06262;
-  --bad-soft: rgb(240 98 98 / 0.14);
-  --warn: #e8b547;
-  --warn-soft: rgb(232 181 71 / 0.14);
-  --info: #5e8bff;
-  --info-soft: rgb(94 139 255 / 0.15);
+  --bad: #ff6b6b;
+  --bad-soft: rgb(255 80 80 / 0.15);
+  --warn: #ffbb45;
+  --warn-soft: rgb(255 187 69 / 0.14);
+  --info: #4dbdff;
+  --info-soft: rgb(33 175 255 / 0.15);
 
-  --popover: #1d1e22;
-  --primary: #ececee;
-  --primary-foreground: #101113;
-  --secondary: rgb(255 255 255 / 0.06);
-  --muted: rgb(255 255 255 / 0.05);
-  --muted-foreground: #9a9ca3;
-  --accent: rgb(255 255 255 / 0.07);
+  --popover: #0a1b52;
+  --primary: #eef2ff;
+  --primary-foreground: #00113d;
+  --secondary: rgb(190 210 255 / 0.08);
+  --muted: rgb(190 210 255 / 0.06);
+  --muted-foreground: #a2aed3;
+  --accent: rgb(190 210 255 / 0.09);
 
   color-scheme: dark;
 }
@@ -216,7 +229,7 @@
     @apply bg-background text-foreground;
     font-size: 14px;
     line-height: 1.45;
-    font-feature-settings: "cv11", "ss01";
+    
   }
   /* Lumière d'ambiance : c'est elle que le verre dépoli laisse deviner. */
   body::before {
@@ -227,13 +240,16 @@
     pointer-events: none;
     background:
       radial-gradient(60rem 40rem at 8% -10%, var(--ambient-a), transparent 60%),
-      radial-gradient(50rem 40rem at 105% 110%, var(--ambient-b), transparent 60%);
+      radial-gradient(50rem 40rem at 105% 110%, var(--ambient-b), transparent 60%),
+      radial-gradient(36rem 28rem at 100% -5%, var(--ambient-c), transparent 60%),
+      linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0 / 56px 56px,
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0 / 56px 56px;
   }
   h1,
   h2,
   h3 {
     font-family: var(--font-heading);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.035em;
   }
   ::selection {
     background: color-mix(in oklab, var(--now) 35%, transparent);
@@ -256,6 +272,23 @@
     box-shadow: inset 0 1px 0 var(--glass-shine), var(--glass-shadow);
     -webkit-backdrop-filter: blur(32px) saturate(160%);
     backdrop-filter: blur(32px) saturate(160%);
+  }
+  /* Le dégradé de la marque, sur du texte. */
+  .brand-text {
+    background: var(--brand-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .dark .brand-text {
+    background-image: linear-gradient(100deg, #6d97ff, #b48cff 70%);
+  }
+  /* Petite étiquette en capitales, comme sur le site. */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
   }
   .num {
     font-family: var(--font-mono);
@@ -291,7 +324,7 @@
   --bn-colors-border: var(--line-strong);
   --bn-colors-side-menu: var(--faint);
   --bn-colors-shadow: rgb(0 0 0 / 0.35);
-  --bn-font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --bn-font-family: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
   --bn-border-radius: 10px;
 }
 .qg-editor .bn-editor {

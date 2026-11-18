@@ -123,7 +123,7 @@ export default function AccessPage() {
       <div className="grid flex-1 place-items-center px-6">
         <div className="glass max-w-md rounded-3xl p-8 text-center">
           <Lock className="mx-auto size-7 text-muted-foreground" aria-hidden />
-          <h1 className="mt-4 text-[24px] font-extrabold">Reconnecte-toi pour ouvrir cette page</h1>
+          <h1 className="mt-4 text-[24px] font-semibold">Reconnecte-toi pour ouvrir cette page</h1>
           <p className="mt-2 text-[14px] text-muted-foreground">
             Les documents légaux et les accès demandent une connexion de moins de 12 heures. La tienne est plus ancienne.
           </p>
@@ -265,7 +265,7 @@ function AccessContent() {
         <Documents />
 
         {/* ---------------------------------------------- connexions et comptes */}
-        <h2 className="mt-6 text-[20px] font-extrabold">Connexions et comptes</h2>
+        <h2 className="mt-6 text-[20px] font-semibold">Connexions et comptes</h2>
         <Panel
           caption={
             <>
@@ -351,7 +351,7 @@ function AccessContent() {
         </Panel>
 
         {/* ------------------------------------------------------------ clés API */}
-        <h2 className="mt-6 text-[20px] font-extrabold">Mots de passe et clés API</h2>
+        <h2 className="mt-6 text-[20px] font-semibold">Mots de passe et clés API</h2>
         <Panel caption="Seulement le nom de l'élément dans le coffre, jamais le secret lui-même">
           <div className="-mx-1 overflow-x-auto">
             <table className="w-full min-w-[720px] border-collapse">

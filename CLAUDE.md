@@ -131,9 +131,9 @@ Données tirées de `metrics_snapshots`.
 
 ## Design
 
-- **Sombre par défaut, façon Timestripe**, avec un vrai thème clair en option.
-- **Orange** pour « maintenant » (aujourd'hui, semaine en cours).
-- **Typographie** : Bricolage Grotesque pour les titres, Inter pour le texte, JetBrains Mono pour les chiffres et les dates.
+- **Direction artistique de vikstudios.com** : clair par défaut (fond `#fbfcff`, bleu nuit `#00113d`), avec un thème sombre bleu nuit en option. Logo Vik Studios dans `src/components/logo.tsx`.
+- **Bleu Vik** (`#004dff`) pour « maintenant » (aujourd'hui, semaine en cours). Couleurs de la marque : violet `#8b45ff`, cyan `#21afff`, ambre `#ffbb45`, corail `#ff5050`.
+- **Typographie** : Geist pour les titres et le texte, Geist Mono pour les chiffres et les dates.
 - **Densité** : élevée mais aérée. Survols subtils, transitions courtes (moins de 150 ms). Respecter `prefers-reduced-motion`.
 - **Réactivité** : les modifications sont optimistes et se synchronisent en temps réel entre Max et Adrien (Supabase Realtime). Indicateur discret « synchronisé ».
 - **Mobile** : utilisable sur téléphone (PWA installable, icône sur l'écran d'accueil).

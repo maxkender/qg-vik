@@ -31,7 +31,7 @@ export function ItemSheet() {
           <div className="flex flex-col gap-5 pt-6">
             <div className="flex items-start gap-2.5">
               <Tick checked={item.done} onChange={() => void toggleDone(item)} label="Fait" />
-              <EditableTitle value={item.title} done={item.done} onSave={(title) => void itemsStore.update(item.id, { title })} className="font-heading text-[20px] leading-7 font-extrabold tracking-[-0.01em]" />
+              <EditableTitle value={item.title} done={item.done} onSave={(title) => void itemsStore.update(item.id, { title })} className="font-heading text-[20px] leading-7 font-semibold tracking-[-0.01em]" />
             </div>
             {!item.done && isLate(item.bucket, today) && <p className="-mt-3 pl-[27px] text-[12.5px] font-semibold text-bad">En retard</p>}
 

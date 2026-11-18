@@ -220,7 +220,7 @@ export function PageView({ id }: { id: string }) {
               if (titleTimer.current) window.clearTimeout(titleTimer.current);
               titleTimer.current = window.setTimeout(() => void pagesStore.update(page.id, { title, ...touch }), 400);
             }}
-            className="mt-5 w-full resize-none bg-transparent font-heading text-[clamp(2rem,5vw,2.75rem)] leading-[1.1] font-extrabold tracking-[-0.025em] outline-none placeholder:text-faint [field-sizing:content]"
+            className="mt-5 w-full resize-none bg-transparent font-heading text-[clamp(2rem,5vw,2.75rem)] leading-[1.1] font-semibold tracking-[-0.025em] outline-none placeholder:text-faint [field-sizing:content]"
           />
           <p className="mt-2 mb-6 flex items-center gap-2 text-[12.5px] text-faint">
             {editorName && <PersonAvatar who={profiles.find((p) => p.id === page.updated_by)?.short ?? "both"} size="xs" />}
@@ -250,7 +250,7 @@ export function PageView({ id }: { id: string }) {
 
       <Sheet open={commentsOpen} onOpenChange={(o) => { setCommentsOpen(o); if (!o) setDraft(null); }}>
         <SheetContent className="glass-strong w-full gap-0 overflow-y-auto border-0 p-5 sm:max-w-md">
-          <SheetTitle className="mb-4 text-[17px] font-extrabold">Commentaires</SheetTitle>
+          <SheetTitle className="mb-4 text-[17px] font-semibold">Commentaires</SheetTitle>
           <SheetDescription className="sr-only">Fils de commentaires de la page</SheetDescription>
           <Comments target={{ pageId: page.id }} draft={draft} onDraftDone={() => setDraft(null)} onJump={jump} />
         </SheetContent>

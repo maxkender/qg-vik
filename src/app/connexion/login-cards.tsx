@@ -99,7 +99,7 @@ export function LoginCards() {
                 )}
               </div>
               <div>
-                <div className="font-heading text-[26px] leading-none font-extrabold tracking-[-0.02em]">{m.name}</div>
+                <div className="font-heading text-[26px] leading-none font-semibold tracking-[-0.02em]">{m.name}</div>
                 <div className="mt-2 text-[13px] text-muted-foreground">{m.role}</div>
               </div>
             </button>
@@ -154,7 +154,7 @@ function PasswordForm({ who, isNew, onBack }: { who: Who; isNew: boolean; onBack
       <div className="flex items-center gap-4">
         <PersonAvatar who={who} size="lg" />
         <div className="min-w-0">
-          <h2 className="text-[26px] leading-none font-extrabold">{m.name}</h2>
+          <h2 className="text-[26px] leading-none font-semibold">{m.name}</h2>
           <p className="mt-2 text-[13px] text-muted-foreground">
             {isNew ? "Première connexion : choisis ton mot de passe." : "Content de te revoir."}
           </p>

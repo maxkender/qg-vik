@@ -27,7 +27,7 @@ export function PersonAvatar({
     <span
       aria-hidden
       className={cn(
-        "inline-grid shrink-0 place-items-center font-heading font-extrabold select-none",
+        "inline-grid shrink-0 place-items-center font-heading font-semibold select-none",
         TONE[who],
         SIZE[size],
         className,
