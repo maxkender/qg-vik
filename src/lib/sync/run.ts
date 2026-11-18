@@ -2,7 +2,7 @@ import "server-only";
 import { adminDb } from "@/lib/sync/admin";
 import { metaReady, syncMeta } from "@/lib/sync/meta";
 import { osReady, syncOs } from "@/lib/sync/os";
-import { qontoReady, syncQonto } from "@/lib/sync/qonto";
+import { qontoHint, qontoReady, syncQonto } from "@/lib/sync/qonto";
 import { PartialSync, rcKey, syncRevenueCat } from "@/lib/sync/revenuecat";
 
 export const SOURCES = ["revenuecat", "qonto", "meta", "os"] as const;
@@ -15,7 +15,7 @@ const RUNNERS = { revenuecat: syncRevenueCat, qonto: syncQonto, meta: syncMeta, 
 export function syncStatus() {
   const base = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SECRET_KEY);
   const rc = ["sophia", "micabo", "unswipe", "runvik"].filter((a) => rcKey(a));
-  return { base, revenuecat: rc.length > 0, revenuecat_apps: rc, qonto: qontoReady(), meta: metaReady(), os: osReady() };
+  return { base, revenuecat: rc.length > 0, revenuecat_apps: rc, qonto: qontoReady(), qonto_forme: qontoHint(), meta: metaReady(), os: osReady() };
 }
 
 export type RunResult = { source: Source; ok: boolean; rows: number; error: string | null; skipped?: boolean };

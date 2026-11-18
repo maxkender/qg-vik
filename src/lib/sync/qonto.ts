@@ -17,8 +17,26 @@ type Tx = {
   settled_balance: number | null; cashflow_category?: { name?: string } | string | null; cashflow_subcategory?: { name?: string } | string | null;
 };
 
-export const qontoReady = () => Boolean(process.env.QONTO_LOGIN && process.env.QONTO_SECRET_KEY);
-const auth = () => ({ Authorization: `${process.env.QONTO_LOGIN}:${process.env.QONTO_SECRET_KEY}` });
+// Les valeurs collées dans Vercel ont parfois un espace ou un retour à la ligne en trop.
+const login = () => (process.env.QONTO_LOGIN ?? "").trim();
+const secret = () => (process.env.QONTO_SECRET_KEY ?? "").trim();
+export const qontoReady = () => Boolean(login() && secret());
+const auth = () => ({ Authorization: `${login()}:${secret()}` });
+
+/** Forme des deux valeurs, sans jamais les montrer : pour comprendre un refus de Qonto. */
+export function qontoHint() {
+  const raw = { l: process.env.QONTO_LOGIN ?? "", s: process.env.QONTO_SECRET_KEY ?? "" };
+  return {
+    login_longueur: login().length,
+    login_ressemble_a_un_identifiant: /^[a-z0-9]+(-[a-z0-9]+)*-\d+$/.test(login()),
+    login_contient_arobase: login().includes("@"),
+    login_contient_deux_points: login().includes(":"),
+    secret_longueur: secret().length,
+    secret_hexadecimal: /^[0-9a-f]+$/i.test(secret()),
+    espaces_en_trop: raw.l !== raw.l.trim() || raw.s !== raw.s.trim(),
+    valeurs_identiques: login() !== "" && login() === secret(),
+  };
+}
 const catName = (c: Tx["cashflow_category"]) => (typeof c === "string" ? c : (c?.name ?? null));
 
 export async function syncQonto(db: SupabaseClient): Promise<number> {
