@@ -335,6 +335,8 @@ function PerApp({ dash, period }: { dash: Dash; period: Period }) {
 
 // ---------------------------------------------------------------------- pays
 const VERDICTS = ["Recruter", "Garder", "À corriger", "Couper"] as const;
+/** En dessous, le € par utilisateur d'un pays n'est pas fiable. */
+const MIN_USERS = 100;
 const VERDICT: Record<string, { tone: string; icon: typeof CircleCheck }> = {
   Recruter: { tone: "bg-good-soft text-good", icon: CircleCheck },
   Garder: { tone: "bg-info-soft text-info", icon: CircleMinus },
@@ -346,16 +348,21 @@ function Countries({ dash, period, app }: { dash: Dash; period: Period; app: str
   const [all, setAll] = useState(false);
   const live = dash.rcCountry.length > 0;
   const rows = useMemo(() => {
+    const known = new Set(dash.verdicts.map((v) => v.code));
+    const solid = (c: { code: string; users: number | null }) => (c.users ?? 0) >= MIN_USERS || known.has(c.code);
     if (live) {
       return countries(dash.rcCountry, app, period)
-        .filter((c) => c.code !== "Autres")
-        .map((c) => ({ code: c.code, name: c.name, perUser: c.perUser, revWeek: c.revenue / c.weeks, users: c.users as number | null }));
+        .filter((c) => c.code !== "Autres" && c.code !== "Unknown")
+        .map((c) => ({ code: c.code, name: c.name, perUser: c.perUser, revWeek: c.revenue / c.weeks, users: c.users as number | null }))
+        // Un pays avec une poignée d'utilisateurs donne un € par utilisateur qui ne veut rien dire :
+        // on classe d'abord ceux qui ont du volume (ou déjà un verdict), les petits ensuite.
+        .sort((a, b) => Number(solid(b)) - Number(solid(a)) || (b.perUser ?? -1) - (a.perUser ?? -1));
     }
     // En attendant RevenueCat : le tableau du seed.
     return [...(dash.seed?.countries ?? [])]
       .sort((a, b) => (b.eur_par_user ?? -1) - (a.eur_par_user ?? -1))
       .map((c) => ({ code: c.code, name: countryName(c.code, c.pays), perUser: c.eur_par_user, revWeek: c.revenus_semaine ?? 0, users: null as number | null }));
-  }, [live, dash.rcCountry, dash.seed, app, period]);
+  }, [live, dash.rcCountry, dash.seed, dash.verdicts, app, period]);
   const verdictOf = new Map(dash.verdicts.map((v) => [v.code, v]));
   const max = Math.max(...rows.map((c) => c.perUser ?? 0), 0.01);
   const shown = all ? rows : rows.slice(0, 14);
@@ -363,7 +370,7 @@ function Countries({ dash, period, app }: { dash: Dash; period: Period; app: str
   return (
     <Panel
       title="Par pays"
-      caption="Trié par € par utilisateur (revenus ÷ nouveaux utilisateurs de la période) : c'est là qu'est l'argent. Le verdict se change ici."
+      caption="Trié par € par utilisateur (revenus ÷ nouveaux utilisateurs de la période) : c'est là qu'est l'argent. Les pays à moins de 100 nouveaux utilisateurs sont classés après. Le verdict se change ici."
       action={<Src s={dash.sources.revenuecat} seedDate={dash.seedDate} />}
     >
       <div className="-mx-1 overflow-x-auto">

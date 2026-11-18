@@ -52,7 +52,7 @@ const flat = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").t
 // Quelques noms que RevenueCat écrit autrement que la norme.
 const BY_NAME = new Map<string, string>([
   ["turkey", "TR"], ["turkiye", "TR"], ["czech republic", "CZ"], ["usa", "US"], ["uk", "GB"], ["south korea", "KR"], ["russian federation", "RU"],
-  ["kosovo", "XK"], ["macao", "MO"], ["hong kong", "HK"], ["palestine state of", "PS"], ["congo", "CG"], ["congo the democratic republic of the", "CD"],
+  ["kosovo", "XK"], ["macao", "MO"], ["hong kong", "HK"], ["myanmar", "MM"], ["saint pierre and miquelon", "PM"], ["palestine state of", "PS"], ["congo", "CG"], ["congo the democratic republic of the", "CD"],
   ["brunei darussalam", "BN"], ["cabo verde", "CV"], ["virgin islands british", "VG"], ["virgin islands u s", "VI"],
   ["saint martin french part", "MF"], ["bonaire sint eustatius and saba", "BQ"], ["korea republic of", "KR"], ["viet nam", "VN"],
   ["iran islamic republic of", "IR"], ["moldova republic of", "MD"], ["tanzania united republic of", "TZ"], ["taiwan province of china", "TW"],
