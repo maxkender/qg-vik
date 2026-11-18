@@ -8,6 +8,7 @@ import { Board, type ColumnDef } from "@/components/planner/board";
 import { QuickAdd, useQuickCreate } from "@/components/planner/quick-add";
 import { usePlanner } from "@/components/planner/use-planner";
 import { useMe } from "@/components/session-provider";
+import { CATEGORIES, type Category } from "@/lib/categories";
 import { itemsStore } from "@/lib/data";
 import { dayKey, isLate, weekKey } from "@/lib/dates";
 import type { Item, Prio } from "@/lib/types";
@@ -30,12 +31,14 @@ export default function TodoPage() {
 
   const [q, setQ] = useState("");
   const [when, setWhen] = useState<When>("all");
+  const [cat, setCat] = useState<Category | "all">("all");
   const open = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const todayKey = dayKey(today);
     const week = weekKey(today);
     return roots.filter((i) => {
       if (i.done) return false;
+      if (cat !== "all" && i.category !== cat) return false;
       if (needle && !`${i.title} ${i.notes ?? ""}`.toLowerCase().includes(needle)) return false;
       if (when === "late") return isLate(i.bucket, today);
       if (when === "today") return i.bucket === todayKey || isLate(i.bucket, today);
@@ -43,8 +46,8 @@ export default function TodoPage() {
       if (when === "nodate") return i.bucket === "inbox";
       return true;
     });
-  }, [roots, q, when, today]);
-  const filtered = q.trim() !== "" || when !== "all";
+  }, [roots, q, when, cat, today]);
+  const filtered = q.trim() !== "" || when !== "all" || cat !== "all";
   // Le « Salut » parle toujours de mes tâches, quel que soit le filtre.
   const mine = useMemo(
     () => all.filter((i) => !i.parent_id && !i.done && (i.owner === me.short || i.owner === "both")),
@@ -85,15 +88,21 @@ export default function TodoPage() {
         <div className="flex flex-wrap items-center gap-2">
           <label className="flex h-9 min-w-0 flex-[1_1_200px] items-center gap-2 rounded-lg border border-line bg-glass px-2.5 focus-within:border-line-strong">
             <Search className="size-3.5 shrink-0 text-faint" aria-hidden />
-            <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.stopPropagation()} placeholder="Filtrer par titre ou description…" aria-label="Filtrer les tâches" className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-faint" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.stopPropagation()} placeholder="Filtrer…" aria-label="Filtrer les tâches" className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-faint" />
           </label>
+          <select value={cat} onChange={(e) => setCat(e.target.value as Category | "all")} aria-label="Catégorie" className="h-9 rounded-lg border border-line bg-glass px-2.5 text-[13px] outline-none focus:border-line-strong">
+            <option value="all">Toutes les catégories</option>
+            {CATEGORIES.map((c) => (
+              <option key={c.key} value={c.key}>{c.label}</option>
+            ))}
+          </select>
           <select value={when} onChange={(e) => setWhen(e.target.value as When)} aria-label="Échéance" className="h-9 rounded-lg border border-line bg-glass px-2.5 text-[13px] outline-none focus:border-line-strong">
             {WHEN.map(([k, l]) => (
               <option key={k} value={k}>{l}</option>
             ))}
           </select>
           {filtered && (
-            <button type="button" onClick={() => { setQ(""); setWhen("all"); }} className="inline-flex h-9 items-center gap-1 rounded-lg px-2 text-[12.5px] text-muted-foreground hover:text-foreground">
+            <button type="button" onClick={() => { setQ(""); setWhen("all"); setCat("all"); }} className="inline-flex h-9 items-center gap-1 rounded-lg px-2 text-[12.5px] text-muted-foreground hover:text-foreground">
               <X className="size-3.5" aria-hidden /> Effacer · <span className="num">{open.length}</span> tâche{open.length > 1 ? "s" : ""}
             </button>
           )}

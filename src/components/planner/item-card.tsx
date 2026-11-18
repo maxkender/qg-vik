@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { itemsStore } from "@/lib/data";
 import { addDays, addMonths, bucketLabel, dayKey, isLate, monday, monthKey, weekKey, yearKey } from "@/lib/dates";
-import { byOrder, createItem, nextOwner, nextPrio, OWNER_LABEL, PRIO_LABEL, toggleDone } from "@/lib/items";
+import { categoryOf, CATEGORIES } from "@/lib/categories";
+import { byOrder, createItem, nextOwner, OWNER_LABEL, OWNER_NAME, PRIO_LABEL, toggleDone } from "@/lib/items";
 import type { Owner } from "@/lib/members";
 import type { Item, Prio } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -89,10 +90,10 @@ export function EditableTitle({
   );
 }
 
-const PRIO_TONE: Record<Prio, string> = {
-  urgent: "bg-bad-soft text-bad",
-  normal: "bg-info-soft text-info",
-  later: "bg-muted text-muted-foreground",
+const OWNER_TONE: Record<Owner, string> = {
+  max: "bg-max-soft text-max",
+  adrien: "bg-adrien-soft text-adrien",
+  both: "bg-both-soft text-both",
 };
 
 export function moveTargets(today: Date): [string, string][] {
@@ -115,6 +116,8 @@ type Props = {
   comments?: number;
   /** Afficher l'horizon (« S47 », « Aujourd'hui ») sous le titre. */
   showHorizon?: boolean;
+  /** Afficher l'urgence sur la carte (inutile quand la colonne la dit déjà). */
+  showPrio?: boolean;
   /** Afficher « en retard » même sans l'horizon. */
   showLate?: boolean;
   dragging?: boolean;
@@ -122,13 +125,14 @@ type Props = {
   onOpen?: (item: Item) => void;
 };
 
-export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showHorizon, showLate, dragging, onEditing, onOpen }: Props) {
+export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showHorizon, showPrio = true, showLate, dragging, onEditing, onOpen }: Props) {
   const me = useMe();
   const { today } = useView();
   const [open, setOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const addRef = useRef<HTMLInputElement>(null);
 
+  const category = categoryOf(item.category);
   const late = !item.done && isLate(item.bucket, today);
   const doneKids = kids.filter((k) => k.done).length;
   const sorted = [...kids].sort(byOrder);
@@ -147,8 +151,6 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
       className={cn(
         "group/card relative rounded-[10px] px-2 py-[7px] transition-colors duration-100",
         "hover:bg-glass",
-        kids.length > 0 && !item.done && "bg-info-soft/60 hover:bg-info-soft",
-        item.prio === "urgent" && !item.done && "shadow-[inset_2px_0_0_var(--bad)]",
         dragging && "glass-strong cursor-grabbing shadow-2xl",
       )}
     >
@@ -160,25 +162,6 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
           onSave={(title) => void itemsStore.update(item.id, { title })}
           onEditing={onEditing}
         />
-        {!item.done && item.prio !== "normal" && (
-          <button
-            type="button"
-            onClick={() => void itemsStore.update(item.id, { prio: nextPrio(item.prio) })}
-            title="Changer la priorité"
-            className={cn("mt-[1px] shrink-0 rounded-[5px] px-1.5 text-[10px] leading-[19px] font-bold tracking-wide uppercase", PRIO_TONE[item.prio])}
-          >
-            {item.prio === "urgent" ? "Urgent" : "Plus tard"}
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={() => void itemsStore.update(item.id, { owner: nextOwner(item.owner) })}
-          title={`${OWNER_LABEL[item.owner]} (clic pour changer)`}
-          aria-label={`Personne : ${OWNER_LABEL[item.owner]}. Cliquer pour changer.`}
-          className="mt-[1px] shrink-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <PersonAvatar who={item.owner} size="xs" />
-        </button>
         {onOpen && (
           <button
             type="button"
@@ -212,6 +195,17 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
               <Plus aria-hidden /> Ajouter un sous-objectif
             </DropdownMenuItem>
             <DropdownMenuSeparator />
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>Catégorie</DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                {CATEGORIES.map((c) => (
+                  <DropdownMenuItem key={c.key} disabled={c.key === item.category} onSelect={() => void itemsStore.update(item.id, { category: c.key })}>
+                    <span className="size-2 rounded-full" style={{ background: c.color }} aria-hidden /> {c.label}
+                  </DropdownMenuItem>
+                ))}
+                {item.category && <DropdownMenuItem onSelect={() => void itemsStore.update(item.id, { category: null })}>Aucune</DropdownMenuItem>}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>Priorité</DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
@@ -258,38 +252,49 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
         </DropdownMenu>
       </div>
 
-      {item.notes && onOpen && (
-        <button type="button" onClick={() => onOpen(item)} className="mt-0.5 block w-full truncate pl-[25px] text-left text-[12px] text-muted-foreground hover:text-foreground">
-          {item.notes.split("\n")[0]}
+      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 pl-[25px] text-[11.5px] text-faint">
+        <button
+          type="button"
+          onClick={() => void itemsStore.update(item.id, { owner: nextOwner(item.owner) })}
+          title="Changer la personne"
+          aria-label={`Personne : ${OWNER_NAME[item.owner]}. Cliquer pour changer.`}
+          className={cn("rounded-md px-1.5 text-[12px] leading-[20px] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring", OWNER_TONE[item.owner], item.done && "opacity-50")}
+        >
+          {OWNER_NAME[item.owner]}
         </button>
-      )}
-      {(showHorizon || late || showLate || kids.length > 0 || comments > 0) && (
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 pl-[25px] text-[11.5px] text-faint">
-          {(showHorizon || late) && (
-            <span className={cn("num", late && "text-bad")}>
-              {late && "en retard · "}
-              {bucketLabel(item.bucket, today)}
-            </span>
-          )}
-          {kids.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setOpen((v) => !v)}
-              aria-expanded={open}
-              className="inline-flex items-center gap-0.5 rounded transition-colors duration-100 hover:text-foreground"
-            >
-              <span className="num">{doneKids}/{kids.length}</span>&nbsp;sous-objectifs
-              <ChevronDown className={cn("size-3 transition-transform duration-100", open && "rotate-180")} aria-hidden />
-            </button>
-          )}
-          {comments > 0 && onOpen && (
-            <button type="button" onClick={() => onOpen(item)} className="inline-flex items-center gap-1 hover:text-foreground">
-              <MessageSquare className="size-3" aria-hidden />
-              <span className="num">{comments}</span>
-            </button>
-          )}
-        </div>
-      )}
+        {category && (
+          <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">
+            <span className="size-1.5 rounded-full" style={{ background: category.color }} aria-hidden />
+            {category.label}
+          </span>
+        )}
+        {showPrio && !item.done && item.prio !== "normal" && (
+          <span className={cn("text-[10.5px] font-semibold tracking-[0.06em] uppercase", item.prio === "urgent" ? "text-bad" : "text-faint")}>{item.prio === "urgent" ? "Urgent" : "Plus tard"}</span>
+        )}
+        {(showHorizon || late || showLate) && (
+          <span className={cn("num", late && "text-bad")}>
+            {late && "en retard · "}
+            {bucketLabel(item.bucket, today)}
+          </span>
+        )}
+        {kids.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            className="inline-flex items-center gap-0.5 rounded transition-colors duration-100 hover:text-foreground"
+          >
+            <span className="num">{doneKids}/{kids.length}</span>&nbsp;sous-objectifs
+            <ChevronDown className={cn("size-3 transition-transform duration-100", open && "rotate-180")} aria-hidden />
+          </button>
+        )}
+        {comments > 0 && onOpen && (
+          <button type="button" onClick={() => onOpen(item)} className="inline-flex items-center gap-1 hover:text-foreground">
+            <MessageSquare className="size-3" aria-hidden />
+            <span className="num">{comments}</span>
+          </button>
+        )}
+      </div>
 
       {confirmDelete && (
         <div className="mt-1.5 flex items-center gap-2 pl-[25px] text-[12px] text-bad" role="alertdialog" aria-label="Confirmer la suppression">

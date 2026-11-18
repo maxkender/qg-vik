@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { blocksToText, buildContext, isoWeekKey, todayParis } from "@/lib/assistant/context";
+import { CATEGORY_KEYS } from "@/lib/categories";
 import { MEMBERS, isWho, type Who } from "@/lib/members";
 import { containsSecret, SECRET_MESSAGE } from "@/lib/secrets";
 import { supabaseServer } from "@/lib/supabase/server";
@@ -18,12 +19,13 @@ const TOOLS: Anthropic.Beta.BetaTool[] = [
     input_schema: {
       type: "object",
       additionalProperties: false,
-      required: ["titre", "description", "pour", "priorite", "echeance"],
+      required: ["titre", "description", "pour", "priorite", "categorie", "echeance"],
       properties: {
         titre: { type: "string", description: "Titre court, à l'infinitif." },
         description: { type: ["string", "null"], description: "Détails utiles, sinon null." },
         pour: { type: "string", enum: ["max", "adrien", "both"], description: "Personne assignée. Par défaut : la personne qui parle." },
         priorite: { type: "string", enum: ["urgent", "normal", "later"] },
+        categorie: { type: ["string", "null"], enum: [...CATEGORY_KEYS, null], description: "La catégorie qui correspond, sinon null." },
         echeance: { type: "string", description: "inbox (sans date), life, d:AAAA-MM-JJ (un jour), w:AAAA-Wnn (une semaine ISO), m:AAAA-MM (un mois) ou y:AAAA." },
       },
     },
@@ -105,7 +107,7 @@ export async function POST(request: Request) {
       if (!BUCKET.test(bucket)) return { result: "Échéance invalide. Formats : inbox, d:AAAA-MM-JJ, w:AAAA-Wnn, m:AAAA-MM, y:AAAA.", error: true };
       const { error } = await db.from("items").insert({
         title, notes: input.description ? String(input.description) : null, bucket,
-        owner: input.pour, prio: input.priorite, sort_order: Date.now(), created_by: userId,
+        owner: input.pour, prio: input.priorite, category: input.categorie ?? null, sort_order: Date.now(), created_by: userId,
       });
       if (error) return { result: `Échec : ${error.message}`, error: true };
       return { result: "Tâche créée.", label: `Tâche ajoutée : ${title}` };

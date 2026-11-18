@@ -1,12 +1,14 @@
 "use client";
 
 import { itemsStore } from "@/lib/data";
+import type { Category } from "@/lib/categories";
 import type { Owner } from "@/lib/members";
 import { newId } from "@/lib/store";
 import type { Item, Prio } from "@/lib/types";
 
 export const PRIO_LABEL: Record<Prio, string> = { urgent: "Urgent", normal: "À faire", later: "Plus tard" };
 export const OWNER_LABEL: Record<Owner, string> = { max: "Max", adrien: "Adrien", both: "Les deux" };
+export const OWNER_NAME: Record<Owner, string> = { max: "Maximilien", adrien: "Adrien", both: "Les deux" };
 export const nextOwner = (o: Owner): Owner => (o === "both" ? "max" : o === "max" ? "adrien" : "both");
 export const nextPrio = (p: Prio): Prio => (p === "normal" ? "urgent" : p === "urgent" ? "later" : "normal");
 
@@ -20,6 +22,7 @@ export function createItem(input: {
   bucket: string;
   owner: Owner;
   prio?: Prio;
+  category?: Category | null;
   parent_id?: string | null;
   created_by: string;
   sort_order?: number;
@@ -32,6 +35,7 @@ export function createItem(input: {
     bucket: input.bucket,
     owner: input.owner,
     prio: input.prio ?? "normal",
+    category: input.category ?? null,
     parent_id: input.parent_id ?? null,
     done: false,
     done_at: null,

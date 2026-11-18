@@ -3,7 +3,6 @@
 import { createContext, use, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { startOfDay } from "@/lib/dates";
 import type { Owner, Who } from "@/lib/members";
-import { useMe } from "@/components/session-provider";
 
 export type WhoFilter = "all" | Who;
 
@@ -32,17 +31,16 @@ export function useView(): ViewState {
   return v;
 }
 
-const KEY = "qg-who";
+const KEY = "qg-voir";
 
 export function ViewStateProvider({ children }: { children: ReactNode }) {
-  const me = useMe();
-  // Par défaut on voit ses propres tâches ; le choix est gardé sur l'appareil.
+  // Par défaut on voit les tâches des deux ; le choix est gardé sur l'appareil.
   const [who, setWhoState] = useState<WhoFilter>(() => {
     try {
       const saved = localStorage.getItem(KEY);
       if (saved === "all" || saved === "max" || saved === "adrien") return saved;
     } catch {}
-    return me.short;
+    return "all";
   });
   const [today, setToday] = useState(() => startOfDay(new Date()));
   const [quickAddOpen, setQuickAddOpen] = useState(false);

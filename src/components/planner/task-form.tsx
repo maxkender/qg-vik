@@ -5,6 +5,7 @@ import { PersonAvatar } from "@/components/person-avatar";
 import { useView } from "@/components/app/view-state";
 import { defaultBucket } from "@/components/planner/quick-add";
 import { useMe } from "@/components/session-provider";
+import { CATEGORIES, type Category } from "@/lib/categories";
 import { addDays, addMonths, bucketLabel, dayKey, monday, monthKey, parseBucket, weekKey, yearKey } from "@/lib/dates";
 import { createItem, OWNER_LABEL, PRIO_LABEL } from "@/lib/items";
 import type { Owner } from "@/lib/members";
@@ -42,6 +43,26 @@ export function OwnerPicker({ value, onChange }: { value: Owner; onChange: (o: O
       {(Object.keys(OWNER_LABEL) as Owner[]).map((o) => (
         <button key={o} type="button" role="radio" aria-checked={value === o} onClick={() => onChange(o)} className={cn(pill, value === o ? "border-line-strong bg-accent text-foreground" : off)}>
           <PersonAvatar who={o} size="xs" /> {OWNER_LABEL[o]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Catégorie : support, recrutement, posts… Un second clic l'enlève. */
+export function CategoryPicker({ value, onChange }: { value: Category | null; onChange: (c: Category | null) => void }) {
+  return (
+    <div role="radiogroup" aria-label="Catégorie" className="flex flex-wrap gap-1.5">
+      {CATEGORIES.map((c) => (
+        <button
+          key={c.key}
+          type="button"
+          role="radio"
+          aria-checked={value === c.key}
+          onClick={() => onChange(value === c.key ? null : c.key)}
+          className={cn("flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-medium transition-colors duration-100", value === c.key ? "border-line-strong bg-accent text-foreground" : off)}
+        >
+          <span className="size-2 rounded-full" style={{ background: c.color }} aria-hidden /> {c.label}
         </button>
       ))}
     </div>
@@ -95,13 +116,14 @@ export function NewTaskForm({ onDone }: { onDone: () => void }) {
   const [prio, setPrio] = useState<Prio>("normal");
   const [owner, setOwner] = useState<Owner>(who !== "all" ? who : me.short);
   const [bucket, setBucket] = useState<string | null>(null);
+  const [category, setCategory] = useState<Category | null>(null);
 
   function submit() {
     // Dans le titre, seuls « !urgent » et « @adrien » sont lus : l'échéance a son propre champ.
     const q = parseQuickAdd(title, today, { dates: false });
     if (!q.title) return;
     const p = q.prio ?? prio;
-    createItem({ title: q.title, notes: notes.trim() || null, prio: p, owner: q.owner ?? owner, bucket: bucket ?? defaultBucket(p, today), created_by: me.id });
+    createItem({ title: q.title, notes: notes.trim() || null, prio: p, owner: q.owner ?? owner, category: q.category ?? category, bucket: bucket ?? defaultBucket(p, today), created_by: me.id });
     onDone();
   }
 
@@ -134,11 +156,12 @@ export function NewTaskForm({ onDone }: { onDone: () => void }) {
         rows={3}
         className="min-h-20 w-full resize-y rounded-xl border border-line bg-glass p-3 text-[13.5px] outline-none placeholder:text-faint focus:border-line-strong [field-sizing:content]"
       />
+      <Field title="Catégorie"><CategoryPicker value={category} onChange={setCategory} /></Field>
       <Field title="Urgence"><PrioPicker value={prio} onChange={setPrio} /></Field>
       <Field title="Assignée à"><OwnerPicker value={owner} onChange={setOwner} /></Field>
       <Field title="Échéance"><BucketPicker value={bucket ?? defaultBucket(prio, today)} onChange={setBucket} /></Field>
       <div className="flex items-center justify-between gap-3 pt-1">
-        <p className="text-[11.5px] text-faint max-sm:hidden">Astuce : « !urgent » et « @adrien » dans le titre marchent aussi.</p>
+        <span />
         <div className="flex gap-2">
           <button type="button" onClick={onDone} className="h-9 rounded-lg border border-line px-3 text-[13px] text-muted-foreground">Annuler</button>
           <button type="submit" disabled={!title.trim()} className="h-9 rounded-lg bg-foreground px-4 text-[13px] font-semibold text-background disabled:opacity-40">Créer la tâche</button>

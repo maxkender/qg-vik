@@ -30,6 +30,7 @@ export function useQuickCreate() {
       title: q.title,
       prio,
       owner,
+      category: q.category,
       bucket: q.bucket ?? defaults.bucket ?? defaultBucket(prio, today),
       created_by: me.id,
     });
@@ -96,7 +97,7 @@ export function QuickAdd({
               }
             }
           }}
-          placeholder="Nouvelle tâche…  ex. Relancer le comptable !urgent @adrien demain"
+          placeholder="Nouvelle tâche…  ex. Relancer le comptable #finance !urgent @adrien demain"
           aria-label="Nouvelle tâche"
           className="min-w-0 flex-1 bg-transparent text-[14.5px] outline-none placeholder:text-faint"
         />

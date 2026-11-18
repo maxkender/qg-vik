@@ -144,7 +144,7 @@ export function Board({ columns, kidsOf, commentsOf, showHorizon, onDrop, onOpen
       <DragOverlay dropAnimation={{ duration: 140, easing: "ease-out" }}>
         {active ? (
           <div className="w-[min(320px,80vw)]">
-            <ItemCard item={active} kids={kidsOf.get(active.id) ?? []} showHorizon={showHorizon} dragging />
+            <ItemCard item={active} kids={kidsOf.get(active.id) ?? []} showHorizon={showHorizon} showPrio={!showHorizon} dragging />
           </div>
         ) : null}
       </DragOverlay>
@@ -254,7 +254,7 @@ function SortableCard({
       role="group"
       aria-roledescription="tâche déplaçable"
     >
-      <ItemCard item={item} kids={kids} comments={comments} showHorizon={showHorizon} onEditing={setEditing} onOpen={onOpen} />
+      <ItemCard item={item} kids={kids} comments={comments} showHorizon={showHorizon} showPrio={!showHorizon} onEditing={setEditing} onOpen={onOpen} />
     </div>
   );
 }

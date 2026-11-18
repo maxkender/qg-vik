@@ -1,3 +1,4 @@
+import type { Category } from "@/lib/categories";
 import type { Owner } from "@/lib/members";
 
 export type Prio = "urgent" | "normal" | "later";
@@ -9,6 +10,7 @@ export type Item = {
   bucket: string;
   owner: Owner;
   prio: Prio;
+  category: Category | null;
   parent_id: string | null;
   done: boolean;
   done_at: string | null;

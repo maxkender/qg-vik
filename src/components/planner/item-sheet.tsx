@@ -3,7 +3,7 @@
 import { useView } from "@/components/app/view-state";
 import { Comments } from "@/components/comments";
 import { AddLine, EditableTitle, Tick } from "@/components/planner/item-card";
-import { BucketPicker, Field, OwnerPicker, PrioPicker } from "@/components/planner/task-form";
+import { BucketPicker, Field, OwnerPicker, CategoryPicker, PrioPicker } from "@/components/planner/task-form";
 import { useMe } from "@/components/session-provider";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { itemsStore, profilesStore } from "@/lib/data";
@@ -50,6 +50,7 @@ export function ItemSheet() {
                 className="min-h-28 w-full resize-y rounded-xl border border-line bg-glass p-3 text-[13.5px] leading-relaxed outline-none transition-colors duration-100 placeholder:text-faint focus:border-line-strong [field-sizing:content]"
               />
             </Field>
+            <Field title="Catégorie"><CategoryPicker value={item.category} onChange={(category) => void itemsStore.update(item.id, { category })} /></Field>
             <Field title="Urgence"><PrioPicker value={item.prio} onChange={(prio) => void itemsStore.update(item.id, { prio })} /></Field>
             <Field title="Assignée à"><OwnerPicker value={item.owner} onChange={(owner) => void itemsStore.update(item.id, { owner })} /></Field>
             <Field title="Échéance">
