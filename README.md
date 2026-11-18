@@ -72,7 +72,7 @@ Le QG ne fait que **lire** RevenueCat, Qonto, Meta et l'OS (uniquement des `GET`
 
 ## Assistant et profils
 
-- **Assistant** (`/assistant`, route `src/app/api/assistant/route.ts`) : répond à partir des données du QG et peut créer une tâche ou envoyer un message. Il lit la base avec la session de la personne connectée (RLS). Variable Vercel : `ANTHROPIC_API_KEY`. Les données utiles à la réponse sont envoyées à l'API Anthropic à chaque question.
+- **Assistant** (rond en bas à droite de chaque page, `src/components/assistant/bubble.tsx`, route `src/app/api/assistant/route.ts`) : répond à partir des données du QG et peut créer une tâche ou envoyer un message. Il lit la base avec la session de la personne connectée (RLS). Variable Vercel : `ANTHROPIC_API_KEY`. Les données utiles à la réponse sont envoyées à l'API Anthropic à chaque question.
 - **Profils** (`/profils`) : chiffres et activité de chacun, retours et liens envoyés à l'autre (table `messages`).
 
 ## Base de données

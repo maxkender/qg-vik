@@ -1,3 +1,4 @@
+import { AssistantBubble } from "@/components/assistant/bubble";
 import { Logo } from "@/components/logo";
 import { SearchDialog } from "@/components/app/search";
 import { AppShell } from "@/components/app/shell";
@@ -25,6 +26,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
             <>
               <SearchDialog />
               <ItemSheet />
+              <AssistantBubble />
             </>
           }
         >

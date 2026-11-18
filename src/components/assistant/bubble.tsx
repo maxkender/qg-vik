@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowUp, Check, RotateCcw } from "lucide-react";
-import { ViewHeader } from "@/components/app/shell";
+import { ArrowUp, Check, RotateCcw, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Turn = { role: "user" | "assistant"; text: string; actions?: string[]; error?: boolean };
@@ -23,8 +22,9 @@ function keep(turns: Turn[]) {
   } catch {}
 }
 
-// L'assistant : on pose une question sur les données du QG, ou on lui dicte une tâche.
-export default function AssistantPage() {
+/** L'assistant, toujours là : un rond en bas à droite qui ouvre la discussion. */
+export function AssistantBubble() {
+  const [open, setOpen] = useState(false);
   const [turns, setTurns] = useState<Turn[]>(restore);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -33,7 +33,7 @@ export default function AssistantPage() {
 
   useEffect(() => {
     end.current?.scrollIntoView({ block: "end" });
-  }, [turns]);
+  }, [turns, open]);
 
   async function ask(question: string) {
     const text = question.trim();
@@ -93,37 +93,51 @@ export default function AssistantPage() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <ViewHeader title="Assistant">
-        {turns.length > 0 && (
-          <button type="button" onClick={reset} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line px-2.5 text-[12.5px] text-muted-foreground transition-colors duration-100 hover:border-line-strong hover:text-foreground">
-            <RotateCcw className="size-3.5" aria-hidden /> Nouvelle discussion
-          </button>
-        )}
-      </ViewHeader>
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-label={open ? "Fermer l'assistant" : "Ouvrir l'assistant"}
+        aria-expanded={open}
+        className="fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 grid size-12 place-items-center rounded-full bg-foreground text-background shadow-[0_8px_24px_-6px_rgb(0_0_0/0.35)] transition-transform duration-100 hover:scale-105 md:right-6 md:bottom-6"
+      >
+        {open ? <X className="size-5" aria-hidden /> : <Sparkles className="size-5" aria-hidden />}
+      </button>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 md:px-6">
-        <div className="mx-auto flex max-w-[720px] flex-col gap-4 pb-6">
-          {turns.length === 0 && (
-            <div className="pt-[12vh]">
-              <p className="text-[22px] leading-tight font-semibold tracking-[-0.03em]">Pose une question, ou dicte une tâche.</p>
-              <div className="mt-4 flex flex-wrap gap-2">
+      {open && (
+        <section
+          aria-label="Assistant"
+          onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
+          className="glass-strong fixed right-4 bottom-[calc(max(1rem,env(safe-area-inset-bottom))+3.75rem)] z-40 flex h-[min(620px,calc(100dvh-7rem))] w-[min(420px,calc(100vw-2rem))] flex-col overflow-hidden rounded-3xl md:right-6 md:bottom-[5.25rem]"
+        >
+          <header className="flex shrink-0 items-center justify-between px-4 pt-3.5 pb-2">
+            <h2 className="text-[15px] font-semibold">Assistant</h2>
+            {turns.length > 0 && (
+              <button type="button" onClick={reset} title="Nouvelle discussion" aria-label="Nouvelle discussion" className="grid size-7 place-items-center rounded-lg text-muted-foreground transition-colors duration-100 hover:bg-accent hover:text-foreground">
+                <RotateCcw className="size-3.5" aria-hidden />
+              </button>
+            )}
+          </header>
+
+          <div className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto px-4 pb-3">
+            {turns.length === 0 && (
+              <div className="flex flex-col items-start gap-2 pt-2">
+                <p className="text-[13.5px] text-muted-foreground">Pose une question, ou dicte une tâche.</p>
                 {IDEAS.map((idea) => (
                   <button
                     key={idea}
                     type="button"
                     onClick={() => (idea.endsWith("…") ? (setInput(idea.slice(0, -1)), field.current?.focus()) : void ask(idea))}
-                    className="glass rounded-full px-3.5 py-2 text-[13.5px] transition-colors duration-100 hover:border-line-strong"
+                    className="rounded-full border border-line px-3 py-1.5 text-left text-[13px] transition-colors duration-100 hover:border-line-strong"
                   >
                     {idea}
                   </button>
                 ))}
               </div>
-            </div>
-          )}
+            )}
           {turns.map((t, i) =>
             t.role === "user" ? (
-              <p key={i} className="max-w-[85%] self-end rounded-2xl bg-foreground px-3.5 py-2 text-[14.5px] whitespace-pre-wrap text-background">{t.text}</p>
+              <p key={i} className="max-w-[85%] self-end rounded-2xl bg-foreground px-3.5 py-2 text-[14px] whitespace-pre-wrap text-background">{t.text}</p>
             ) : (
               <div key={i} className="flex flex-col gap-2">
                 {t.actions?.map((a, j) => (
@@ -131,46 +145,45 @@ export default function AssistantPage() {
                     <Check className="size-3.5" aria-hidden /> {a}
                   </p>
                 ))}
-                <p aria-live="polite" className={cn("text-[14.5px] leading-[1.6] whitespace-pre-wrap", t.error && "text-bad")}>
+                <p aria-live="polite" className={cn("text-[14px] leading-[1.55] whitespace-pre-wrap", t.error && "text-bad")}>
                   {t.text || (busy && i === turns.length - 1 ? <span className="animate-pulse text-faint">Je regarde…</span> : null)}
                 </p>
               </div>
             ),
           )}
           <div ref={end} />
-        </div>
-      </div>
+          </div>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void ask(input);
-        }}
-        className="shrink-0 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:px-6"
-      >
-        <div className="glass-strong mx-auto flex max-w-[720px] items-end gap-2 rounded-3xl p-2 pl-4">
-          <textarea
-            ref={field}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              e.stopPropagation();
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                void ask(input);
-              }
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void ask(input);
             }}
-            rows={1}
-            autoFocus
-            placeholder="Demande n'importe quoi sur Vik Studios…"
-            aria-label="Message à l'assistant"
-            className="max-h-40 min-h-9 flex-1 resize-none bg-transparent py-2 text-[14.5px] outline-none [field-sizing:content] placeholder:text-faint"
-          />
-          <button type="submit" disabled={busy || !input.trim()} aria-label="Envoyer" className="grid size-9 shrink-0 place-items-center rounded-full bg-foreground text-background transition-opacity duration-100 disabled:opacity-30">
-            <ArrowUp className="size-4" aria-hidden />
-          </button>
-        </div>
-      </form>
-    </div>
+            className="m-2.5 mt-0 flex shrink-0 items-end gap-2 rounded-3xl border border-line p-1.5 pl-3.5 focus-within:border-line-strong"
+          >
+            <textarea
+              ref={field}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key !== "Escape") e.stopPropagation();
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  void ask(input);
+                }
+              }}
+              rows={1}
+              autoFocus
+              placeholder="Demande n'importe quoi…"
+              aria-label="Message à l'assistant"
+              className="max-h-32 min-h-8 flex-1 resize-none bg-transparent py-1.5 text-[14px] outline-none [field-sizing:content] placeholder:text-faint"
+            />
+            <button type="submit" disabled={busy || !input.trim()} aria-label="Envoyer" className="grid size-8 shrink-0 place-items-center rounded-full bg-foreground text-background transition-opacity duration-100 disabled:opacity-30">
+              <ArrowUp className="size-4" aria-hidden />
+            </button>
+          </form>
+        </section>
+      )}
+    </>
   );
 }
