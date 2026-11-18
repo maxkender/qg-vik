@@ -59,7 +59,7 @@ export function AppShell({ children, pagesNav, search }: { children: ReactNode; 
     <div className="flex h-dvh flex-col md:flex-row">
       <Rail pathname={pathname} pagesNav={pagesNav} />
       <TopBar pathname={pathname} />
-      <main className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</main>
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col pb-[env(safe-area-inset-bottom)]">{children}</main>
 
       <Dialog open={quickAddOpen} onOpenChange={setQuickAddOpen}>
         <DialogContent showCloseButton={false} className="glass-strong top-[22%] translate-y-0 gap-0 rounded-3xl border-0 p-2 sm:max-w-xl">
@@ -324,11 +324,11 @@ function TopBar({ pathname }: { pathname: string }) {
 /** En-tête d'une vue : titre, sous-titre, actions à droite. */
 export function ViewHeader({ title, sub, children, eyebrow }: { title: ReactNode; sub?: ReactNode; children?: ReactNode; eyebrow?: ReactNode }) {
   return (
-    <div className="flex shrink-0 flex-wrap items-end justify-between gap-x-4 gap-y-3 px-4 pt-4 pb-4 md:px-6 md:pt-6">
+    <div className="flex shrink-0 flex-wrap items-end justify-between gap-x-4 gap-y-2.5 px-4 pt-3.5 pb-3 md:px-6 md:pt-6 md:pb-4">
       <div className="min-w-0">
-        {eyebrow && <p className="mb-1 font-heading text-[14px] font-extrabold text-muted-foreground">{eyebrow}</p>}
-        <h1 className="text-[28px] leading-[1.05] font-extrabold md:text-[32px]">{title}</h1>
-        {sub && <p className="mt-1.5 text-[13.5px] text-muted-foreground">{sub}</p>}
+        {eyebrow && <p className="mb-1 font-heading text-[13px] font-extrabold text-muted-foreground md:text-[14px]">{eyebrow}</p>}
+        <h1 className="text-[24px] leading-[1.05] font-extrabold md:text-[32px]">{title}</h1>
+        {sub && <p className="mt-1.5 text-[13.5px] text-muted-foreground max-md:hidden">{sub}</p>}
       </div>
       {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
     </div>

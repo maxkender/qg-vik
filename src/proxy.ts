@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Pages accessibles sans être connecté.
-const PUBLIC_PATHS = ["/connexion", "/auth/"];
+const PUBLIC_PATHS = ["/connexion", "/auth/", "/manifest.webmanifest", "/icon.png", "/apple-icon.png"];
 
 /**
  * Rafraîchit la session Supabase et renvoie vers « Qui se connecte ? » si personne n'est connecté.

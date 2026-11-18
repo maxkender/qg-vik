@@ -26,11 +26,13 @@ export const metadata: Metadata = {
   description: "Le QG privé de Vik Studios.",
   // App privée : rien à indexer.
   robots: { index: false, follow: false },
+  appleWebApp: { capable: true, title: "QG Vik", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {
   themeColor: "#101113",
   colorScheme: "dark light",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

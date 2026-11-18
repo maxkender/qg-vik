@@ -59,7 +59,7 @@ export default function TodoPage() {
         title="À faire"
         sub={who === "all" ? "Toutes les tâches. Glisse une carte pour changer sa priorité." : "Glisse une carte d'une colonne à l'autre pour changer sa priorité."}
       >
-        <WhoSwitch className="w-[220px]" />
+        <WhoSwitch className="w-[220px] max-md:w-full" />
       </ViewHeader>
       <div className="shrink-0 px-4 pb-4 md:px-6">
         <QuickAdd />
