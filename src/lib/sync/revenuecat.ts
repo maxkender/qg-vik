@@ -13,7 +13,22 @@ type Chart = {
 };
 type App = { key: string; rc_project_id: string | null };
 
-export const rcKey = (app: string) => process.env[`REVENUECAT_KEY_${app.toUpperCase()}`];
+// Nettoyée : une valeur collée dans Vercel a parfois un espace ou un retour à la ligne en trop.
+export const rcKey = (app: string) => (process.env[`REVENUECAT_KEY_${app.toUpperCase()}`] ?? "").trim() || undefined;
+
+/** Forme d'une clé, sans jamais la montrer : pour comprendre un refus de RevenueCat. */
+export function rcHint(app: string) {
+  const raw = process.env[`REVENUECAT_KEY_${app.toUpperCase()}`] ?? "";
+  const k = raw.trim();
+  const prefix = k.match(/^[a-z]+_/i)?.[0] ?? "(aucun)";
+  return {
+    longueur: k.length,
+    // Le préfixe dit le type de clé : « sk_ » = clé secrète (la bonne), « appl_ » / « goog_ » = clé publique de l'app (la mauvaise).
+    prefixe: ["sk_", "appl_", "goog_", "amzn_", "strp_", "rcb_", "atk_"].includes(prefix) ? prefix : k ? "(autre)" : "(vide)",
+    espaces_en_trop: raw !== k,
+    contient_des_espaces: /\s/.test(k),
+  };
+}
 
 // Graphique → (mesure RevenueCat → colonne de rc_daily)
 const DAILY: { chart: string; map: Record<string, string> }[] = [
