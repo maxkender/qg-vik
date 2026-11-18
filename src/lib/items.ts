@@ -36,6 +36,7 @@ export function createItem(input: {
     owner: input.owner,
     prio: input.prio ?? "normal",
     category: input.category ?? null,
+    page_id: null,
     parent_id: input.parent_id ?? null,
     done: false,
     done_at: null,

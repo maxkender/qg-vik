@@ -10,12 +10,14 @@ import { Comments } from "@/components/comments";
 import { PageIcon } from "@/components/pages/page-icon";
 import { PersonAvatar } from "@/components/person-avatar";
 import { useMe } from "@/components/session-provider";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { commentsStore, pagesStore, profilesStore, readsStore } from "@/lib/data";
 import { MEMBERS, type Who } from "@/lib/members";
-import { PAGE_ICONS, ago, breadcrumb, childrenOf, createPage, pageHref, pageTitle } from "@/lib/pages";
+import { PAGE_ICONS, ago, breadcrumb, childrenOf, createPage, moveTargets, pageHref, pageTitle } from "@/lib/pages";
 import { newId, useRows } from "@/lib/store";
 import type { PageRow } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -150,6 +152,20 @@ export function PageView({ id }: { id: string }) {
             <DropdownMenuItem onSelect={() => go(createPage({ parent_id: page.id, created_by: me.id }).id)}>
               <Plus aria-hidden /> Nouvelle sous-page
             </DropdownMenuItem>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>Ranger dans…</DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="max-h-80 w-60 overflow-y-auto">
+                <DropdownMenuItem disabled={!page.parent_id} onSelect={() => void pagesStore.update(page.id, { parent_id: null })}>
+                  Tout en haut
+                </DropdownMenuItem>
+                {moveTargets(pages, page.id).map(({ page: target, depth }) => (
+                  <DropdownMenuItem key={target.id} disabled={target.id === page.parent_id} onSelect={() => void pagesStore.update(page.id, { parent_id: target.id })} style={{ paddingLeft: 8 + depth * 12 }}>
+                    <PageIcon icon={target.icon} /> <span className="truncate">{pageTitle(target)}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               variant="destructive"
               onSelect={() => {

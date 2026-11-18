@@ -3,7 +3,7 @@
 import { Suspense, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Star } from "lucide-react";
+import { FolderPlus, Plus, Star } from "lucide-react";
 import { ViewHeader } from "@/components/app/shell";
 import { PageView } from "@/components/pages/page-view";
 import { useMe } from "@/components/session-provider";
@@ -57,6 +57,9 @@ function PagesIndex() {
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
       <ViewHeader title="Pages">
+        <button type="button" onClick={() => router.push(pageHref(createPage({ folder: true, created_by: me.id }).id))} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-[13.5px] font-medium text-muted-foreground transition-colors duration-100 hover:border-line-strong hover:text-foreground">
+          <FolderPlus className="size-4" aria-hidden /> Dossier
+        </button>
         <button type="button" onClick={create} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-foreground px-3.5 text-[13.5px] font-semibold text-background">
           <Plus className="size-4" aria-hidden /> Nouvelle page
         </button>

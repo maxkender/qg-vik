@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { BookOpenCheck, ChevronRight, Files, Plus } from "lucide-react";
+import { BookOpenCheck, ChevronRight, Files, FolderPlus, Plus } from "lucide-react";
 import { useMe } from "@/components/session-provider";
 import { pagesStore, readsStore } from "@/lib/data";
 import { breadcrumb, childrenOf, createPage, pageHref, pageTitle } from "@/lib/pages";
@@ -81,15 +81,26 @@ function PagesNavInner() {
     <>
       <div className="flex items-center justify-between px-2 pt-3 pb-1">
         <p className="text-[10.5px] font-semibold tracking-[0.1em] text-faint uppercase">Pages</p>
-        <button
-          type="button"
-          aria-label="Nouvelle page"
-          title="Nouvelle page"
-          onClick={() => router.push(pageHref(createPage({ created_by: me.id }).id))}
-          className="grid size-5 place-items-center rounded text-faint transition-colors duration-100 hover:bg-accent hover:text-foreground"
-        >
-          <Plus className="size-3.5" aria-hidden />
-        </button>
+        <span className="flex gap-0.5">
+          <button
+            type="button"
+            aria-label="Nouveau dossier"
+            title="Nouveau dossier"
+            onClick={() => router.push(pageHref(createPage({ folder: true, created_by: me.id }).id))}
+            className="grid size-5 place-items-center rounded text-faint transition-colors duration-100 hover:bg-accent hover:text-foreground"
+          >
+            <FolderPlus className="size-3.5" aria-hidden />
+          </button>
+          <button
+            type="button"
+            aria-label="Nouvelle page"
+            title="Nouvelle page"
+            onClick={() => router.push(pageHref(createPage({ created_by: me.id }).id))}
+            className="grid size-5 place-items-center rounded text-faint transition-colors duration-100 hover:bg-accent hover:text-foreground"
+          >
+            <Plus className="size-3.5" aria-hidden />
+          </button>
+        </span>
       </div>
       <Link
         href="/a-lire"

@@ -1,7 +1,8 @@
 "use client";
 
 import { memo, useRef, useState, type KeyboardEvent } from "react";
-import { Check, ChevronDown, Ellipsis, Maximize2, MessageSquare, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Check, ChevronDown, Ellipsis, FileText, Maximize2, MessageSquare, Plus, Trash2 } from "lucide-react";
 import { PersonAvatar } from "@/components/person-avatar";
 import { useMe } from "@/components/session-provider";
 import { useView } from "@/components/app/view-state";
@@ -9,7 +10,9 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
   DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { itemsStore } from "@/lib/data";
+import { itemsStore, pagesStore } from "@/lib/data";
+import { pageHref, pageTitle } from "@/lib/pages";
+import { useRows } from "@/lib/store";
 import { addDays, addMonths, bucketLabel, dayKey, isLate, monday, monthKey, weekKey, yearKey } from "@/lib/dates";
 import { categoryOf, CATEGORIES } from "@/lib/categories";
 import { byOrder, createItem, nextOwner, OWNER_LABEL, OWNER_NAME, PRIO_LABEL, toggleDone } from "@/lib/items";
@@ -277,6 +280,7 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
             {bucketLabel(item.bucket, today)}
           </span>
         )}
+        {item.page_id && <LinkedPage id={item.page_id} />}
         {kids.length > 0 && (
           <button
             type="button"
@@ -336,6 +340,18 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
     </div>
   );
 });
+
+/** La page reliée à la tâche : un clic l'ouvre. */
+function LinkedPage({ id }: { id: string }) {
+  const page = useRows(pagesStore).find((p) => p.id === id && !p.archived_at);
+  if (!page) return null;
+  return (
+    <Link href={pageHref(page.id)} className="inline-flex max-w-[180px] items-center gap-1 text-muted-foreground hover:text-foreground hover:underline">
+      <FileText className="size-3 shrink-0" aria-hidden />
+      <span className="truncate">{pageTitle(page)}</span>
+    </Link>
+  );
+}
 
 /** Ligne « Ajouter… » en bas d'une colonne ou d'une liste de sous-objectifs. */
 export function AddLine({
