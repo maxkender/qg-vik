@@ -1,0 +1,66 @@
+[
+ {
+  "id": "dec00",
+  "date": "2026-11-18",
+  "title": "Recrutement cohorte du 23/11 : Norvège, Suède, Finlande, Danemark, Japon uniquement",
+  "why": "Pays où un utilisateur rapporte le plus (RevenueCat). Objectifs envoyés à Regina et Sara le 18/11.",
+  "domain": "Recrutement",
+  "createdAt": 1795011200000
+ },
+ {
+  "id": "dec01",
+  "date": "2026-11-18",
+  "title": "Parrainage : jamais de cash, jamais entre posteurs",
+  "why": "Le filleul est toujours payé directement par Vik Studios (Ruul ou exception Upwork).",
+  "domain": "Recrutement",
+  "createdAt": 1795011200001
+ },
+ {
+  "id": "dec02",
+  "date": "2026-11-18",
+  "title": "Doublement le jeudi, max 40 propositions, Max dit oui ou non",
+  "why": "2e compte en warm-up du jeudi au dimanche, démarre le lundi avec la cohorte. Classement par vues, 2e compte sur un autre label.",
+  "domain": "OS",
+  "createdAt": 1795011200002
+ },
+ {
+  "id": "dec03",
+  "date": "2026-11-18",
+  "title": "Pas de paie pour un posteur Ruul pas prêt",
+  "why": "Identité + banque obligatoires, sinon il n'entre pas dans le lot de paie. Relances KYC par l'OS.",
+  "domain": "Paie",
+  "createdAt": 1795011200003
+ },
+ {
+  "id": "dec04",
+  "date": "2026-11-18",
+  "title": "Kills uniquement le samedi",
+  "why": "Un seul moment de décision par semaine, test à blanc avant et rapport de contrôle après.",
+  "domain": "OS",
+  "createdAt": 1795011200004
+ },
+ {
+  "id": "dec05",
+  "date": "2026-11-18",
+  "title": "Posteur à 2 comptes : on ne coupe qu'un compte",
+  "why": "Il garde l'autre. Milestone repassé au tarif 1 compte, bandeau à la prochaine connexion.",
+  "domain": "Paie",
+  "createdAt": 1795011200005
+ },
+ {
+  "id": "dec06",
+  "date": "2026-11-18",
+  "title": "Exception Upwork pour les posteurs qui refusent Ruul",
+  "why": "Ils envoient leur lien de profil Upwork, ajoutés à la page « À ajouter sur Upwork – nouvelle cohorte ».",
+  "domain": "Paie",
+  "createdAt": 1795011200006
+ },
+ {
+  "id": "dec07",
+  "date": "2026-11-18",
+  "title": "Le QG remplace Notion pour le pilotage ; l'OS reste l'opérationnel",
+  "why": "Une seule page pour piloter, les données vivantes restent dans l'OS.",
+  "domain": "Admin",
+  "createdAt": 1795011200007
+ }
+]

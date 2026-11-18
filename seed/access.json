@@ -1,0 +1,241 @@
+[
+ {
+  "id": "acc00",
+  "kind": "access",
+  "service": "Qonto",
+  "url": "https://app.qonto.com",
+  "login": "",
+  "where": "",
+  "who": "",
+  "twofa": false,
+  "createdAt": 1795011200000
+ },
+ {
+  "id": "acc01",
+  "kind": "access",
+  "service": "Upwork",
+  "url": "https://www.upwork.com",
+  "login": "",
+  "where": "",
+  "who": "",
+  "twofa": false,
+  "createdAt": 1795011200001
+ },
+ {
+  "id": "acc02",
+  "kind": "access",
+  "service": "Ruul",
+  "url": "https://ruul.io",
+  "login": "",
+  "where": "",
+  "who": "",
+  "twofa": false,
+  "createdAt": 1795011200002
+ },
+ {
+  "id": "acc03",
+  "kind": "access",
+  "service": "RevenueCat",
+  "url": "https://app.revenuecat.com",
+  "login": "",
+  "where": "",
+  "who": "",
+  "twofa": false,
+  "createdAt": 1795011200003
+ },
+ {
+  "id": "acc04",
+  "kind": "access",
+  "service": "App Store Connect",
+  "url": "https://appstoreconnect.apple.com",
+  "login": "",
+  "where": "",
+  "who": "",
+  "twofa": false,
+  "createdAt": 1795011200004
+ },
+ {
+  "id": "acc05",
+  "kind": "access",
+  "service": "Google Play Console",
+  "url": "https://play.google.com/console",
+  "login": "",
+  "where": "",
+  "who": "",
+  "twofa": false,
+  "createdAt": 1795011200005
+ },
+ {
+  "id": "acc06",
+  "kind": "access",
+  "service": "Supabase",
+  "url": "https://supabase.com/dashboard",
+  "login": "",
+  "where": "",
+  "who": "",
+  "twofa": false,
+  "createdAt": 1795011200006
+ },
+ {
+  "id": "acc07",
+  "kind": "access",
+  "service": "Lovable",
+  "url": "https://lovable.dev",
+  "login": "",
+  "where": "",
+  "who": "",
+  "twofa": false,
+  "createdAt": 1795011200007
+ },
+ {
+  "id": "acc08",
+  "kind": "access",
+  "service": "Meta Ads",
+  "url": "https://adsmanager.facebook.com",
+  "login": "",
+  "where": "",
+  "who": "",
+  "twofa": false,
+  "createdAt": 1795011200008
+ },
+ {
+  "id": "acc09",
+  "kind": "access",
+  "service": "Slack",
+  "url": "https://app.slack.com",
+  "login": "",
+  "where": "",
+  "who": "",
+  "twofa": false,
+  "createdAt": 1795011200009
+ },
+ {
+  "id": "acc10",
+  "kind": "access",
+  "service": "Notion",
+  "url": "https://www.notion.so",
+  "login": "",
+  "where": "",
+  "who": "",
+  "twofa": false,
+  "createdAt": 1795011200010
+ },
+ {
+  "id": "acc11",
+  "kind": "access",
+  "service": "Google Workspace",
+  "url": "https://admin.google.com",
+  "login": "",
+  "where": "",
+  "who": "",
+  "twofa": false,
+  "createdAt": 1795011200011
+ },
+ {
+  "id": "acc12",
+  "kind": "access",
+  "service": "Apify",
+  "url": "https://console.apify.com",
+  "login": "",
+  "where": "",
+  "who": "",
+  "twofa": false,
+  "createdAt": 1795011200012
+ },
+ {
+  "id": "acc13",
+  "kind": "access",
+  "service": "Anthropic (Claude)",
+  "url": "https://claude.ai",
+  "login": "",
+  "where": "",
+  "who": "",
+  "twofa": false,
+  "createdAt": 1795011200013
+ },
+ {
+  "id": "acc14",
+  "kind": "access",
+  "service": "URSSAF",
+  "url": "https://www.urssaf.fr",
+  "login": "",
+  "where": "",
+  "who": "",
+  "twofa": false,
+  "createdAt": 1795011200014
+ },
+ {
+  "id": "acc15",
+  "kind": "access",
+  "service": "Impôts (pro)",
+  "url": "https://www.impots.gouv.fr",
+  "login": "",
+  "where": "",
+  "who": "",
+  "twofa": false,
+  "createdAt": 1795011200015
+ },
+ {
+  "id": "key00",
+  "kind": "key",
+  "service": "RevenueCat",
+  "usedBy": "OS (revenus)",
+  "where": "",
+  "rotated": "",
+  "createdAt": 1795011200000
+ },
+ {
+  "id": "key01",
+  "kind": "key",
+  "service": "Supabase",
+  "usedBy": "OS / Lovable",
+  "where": "",
+  "rotated": "",
+  "createdAt": 1795011200001
+ },
+ {
+  "id": "key02",
+  "kind": "key",
+  "service": "Apify",
+  "usedBy": "Scraping TikTok",
+  "where": "",
+  "rotated": "",
+  "createdAt": 1795011200002
+ },
+ {
+  "id": "key03",
+  "kind": "key",
+  "service": "Anthropic",
+  "usedBy": "Bots et agents de l'OS",
+  "where": "",
+  "rotated": "",
+  "createdAt": 1795011200003
+ },
+ {
+  "id": "key04",
+  "kind": "key",
+  "service": "Brevo",
+  "usedBy": "Emails du site",
+  "where": "",
+  "rotated": "",
+  "createdAt": 1795011200004
+ },
+ {
+  "id": "key05",
+  "kind": "key",
+  "service": "Fal",
+  "usedBy": "Génération d'images",
+  "where": "",
+  "rotated": "",
+  "createdAt": 1795011200005
+ },
+ {
+  "id": "key06",
+  "kind": "key",
+  "service": "ElevenLabs",
+  "usedBy": "Voix",
+  "where": "",
+  "rotated": "",
+  "createdAt": 1795011200006
+ }
+]

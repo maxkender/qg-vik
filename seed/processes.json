@@ -1,0 +1,105 @@
+{
+  "_source": "Extrait tel quel de reference/maquette-qg.html (constantes FLOWS, WEEK, DAILY). day : 1 = lundi … 7 = dimanche, null = tous les jours.",
+  "routines": [
+    { "id": "rt-w01", "day": 1, "title": "Paie du lundi", "sub": "Upwork + lot Ruul · avant 12h", "who": "max" },
+    { "id": "rt-w02", "day": 1, "title": "Démarrage de la cohorte", "sub": "auto · matin", "who": "os" },
+    { "id": "rt-w03", "day": 1, "title": "Réunion Max & Adrien", "sub": "30 min · QG", "who": "both" },
+    { "id": "rt-w04", "day": 1, "title": "Revue vision + pays", "sub": "1er lundi du mois · 1h", "who": "both" },
+    { "id": "rt-w05", "day": 4, "title": "Check cohorte + doublement", "sub": "matin · max 40 propositions", "who": "max" },
+    { "id": "rt-w06", "day": 4, "title": "Objectifs de recrutement aux HMs", "sub": "après le check · Slack", "who": "max" },
+    { "id": "rt-w07", "day": 5, "title": "Test à blanc des kills", "sub": "fin de journée", "who": "max" },
+    { "id": "rt-w08", "day": 6, "title": "Kills + rapport de contrôle", "sub": "soir", "who": "max" },
+    { "id": "rt-w09", "day": 6, "title": "Fin des offres HM", "sub": "cible avant minuit (Paris)", "who": "os" },
+    { "id": "rt-d01", "day": null, "title": "Rapport du jour", "sub": "9h15 · Upwork Watch, alertes OS", "who": "max" },
+    { "id": "rt-d02", "day": null, "title": "Tickets et escalades support", "sub": "matin et soir", "who": "adrien" },
+    { "id": "rt-d03", "day": null, "title": "Rapport Ruul du soir", "sub": "17h · auto", "who": "os" },
+    { "id": "rt-d04", "day": null, "title": "Import contenu et labels", "sub": "au besoin", "who": "max" }
+  ],
+  "processes": [
+    {
+      "id": "pr-hm",
+      "title": "Le job d'une HM",
+      "meta": "Hiring manager · recrute sur Upwork, rien d'autre",
+      "steps": [
+        { "kind": "start", "title": "Jeudi : objectifs de la semaine", "who": "max", "desc": "Max envoie sur Slack les pays et le nombre d'offres acceptées à obtenir." },
+        { "title": "« What do I need to do today? »", "who": "hm", "desc": "La HM ouvre Claude avec le skill hm-recruiting, connecté à Upwork (compte client Vik Studios)." },
+        { "title": "Job post + invitations", "who": "claude", "desc": "Claude prépare le job post (template du 2 novembre) et les invitations dans les pays cibles." },
+        { "kind": "gate", "title": "La HM valide chaque envoi", "who": "hm", "desc": "Claude n'envoie rien sans le « oui » de la HM.", "no": "Pays fermé (ex. Portugal) : aucune invitation." },
+        { "title": "La HM envoie l'offre", "who": "hm", "desc": "Toujours elle-même, sur upwork.com, avec les milestones." },
+        { "kind": "gate", "title": "Offre acceptée ?", "who": "poster", "yes": "Oui : cacher la conversation, ne plus rien envoyer après l'acceptation." },
+        { "title": "L'OS prend le relais", "who": "os", "desc": "Création du compte, onboarding, posts, paie : plus rien pour la HM." },
+        { "kind": "end", "title": "Cible atteinte avant samedi minuit", "who": "hm", "desc": "Heure de Paris." }
+      ],
+      "rules": [
+        ["Questions", "Claude d'abord, puis Lucia sur Slack."],
+        ["Guide", "Hiring Manager Guide (Notion), 4 étapes."]
+      ]
+    },
+    {
+      "id": "pr-ruul",
+      "title": "Onboarding d'un posteur Ruul",
+      "meta": "Venu du site sophia-culture.com ou d'un parrainage",
+      "steps": [
+        { "kind": "start", "title": "Candidature sur le site", "who": "poster", "desc": "Directe, ou via un lien de parrainage (?ref=CODE)." },
+        { "title": "Accepté, puis contrat signé", "who": "os", "desc": "Sur le Hub (sophia-culture.com)." },
+        { "title": "Compte OS créé et première connexion", "who": "poster", "desc": "Il tape son nom légal dans l'OS." },
+        { "kind": "gate", "title": "Compte Ruul prêt ?", "who": "poster", "desc": "Même email que la candidature, identité vérifiée (KYC), banque ajoutée.", "no": "Pas prêt : relances KYC par l'OS, et pas de paie tant que ce n'est pas fait." },
+        { "title": "Ajouté comme freelance dans Ruul", "who": "max", "desc": "Avec son nom légal." },
+        { "title": "Démarre le lundi", "who": "os", "desc": "Premier lundi au moins 3 jours après la signature." },
+        { "title": "2 slideshows par jour, 7 j / 7", "who": "poster", "desc": "Lien collé le jour même avant minuit. Pas de retenue pour les posts manqués." },
+        { "kind": "end", "title": "Payé chaque lundi via Ruul", "who": "max", "desc": "Zone A 14 $, B 10 $, C 7 $ par semaine. Max valide et paie, via la page Payouts du Hub." }
+      ],
+      "rules": [
+        ["Bloqué plus de 48 h", "signalé et relancé automatiquement."],
+        ["Questions", "#ruul-questions ; l'argent en privé."],
+        ["Arrêt", "décidé le samedi, dernière semaine payée le lundi suivant."]
+      ]
+    },
+    {
+      "id": "pr-kills",
+      "title": "Kills et doublement",
+      "meta": "Un seul moment de décision par semaine pour chaque",
+      "steps": [
+        { "kind": "start", "title": "Jeudi matin : check de la cohorte", "who": "max", "desc": "L'OS classe les posteurs par vues (stars d'abord)." },
+        { "kind": "gate", "title": "Max propositions : 40", "who": "max", "desc": "Max dit oui ou non à chaque doublement.", "yes": "Oui : 2e compte sur un autre label, warm-up du jeudi au dimanche, démarre lundi." },
+        { "title": "Vendredi : test à blanc des kills", "who": "max", "desc": "On regarde qui serait coupé, sans rien appliquer." },
+        { "kind": "gate", "title": "Samedi soir : kills", "who": "max", "desc": "Posteur à 2 comptes : on ne coupe qu'un compte.", "no": "Milestone repassé au tarif 1 compte + bandeau à la prochaine connexion." },
+        { "kind": "end", "title": "Rapport de contrôle", "who": "os", "desc": "Vérifie que chaque règle s'est bien appliquée ; retrait des personnes coupées sur Slack." }
+      ],
+      "rules": [
+        ["Jamais", "de kill en dehors du samedi."]
+      ]
+    },
+    {
+      "id": "pr-support",
+      "title": "Support posteurs",
+      "meta": "Email ou bouton Help dans l'OS",
+      "steps": [
+        { "kind": "start", "title": "Question d'un posteur", "who": "poster", "desc": "Email support ou Help dans l'OS (mêmes données des deux côtés)." },
+        { "title": "Le bot répond", "who": "os", "desc": "À partir des guides Notion publics (Poster Guide, règles Ruul)." },
+        { "kind": "gate", "title": "Résolu ?", "who": "os", "yes": "Oui : ticket fermé.", "no": "Non : escalade dans #a-os-tickets avec la vraie situation du posteur." },
+        { "kind": "end", "title": "Adrien traite les escalades", "who": "adrien", "desc": "Matin et soir." }
+      ],
+      "rules": [
+        ["Lien de post", "s'il a posté, c'est bon : des gens vérifient."],
+        ["Parrainage", "jamais de cash, jamais entre posteurs."],
+        ["Upwork", "s'il refuse Ruul : il envoie son lien de profil Upwork (exception)."]
+      ]
+    },
+    {
+      "id": "pr-paie",
+      "title": "Paie et parrainage",
+      "meta": "Deux circuits : Upwork et Ruul",
+      "steps": [
+        { "kind": "start", "title": "Lundi avant 12h", "who": "max", "desc": "La semaine lundi → dimanche qui vient de finir." },
+        { "title": "Posteurs Upwork", "who": "max", "desc": "Milestones payés sur Upwork, depuis l'OS." },
+        { "title": "Posteurs Ruul", "who": "max", "desc": "Un paiement groupé dans Ruul Business, enregistré dans Payouts du Hub." },
+        { "kind": "gate", "title": "Parrainage", "who": "os", "desc": "10 invitations / mois max. L'ami suit le parcours Ruul.", "yes": "Bonus 10 $ au parrain quand le filleul a fait sa 1re semaine payée." },
+        { "kind": "end", "title": "Rapport Ruul du soir", "who": "os", "desc": "Tous les jours à 17h sur Slack." }
+      ],
+      "rules": [
+        ["Ruul pas prêt", "pas dans le lot de paie."]
+      ]
+    }
+  ]
+}

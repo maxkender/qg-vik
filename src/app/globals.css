@@ -1,0 +1,258 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ------------------------------------------------------------------
+   QG Vik — jetons de design
+   Sombre par défaut, surfaces en verre dépoli (sobre, façon Notion),
+   orange = « maintenant », teal = Max, rose = Adrien, gris = les deux.
+   ------------------------------------------------------------------ */
+
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Couleurs propres au QG */
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-glass: var(--glass);
+  --color-glass-strong: var(--glass-strong);
+  --color-now: var(--now);
+  --color-now-soft: var(--now-soft);
+  --color-max: var(--max);
+  --color-max-soft: var(--max-soft);
+  --color-adrien: var(--adrien);
+  --color-adrien-soft: var(--adrien-soft);
+  --color-both: var(--both);
+  --color-both-soft: var(--both-soft);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* Thème clair (option) */
+:root {
+  --radius: 0.75rem;
+
+  --background: #f6f5f2;
+  --foreground: #1a1b1e;
+  --faint: #a3a5ab;
+  --line: rgb(20 20 25 / 0.08);
+  --line-strong: rgb(20 20 25 / 0.14);
+  --glass: rgb(255 255 255 / 0.62);
+  --glass-strong: rgb(255 255 255 / 0.86);
+  --glass-shine: rgb(255 255 255 / 0.9);
+  --glass-shadow: 0 1px 2px rgb(20 20 25 / 0.04), 0 12px 32px -12px rgb(20 20 25 / 0.12);
+  --ambient-a: rgb(217 96 27 / 0.1);
+  --ambient-b: rgb(14 143 126 / 0.09);
+
+  --now: #d9601b;
+  --now-soft: #fbe7da;
+  --max: #0e8f7e;
+  --max-soft: #dcf2ee;
+  --adrien: #b5419c;
+  --adrien-soft: #f7e1f2;
+  --both: #5f6168;
+  --both-soft: #ececea;
+  --good: #1e9a5b;
+  --good-soft: #ddf3e7;
+  --bad: #d13d3d;
+  --bad-soft: #fbe2e2;
+  --warn: #b98410;
+  --warn-soft: #faf0d6;
+  --info: #2f5fe0;
+  --info-soft: #e2e9fd;
+
+  --card: var(--glass);
+  --card-foreground: var(--foreground);
+  --popover: #ffffff;
+  --popover-foreground: var(--foreground);
+  --primary: #1a1b1e;
+  --primary-foreground: #f6f5f2;
+  --secondary: rgb(20 20 25 / 0.05);
+  --secondary-foreground: var(--foreground);
+  --muted: rgb(20 20 25 / 0.05);
+  --muted-foreground: #686a71;
+  --accent: rgb(20 20 25 / 0.06);
+  --accent-foreground: var(--foreground);
+  --destructive: var(--bad);
+  --border: var(--line);
+  --input: var(--line-strong);
+  --ring: var(--now);
+  --chart-1: var(--info);
+  --chart-2: var(--max);
+  --chart-3: var(--now);
+  --chart-4: var(--warn);
+  --chart-5: var(--adrien);
+  --sidebar: transparent;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--line);
+  --sidebar-ring: var(--now);
+
+  color-scheme: light;
+}
+
+/* Thème sombre (par défaut) */
+.dark {
+  --background: #101113;
+  --foreground: #ececee;
+  --faint: #62646b;
+  --line: rgb(255 255 255 / 0.07);
+  --line-strong: rgb(255 255 255 / 0.13);
+  --glass: rgb(255 255 255 / 0.035);
+  --glass-strong: rgb(34 35 39 / 0.78);
+  --glass-shine: rgb(255 255 255 / 0.06);
+  --glass-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 40px -16px rgb(0 0 0 / 0.55);
+  --ambient-a: rgb(242 118 46 / 0.13);
+  --ambient-b: rgb(56 198 176 / 0.09);
+
+  --now: #f2762e;
+  --now-soft: rgb(242 118 46 / 0.14);
+  --max: #38c6b0;
+  --max-soft: rgb(56 198 176 / 0.14);
+  --adrien: #e68ad2;
+  --adrien-soft: rgb(230 138 210 / 0.14);
+  --both: #a9abb2;
+  --both-soft: rgb(169 171 178 / 0.12);
+  --good: #3dbe7c;
+  --good-soft: rgb(61 190 124 / 0.14);
+  --bad: #f06262;
+  --bad-soft: rgb(240 98 98 / 0.14);
+  --warn: #e8b547;
+  --warn-soft: rgb(232 181 71 / 0.14);
+  --info: #5e8bff;
+  --info-soft: rgb(94 139 255 / 0.15);
+
+  --popover: #1d1e22;
+  --primary: #ececee;
+  --primary-foreground: #101113;
+  --secondary: rgb(255 255 255 / 0.06);
+  --muted: rgb(255 255 255 / 0.05);
+  --muted-foreground: #9a9ca3;
+  --accent: rgb(255 255 255 / 0.07);
+
+  color-scheme: dark;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-size: 14px;
+    line-height: 1.45;
+    font-feature-settings: "cv11", "ss01";
+  }
+  /* Lumière d'ambiance : c'est elle que le verre dépoli laisse deviner. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(60rem 40rem at 8% -10%, var(--ambient-a), transparent 60%),
+      radial-gradient(50rem 40rem at 105% 110%, var(--ambient-b), transparent 60%);
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.02em;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--now) 35%, transparent);
+  }
+}
+
+@layer components {
+  /* Panneau en verre : cartes, colonnes, rail. */
+  .glass {
+    background: var(--glass);
+    border: 1px solid var(--line);
+    box-shadow: inset 0 1px 0 var(--glass-shine), var(--glass-shadow);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    backdrop-filter: blur(24px) saturate(150%);
+  }
+  /* Verre plus opaque : menus, popovers, palette de commandes. */
+  .glass-strong {
+    background: var(--glass-strong);
+    border: 1px solid var(--line-strong);
+    box-shadow: inset 0 1px 0 var(--glass-shine), var(--glass-shadow);
+    -webkit-backdrop-filter: blur(32px) saturate(160%);
+    backdrop-filter: blur(32px) saturate(160%);
+  }
+  .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

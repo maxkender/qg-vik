@@ -1,0 +1,604 @@
+{
+ "asOf": "18/11",
+ "weeks": [
+  {
+   "label": "S43",
+   "lundi": "2026-10-19",
+   "rev": 47340,
+   "dep": 6218,
+   "tresor": 21064,
+   "viraux": 0.0688,
+   "vues": 14033721,
+   "actifs": 230,
+   "kills": 0,
+   "doubles": 0,
+   "sophia": 46225,
+   "micabo": 241,
+   "unswipe": 874,
+   "support": null,
+   "partial": false
+  },
+  {
+   "label": "S44",
+   "lundi": "2026-10-26",
+   "rev": 49178,
+   "dep": 8424,
+   "tresor": 63426,
+   "viraux": 0.0929,
+   "vues": 18285030,
+   "actifs": 238,
+   "kills": 7,
+   "doubles": 9,
+   "sophia": 48329,
+   "micabo": 364,
+   "unswipe": 485,
+   "support": null,
+   "partial": false
+  },
+  {
+   "label": "S45",
+   "lundi": "2026-11-02",
+   "rev": 45531,
+   "dep": 6788,
+   "tresor": 56651,
+   "viraux": 0.1192,
+   "vues": 27765653,
+   "actifs": 298,
+   "kills": 21,
+   "doubles": 6,
+   "sophia": 44822,
+   "micabo": 489,
+   "unswipe": 220,
+   "support": null,
+   "partial": false
+  },
+  {
+   "label": "S46",
+   "lundi": "2026-11-09",
+   "rev": 51028,
+   "dep": 7509,
+   "tresor": 49142,
+   "viraux": 0.0889,
+   "vues": 21886295,
+   "actifs": 331,
+   "kills": 11,
+   "doubles": 0,
+   "sophia": 50269,
+   "micabo": 742,
+   "unswipe": 17,
+   "support": 0.731,
+   "partial": false
+  },
+  {
+   "label": "S47*",
+   "lundi": "2026-11-16",
+   "rev": 14094,
+   "dep": 4926,
+   "tresor": 58340,
+   "viraux": 0.0459,
+   "vues": 5266376,
+   "actifs": 447,
+   "kills": 0,
+   "doubles": 0,
+   "sophia": 13968,
+   "micabo": 96,
+   "unswipe": 30,
+   "support": 0.285,
+   "partial": true
+  }
+ ],
+ "months": [
+  {
+   "label": "Sept.",
+   "postes": {
+    "Posteurs": 7287,
+    "Matériel": 5084,
+    "Outils & abonnements": 2117,
+    "Contenu & IA": 1898,
+    "Déplacements & repas": 520,
+    "Transferts": 300
+   }
+  },
+  {
+   "label": "Oct.",
+   "postes": {
+    "Posteurs": 14883,
+    "Transferts": 11118,
+    "Contenu & IA": 2598,
+    "Outils & abonnements": 2554,
+    "Déplacements & repas": 1073,
+    "Admin & compta": 143,
+    "Matériel": 169
+   }
+  },
+  {
+   "label": "Nov. (au 18)",
+   "postes": {
+    "Posteurs": 14100,
+    "Contenu & IA": 1958,
+    "Admin & compta": 1680,
+    "Outils & abonnements": 932,
+    "Déplacements & repas": 715
+   }
+  }
+ ],
+ "anomalies": [
+  {
+   "id": "a-max",
+   "vendor": "Virement à Max",
+   "mois": "Oct.",
+   "amount": 8900,
+   "why": "À justifier : remboursement de compte courant ou rémunération ?"
+  },
+  {
+   "id": "a-nutria",
+   "vendor": "Nutria SAS",
+   "mois": "Oct.",
+   "amount": 2218,
+   "why": "Virement : refacturation à justifier."
+  },
+  {
+   "id": "a-compta",
+   "vendor": "Impact Audit + Dougs",
+   "mois": "Nov.",
+   "amount": 1680,
+   "why": "Deux comptables en même temps : en garder un."
+  },
+  {
+   "id": "a-apple",
+   "vendor": "Apple Store",
+   "mois": "Sept.",
+   "amount": 5084,
+   "why": "Matériel (dont 4 393 € le 8/09) : facture à ranger."
+  },
+  {
+   "id": "a-gcloud",
+   "vendor": "Google Cloud",
+   "mois": "Nov.",
+   "amount": 800,
+   "why": "×4 vs octobre : vérifier ce qui tourne."
+  },
+  {
+   "id": "a-softriver",
+   "vendor": "SOFTRIVER",
+   "mois": "Nov.",
+   "amount": 261,
+   "why": "Fournisseur inconnu : à identifier."
+  },
+  {
+   "id": "a-upwork",
+   "vendor": "Upwork",
+   "mois": "Nov.",
+   "amount": 13937,
+   "why": "+56 % projeté sur le mois : normal avec les cohortes, à suivre."
+  },
+  {
+   "id": "a-anthropic",
+   "vendor": "Anthropic",
+   "mois": "Oct.",
+   "amount": 1159,
+   "why": "+162 % vs septembre."
+  }
+ ],
+ "countries": [
+  {
+   "pays": "Norvège",
+   "code": "NO",
+   "zone": "A",
+   "verdict": "Recruter",
+   "eur_par_user": 4.2,
+   "revenus_semaine": 1419,
+   "comptes_actifs": 11,
+   "vues_mediane": 2674,
+   "cout_semaine_usd": 154
+  },
+  {
+   "pays": "Suisse",
+   "code": "CH",
+   "zone": "A",
+   "verdict": "Garder",
+   "eur_par_user": 3.55,
+   "revenus_semaine": 804,
+   "comptes_actifs": 1,
+   "vues_mediane": null,
+   "cout_semaine_usd": 14
+  },
+  {
+   "pays": "Autriche",
+   "code": "AT",
+   "zone": "A",
+   "verdict": "Garder",
+   "eur_par_user": 3.12,
+   "revenus_semaine": 635,
+   "comptes_actifs": 1,
+   "vues_mediane": 784,
+   "cout_semaine_usd": 14
+  },
+  {
+   "pays": "Japon",
+   "code": "JP",
+   "zone": "A",
+   "verdict": "Recruter",
+   "eur_par_user": 2.46,
+   "revenus_semaine": 762,
+   "comptes_actifs": 4,
+   "vues_mediane": 385,
+   "cout_semaine_usd": 56
+  },
+  {
+   "pays": "Hongrie",
+   "code": "HU",
+   "zone": "B",
+   "verdict": "Garder",
+   "eur_par_user": 2.33,
+   "revenus_semaine": 3576,
+   "comptes_actifs": 39,
+   "vues_mediane": 2550,
+   "cout_semaine_usd": 390
+  },
+  {
+   "pays": "États-Unis",
+   "code": "US",
+   "zone": "A",
+   "verdict": "À corriger",
+   "eur_par_user": 2.32,
+   "revenus_semaine": 1313,
+   "comptes_actifs": 19,
+   "vues_mediane": 879,
+   "cout_semaine_usd": 266
+  },
+  {
+   "pays": "Croatie",
+   "code": "HR",
+   "zone": "B",
+   "verdict": "Garder",
+   "eur_par_user": 2.23,
+   "revenus_semaine": 797,
+   "comptes_actifs": 25,
+   "vues_mediane": 1698,
+   "cout_semaine_usd": 250
+  },
+  {
+   "pays": "Finlande",
+   "code": "FI",
+   "zone": "A",
+   "verdict": "Recruter",
+   "eur_par_user": 2.19,
+   "revenus_semaine": 712,
+   "comptes_actifs": 8,
+   "vues_mediane": 2369,
+   "cout_semaine_usd": 112
+  },
+  {
+   "pays": "Suède",
+   "code": "SE",
+   "zone": "A",
+   "verdict": "Recruter",
+   "eur_par_user": 2.0,
+   "revenus_semaine": 1111,
+   "comptes_actifs": 21,
+   "vues_mediane": 4554,
+   "cout_semaine_usd": 294
+  },
+  {
+   "pays": "Slovénie",
+   "code": "SI",
+   "zone": "B",
+   "verdict": "Garder",
+   "eur_par_user": 1.95,
+   "revenus_semaine": 485,
+   "comptes_actifs": 13,
+   "vues_mediane": 1363,
+   "cout_semaine_usd": 130
+  },
+  {
+   "pays": "Royaume-Uni",
+   "code": "GB",
+   "zone": "A",
+   "verdict": "À corriger",
+   "eur_par_user": 1.89,
+   "revenus_semaine": 471,
+   "comptes_actifs": 20,
+   "vues_mediane": 788,
+   "cout_semaine_usd": 280
+  },
+  {
+   "pays": "Allemagne",
+   "code": "DE",
+   "zone": "A",
+   "verdict": "Garder",
+   "eur_par_user": 1.89,
+   "revenus_semaine": 4551,
+   "comptes_actifs": 47,
+   "vues_mediane": 1070,
+   "cout_semaine_usd": 658
+  },
+  {
+   "pays": "Israël",
+   "code": "IL",
+   "zone": "A",
+   "verdict": "Garder",
+   "eur_par_user": 1.87,
+   "revenus_semaine": 1044,
+   "comptes_actifs": 13,
+   "vues_mediane": 1972,
+   "cout_semaine_usd": 182
+  },
+  {
+   "pays": "Bulgarie",
+   "code": "BG",
+   "zone": "C",
+   "verdict": "Garder",
+   "eur_par_user": 1.68,
+   "revenus_semaine": 442,
+   "comptes_actifs": 13,
+   "vues_mediane": 1182,
+   "cout_semaine_usd": 91
+  },
+  {
+   "pays": "France",
+   "code": "FR",
+   "zone": "A",
+   "verdict": "Garder",
+   "eur_par_user": 1.62,
+   "revenus_semaine": 3442,
+   "comptes_actifs": 32,
+   "vues_mediane": 1632,
+   "cout_semaine_usd": 448
+  },
+  {
+   "pays": "Slovaquie",
+   "code": "SK",
+   "zone": "B",
+   "verdict": "Garder",
+   "eur_par_user": 1.61,
+   "revenus_semaine": 427,
+   "comptes_actifs": 11,
+   "vues_mediane": 1745,
+   "cout_semaine_usd": 110
+  },
+  {
+   "pays": "Lituanie",
+   "code": "LT",
+   "zone": "B",
+   "verdict": "Garder",
+   "eur_par_user": 1.5,
+   "revenus_semaine": 445,
+   "comptes_actifs": 14,
+   "vues_mediane": 4381,
+   "cout_semaine_usd": 140
+  },
+  {
+   "pays": "Grèce",
+   "code": "GR",
+   "zone": "B",
+   "verdict": "Garder",
+   "eur_par_user": 1.48,
+   "revenus_semaine": 2552,
+   "comptes_actifs": 41,
+   "vues_mediane": 1520,
+   "cout_semaine_usd": 410
+  },
+  {
+   "pays": "Pays-Bas",
+   "code": "NL",
+   "zone": "A",
+   "verdict": "Garder",
+   "eur_par_user": 1.46,
+   "revenus_semaine": 861,
+   "comptes_actifs": 10,
+   "vues_mediane": 1470,
+   "cout_semaine_usd": 140
+  },
+  {
+   "pays": "Tchéquie",
+   "code": "CZ",
+   "zone": "B",
+   "verdict": "Garder",
+   "eur_par_user": 1.45,
+   "revenus_semaine": 751,
+   "comptes_actifs": 21,
+   "vues_mediane": 2012,
+   "cout_semaine_usd": 210
+  },
+  {
+   "pays": "Italie",
+   "code": "IT",
+   "zone": "B",
+   "verdict": "Garder",
+   "eur_par_user": 1.19,
+   "revenus_semaine": 3436,
+   "comptes_actifs": 46,
+   "vues_mediane": 1362,
+   "cout_semaine_usd": 460
+  },
+  {
+   "pays": "Pologne",
+   "code": "PL",
+   "zone": "B",
+   "verdict": "Garder",
+   "eur_par_user": 0.99,
+   "revenus_semaine": 2520,
+   "comptes_actifs": 18,
+   "vues_mediane": 2394,
+   "cout_semaine_usd": 180
+  },
+  {
+   "pays": "Roumanie",
+   "code": "RO",
+   "zone": "C",
+   "verdict": "Garder",
+   "eur_par_user": 0.9,
+   "revenus_semaine": 877,
+   "comptes_actifs": 27,
+   "vues_mediane": 1251,
+   "cout_semaine_usd": 189
+  },
+  {
+   "pays": "Espagne",
+   "code": "ES",
+   "zone": "B",
+   "verdict": "Garder",
+   "eur_par_user": 0.89,
+   "revenus_semaine": 1564,
+   "comptes_actifs": 29,
+   "vues_mediane": 1090,
+   "cout_semaine_usd": 290
+  },
+  {
+   "pays": "Serbie",
+   "code": "RS",
+   "zone": "C",
+   "verdict": "Couper",
+   "eur_par_user": 0.81,
+   "revenus_semaine": 527,
+   "comptes_actifs": 18,
+   "vues_mediane": 4480,
+   "cout_semaine_usd": 126
+  },
+  {
+   "pays": "Turquie",
+   "code": "TR",
+   "zone": "C",
+   "verdict": "Garder",
+   "eur_par_user": 0.78,
+   "revenus_semaine": 4456,
+   "comptes_actifs": 51,
+   "vues_mediane": 1888,
+   "cout_semaine_usd": 357
+  },
+  {
+   "pays": "Mexique",
+   "code": "MX",
+   "zone": "C",
+   "verdict": "Garder",
+   "eur_par_user": 0.68,
+   "revenus_semaine": 1840,
+   "comptes_actifs": 1,
+   "vues_mediane": null,
+   "cout_semaine_usd": 7
+  },
+  {
+   "pays": "Kazakhstan",
+   "code": "KZ",
+   "zone": "C",
+   "verdict": "Couper",
+   "eur_par_user": 0.57,
+   "revenus_semaine": 129,
+   "comptes_actifs": 7,
+   "vues_mediane": 4707,
+   "cout_semaine_usd": 49
+  },
+  {
+   "pays": "Colombie",
+   "code": "CO",
+   "zone": "C",
+   "verdict": "Couper",
+   "eur_par_user": 0.48,
+   "revenus_semaine": 639,
+   "comptes_actifs": 6,
+   "vues_mediane": 568,
+   "cout_semaine_usd": 42
+  },
+  {
+   "pays": "Argentine",
+   "code": "AR",
+   "zone": "C",
+   "verdict": "Couper",
+   "eur_par_user": 0.31,
+   "revenus_semaine": 263,
+   "comptes_actifs": 6,
+   "vues_mediane": 2778,
+   "cout_semaine_usd": 42
+  },
+  {
+   "pays": "Brésil",
+   "code": "BR",
+   "zone": "C",
+   "verdict": "Couper",
+   "eur_par_user": 0.29,
+   "revenus_semaine": 572,
+   "comptes_actifs": 19,
+   "vues_mediane": 1314,
+   "cout_semaine_usd": 133
+  },
+  {
+   "pays": "Danemark",
+   "code": "DK",
+   "zone": "A",
+   "verdict": "Recruter",
+   "eur_par_user": null,
+   "revenus_semaine": 0,
+   "comptes_actifs": 3,
+   "vues_mediane": null,
+   "cout_semaine_usd": 42
+  },
+  {
+   "pays": "Émirats",
+   "code": "AE",
+   "zone": "B",
+   "verdict": "Couper",
+   "eur_par_user": null,
+   "revenus_semaine": 0,
+   "comptes_actifs": 7,
+   "vues_mediane": 5205,
+   "cout_semaine_usd": 70
+  },
+  {
+   "pays": "Lettonie",
+   "code": "LV",
+   "zone": "B",
+   "verdict": "Garder",
+   "eur_par_user": null,
+   "revenus_semaine": 0,
+   "comptes_actifs": 7,
+   "vues_mediane": 1962,
+   "cout_semaine_usd": 70
+  },
+  {
+   "pays": "Estonie",
+   "code": "EE",
+   "zone": "B",
+   "verdict": "Garder",
+   "eur_par_user": null,
+   "revenus_semaine": 295,
+   "comptes_actifs": 8,
+   "vues_mediane": 1608,
+   "cout_semaine_usd": 80
+  },
+  {
+   "pays": "Australie",
+   "code": "AU",
+   "zone": "A",
+   "verdict": "À corriger",
+   "eur_par_user": null,
+   "revenus_semaine": 184,
+   "comptes_actifs": 3,
+   "vues_mediane": 539,
+   "cout_semaine_usd": 42
+  },
+  {
+   "pays": "Canada",
+   "code": "CA",
+   "zone": "A",
+   "verdict": "À corriger",
+   "eur_par_user": null,
+   "revenus_semaine": 89,
+   "comptes_actifs": 3,
+   "vues_mediane": 2383,
+   "cout_semaine_usd": 42
+  },
+  {
+   "pays": "Nouvelle-Zélande",
+   "code": "NZ",
+   "zone": "A",
+   "verdict": "À corriger",
+   "eur_par_user": null,
+   "revenus_semaine": 0,
+   "comptes_actifs": 7,
+   "vues_mediane": 670,
+   "cout_semaine_usd": 98
+  }
+ ],
+ "source": "Revenus : RevenueCat (bruts). Dépenses et tréso : Qonto (pubs Meta non incluses). Vues, comptes, kills : OS. Pays : moyenne hebdo 19/10→15/11 (Sophia)."
+}

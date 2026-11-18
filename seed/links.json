@@ -1,0 +1,138 @@
+[
+ {
+  "id": "lk00",
+  "group": "Guides & job posts (Notion)",
+  "title": "TikTok Poster Guide",
+  "url": "https://app.notion.com/p/3f4241308d6681f8ad41dc507f2c8505",
+  "note": "Lu par le bot support",
+  "order": 1795011200000
+ },
+ {
+  "id": "lk01",
+  "group": "Guides & job posts (Notion)",
+  "title": "Hiring Manager Guide",
+  "url": "https://app.notion.com/p/3f4241308d66818c84f3c3eb514f140c",
+  "note": "Les 4 étapes des HM",
+  "order": 1795011200001
+ },
+ {
+  "id": "lk02",
+  "group": "Guides & job posts (Notion)",
+  "title": "HM knowledge base",
+  "url": "https://app.notion.com/p/409241308d6681178c5ef476de8d1ef5",
+  "note": "Base lue par le skill hm-recruiting",
+  "order": 1795011200002
+ },
+ {
+  "id": "lk03",
+  "group": "Guides & job posts (Notion)",
+  "title": "Job post template (2 novembre)",
+  "url": "https://app.notion.com/p/40a241308d66817e8e3bdcfeaeec8609",
+  "note": "Le job post Upwork actuel",
+  "order": 1795011200003
+ },
+ {
+  "id": "lk04",
+  "group": "Guides & job posts (Notion)",
+  "title": "Règles posteurs Ruul et parrainage",
+  "url": "https://app.notion.com/p/414241308d6681b78502f4f64aac931c",
+  "note": "Source unique",
+  "order": 1795011200004
+ },
+ {
+  "id": "lk05",
+  "group": "Chiffres (Notion)",
+  "title": "Dépenses mois par mois",
+  "url": "https://app.notion.com/p/41c241308d6681d4a3fec4f957a59caa",
+  "note": "Détail Qonto par fournisseur",
+  "order": 1795011200005
+ },
+ {
+  "id": "lk06",
+  "group": "Chiffres (Notion)",
+  "title": "Ancien QG Notion",
+  "url": "https://app.notion.com/p/41c241308d668120a574c085e567613a",
+  "note": "Semaines, pays, réunions",
+  "order": 1795011200006
+ },
+ {
+  "id": "lk07",
+  "group": "Outils",
+  "title": "Site Sophia (Hub)",
+  "url": "https://sophia-culture.com",
+  "note": "Candidatures, contrats, Payouts Ruul",
+  "order": 1795011200007
+ },
+ {
+  "id": "lk08",
+  "group": "Outils",
+  "title": "RevenueCat",
+  "url": "https://app.revenuecat.com",
+  "note": "Revenus Sophia, Micabo, Unswipe",
+  "order": 1795011200008
+ },
+ {
+  "id": "lk09",
+  "group": "Outils",
+  "title": "Qonto",
+  "url": "https://app.qonto.com",
+  "note": "Banque",
+  "order": 1795011200009
+ },
+ {
+  "id": "lk10",
+  "group": "Outils",
+  "title": "Upwork",
+  "url": "https://www.upwork.com",
+  "note": "Contrats et paie Upwork",
+  "order": 1795011200010
+ },
+ {
+  "id": "lk11",
+  "group": "Outils",
+  "title": "Ruul",
+  "url": "https://ruul.io",
+  "note": "Paie des posteurs Ruul",
+  "order": 1795011200011
+ },
+ {
+  "id": "lk12",
+  "group": "Outils",
+  "title": "Supabase",
+  "url": "https://supabase.com/dashboard",
+  "note": "Base de l'OS",
+  "order": 1795011200012
+ },
+ {
+  "id": "lk13",
+  "group": "Outils",
+  "title": "App Store Connect",
+  "url": "https://appstoreconnect.apple.com",
+  "note": "Apps iOS",
+  "order": 1795011200013
+ },
+ {
+  "id": "lk14",
+  "group": "Outils",
+  "title": "Meta Ads",
+  "url": "https://adsmanager.facebook.com",
+  "note": "Pubs (hors Qonto)",
+  "order": 1795011200014
+ },
+ {
+  "id": "lk15",
+  "group": "Outils",
+  "title": "Lovable",
+  "url": "https://lovable.dev",
+  "note": "Front de l'OS",
+  "order": 1795011200015
+ },
+ {
+  "id": "lk16",
+  "group": "Outils",
+  "title": "Slack",
+  "url": "https://app.slack.com",
+  "note": "#a-os-tickets, #upwork-watch, #ruul-questions",
+  "order": 1795011200016
+ }
+]
