@@ -273,3 +273,78 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ------------------------------------------------------------------
+   Éditeur de pages (BlockNote) aux couleurs du QG
+   ------------------------------------------------------------------ */
+.qg-editor .bn-container {
+  --bn-colors-editor-background: transparent;
+  --bn-colors-editor-text: var(--foreground);
+  --bn-colors-menu-background: var(--popover);
+  --bn-colors-menu-text: var(--foreground);
+  --bn-colors-tooltip-background: var(--popover);
+  --bn-colors-tooltip-text: var(--foreground);
+  --bn-colors-hovered-background: var(--accent);
+  --bn-colors-hovered-text: var(--foreground);
+  --bn-colors-selected-background: var(--accent);
+  --bn-colors-selected-text: var(--foreground);
+  --bn-colors-border: var(--line-strong);
+  --bn-colors-side-menu: var(--faint);
+  --bn-colors-shadow: rgb(0 0 0 / 0.35);
+  --bn-font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --bn-border-radius: 10px;
+}
+.qg-editor .bn-editor {
+  padding-inline: 0;
+  font-size: 15.5px;
+  line-height: 1.65;
+}
+.qg-editor .bn-editor h1,
+.qg-editor .bn-editor h2,
+.qg-editor .bn-editor h3 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+}
+.qg-editor .bn-editor a {
+  color: var(--info);
+}
+.qg-page-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.3rem 0.5rem;
+  margin-inline: -0.5rem;
+  border-radius: 8px;
+  color: var(--foreground) !important;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 4px;
+  cursor: pointer;
+  transition: background-color 100ms;
+}
+.qg-page-link:hover {
+  background: var(--accent);
+}
+.qg-page-link[aria-disabled="true"] {
+  color: var(--faint) !important;
+  text-decoration: line-through;
+  cursor: default;
+}
+@keyframes qg-flash {
+  from {
+    background: var(--now-soft);
+  }
+  to {
+    background: transparent;
+  }
+}
+.qg-flash {
+  animation: qg-flash 1.6s ease-out;
+  border-radius: 6px;
+}
+.qg-editor .bn-container,
+.qg-editor .bn-editor {
+  background: transparent !important;
+}

@@ -3,7 +3,7 @@
 import { TableStore } from "@/lib/store";
 import type {
   AccessRow, CommentRow, Decision, Expense, ExpenseCheck, ExpenseRule, Item, Legal,
-  LinkRow, MetricsSnapshot, PageRow, ProcessRow, Profile, Routine,
+  LinkRow, MetricsSnapshot, PageRow, ProcessRow, Profile, ReadRow, Routine,
 } from "@/lib/types";
 
 // Une instance par table, partagée par toute l'app.
@@ -21,3 +21,4 @@ export const commentsStore = new TableStore<CommentRow>("comments", "id");
 export const expensesStore = new TableStore<Expense>("expenses", "id");
 export const expenseRulesStore = new TableStore<ExpenseRule>("expense_rules", "id");
 export const profilesStore = new TableStore<Profile>("profiles", "id");
+export const readsStore = new TableStore<ReadRow>("reads", "id");

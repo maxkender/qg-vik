@@ -19,7 +19,7 @@ const COLUMNS: { prio: Prio; title: string; sub: string; dot: string }[] = [
 // Écran d'accueil : trois colonnes de priorité.
 export default function TodoPage() {
   const me = useMe();
-  const { who } = useView();
+  const { who, setOpenItem } = useView();
   const { all, roots, kidsOf, commentsOf } = usePlanner();
   const create = useQuickCreate();
 
@@ -64,7 +64,7 @@ export default function TodoPage() {
       <div className="shrink-0 px-4 pb-4 md:px-6">
         <QuickAdd />
       </div>
-      <Board columns={columns} kidsOf={kidsOf} commentsOf={commentsOf} showHorizon onDrop={onDrop} />
+      <Board columns={columns} kidsOf={kidsOf} commentsOf={commentsOf} showHorizon onDrop={onDrop} onOpen={(i) => setOpenItem(i.id)} />
     </>
   );
 }

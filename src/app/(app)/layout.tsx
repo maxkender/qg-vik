@@ -1,5 +1,8 @@
+import { SearchDialog } from "@/components/app/search";
 import { AppShell } from "@/components/app/shell";
 import { ViewStateProvider } from "@/components/app/view-state";
+import { PagesNav } from "@/components/pages/pages-nav";
+import { ItemSheet } from "@/components/planner/item-sheet";
 import { SessionProvider } from "@/components/session-provider";
 
 function Loading() {
@@ -17,7 +20,17 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <SessionProvider fallback={<Loading />}>
       <ViewStateProvider>
-        <AppShell>{children}</AppShell>
+        <AppShell
+          pagesNav={<PagesNav />}
+          search={
+            <>
+              <SearchDialog />
+              <ItemSheet />
+            </>
+          }
+        >
+          {children}
+        </AppShell>
       </ViewStateProvider>
     </SessionProvider>
   );

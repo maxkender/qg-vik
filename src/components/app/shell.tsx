@@ -306,6 +306,16 @@ function TopBar({ pathname }: { pathname: string }) {
         >
           Pages
         </Link>
+        <Link
+          href="/a-lire"
+          aria-current={pathname === "/a-lire" ? "page" : undefined}
+          className={cn(
+            "flex h-8 shrink-0 items-center rounded-lg px-2.5 text-[13px] font-medium whitespace-nowrap",
+            pathname === "/a-lire" ? "bg-accent text-foreground" : "text-muted-foreground",
+          )}
+        >
+          À lire
+        </Link>
       </nav>
     </header>
   );

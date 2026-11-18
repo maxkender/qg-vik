@@ -15,7 +15,7 @@ const KEY = "qg-horizons";
 
 // Comme Timestripe : Aujourd'hui en grand, puis des bandes qu'on ouvre.
 export default function HorizonsPage() {
-  const { today } = useView();
+  const { today, setOpenItem } = useView();
   const { roots, kidsOf, commentsOf, inBucket } = usePlanner();
   const create = useQuickCreate();
   // Page rendue uniquement dans le navigateur : on peut relire le choix gardé sur l'appareil.
@@ -81,7 +81,7 @@ export default function HorizonsPage() {
   return (
     <>
       <ViewHeader title="Horizons" sub="Clique sur une bande pour l'ouvrir. Glisse une tâche d'une colonne à l'autre." />
-      <Board columns={columns} kidsOf={kidsOf} commentsOf={commentsOf} onDrop={onDrop} />
+      <Board columns={columns} kidsOf={kidsOf} commentsOf={commentsOf} onDrop={onDrop} onOpen={(i) => setOpenItem(i.id)} />
     </>
   );
 }

@@ -51,7 +51,7 @@ function slots(kind: RangeKind, today: Date, offset: number): Slot[] {
 
 /** Jours, Semaines, Mois, Années : des colonnes de temps qui défilent, celle en cours en orange. */
 export function RangeView({ kind }: { kind: RangeKind }) {
-  const { today } = useView();
+  const { today, setOpenItem } = useView();
   const { kidsOf, commentsOf, inBucket } = usePlanner();
   const create = useQuickCreate();
   const [offset, setOffset] = useState(0);
@@ -85,7 +85,7 @@ export function RangeView({ kind }: { kind: RangeKind }) {
           </button>
         </div>
       </ViewHeader>
-      <Board columns={columns} kidsOf={kidsOf} commentsOf={commentsOf} onDrop={onDrop} />
+      <Board columns={columns} kidsOf={kidsOf} commentsOf={commentsOf} onDrop={onDrop} onOpen={(i) => setOpenItem(i.id)} />
     </>
   );
 }

@@ -19,6 +19,9 @@ type ViewState = {
   setQuickAddOpen: (v: boolean) => void;
   searchOpen: boolean;
   setSearchOpen: (v: boolean) => void;
+  /** Tâche ouverte dans le panneau de détail (notes et commentaires). */
+  openItem: string | null;
+  setOpenItem: (id: string | null) => void;
 };
 
 const Ctx = createContext<ViewState | null>(null);
@@ -44,6 +47,7 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
   const [today, setToday] = useState(() => startOfDay(new Date()));
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [openItem, setOpenItem] = useState<string | null>(null);
 
   const setWho = useCallback((w: WhoFilter) => {
     setWhoState(w);
@@ -76,8 +80,10 @@ export function ViewStateProvider({ children }: { children: ReactNode }) {
       setQuickAddOpen,
       searchOpen,
       setSearchOpen,
+      openItem,
+      setOpenItem,
     }),
-    [who, setWho, today, quickAddOpen, searchOpen],
+    [who, setWho, today, quickAddOpen, searchOpen, openItem],
   );
 
   return <Ctx value={value}>{children}</Ctx>;

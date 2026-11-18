@@ -206,3 +206,13 @@ export type ExpenseRule = {
 };
 
 export type Profile = { id: string; name: string; short: "max" | "adrien"; color: string };
+
+export type ReadRow = {
+  id: string;
+  page_id: string;
+  for_who: "max" | "adrien";
+  note: string | null;
+  sent_by: string | null;
+  created_at: string;
+  read_at: string | null;
+};
