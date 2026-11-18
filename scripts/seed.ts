@@ -9,6 +9,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import { MEMBERS, parseAllowedEmails, type Who } from "../src/lib/members";
 
 const OS_PROJECT_REF = "mbikecieskoobeizixig"; // projet de l'OS : interdit
 const args = new Set(process.argv.slice(2));
@@ -157,7 +158,26 @@ const routines: Table = {
 
 const legal: Table = { name: "legal", conflict: "id", columns: { id: "boolean" }, rows: [{ id: true }] };
 
+// ----------------------------------------------------------- liste blanche
+// Les 2 emails autorisés viennent de ALLOWED_EMAILS (jamais du code).
+const allowed = parseAllowedEmails(process.env.ALLOWED_EMAILS);
+const allowedEmails: Table = {
+  name: "allowed_emails",
+  conflict: "short",
+  columns: { email: "text", short: "text", name: "text", color: "text" },
+  rows: (Object.keys(allowed) as Who[]).map((who) => ({
+    email: allowed[who],
+    short: who,
+    name: MEMBERS[who].name,
+    color: MEMBERS[who].color,
+  })),
+};
+
 const TABLES = [items, decisions, links, access, metrics, processes, routines, legal];
+// La liste blanche suit toujours ALLOWED_EMAILS, même sans --reset.
+const ALWAYS_UPDATE = new Set(["allowed_emails"]);
+if (allowedEmails.rows.length) TABLES.push(allowedEmails);
+else console.error("(ALLOWED_EMAILS absent : la liste blanche n'est pas touchée.)");
 
 // -------------------------------------------------------------------- SQL
 const q = (ident: string) => `"${ident.replace(/"/g, '""')}"`;
@@ -169,7 +189,7 @@ function toSql(t: Table): string {
   const typed = cols.map((c) => `${q(c)} ${t.columns[c]}`).join(", ");
   const updates = cols.filter((c) => c !== t.conflict).map((c) => `${q(c)} = excluded.${q(c)}`);
   const onConflict =
-    RESET && updates.length
+    (RESET || ALWAYS_UPDATE.has(t.name)) && updates.length
       ? `on conflict (${q(t.conflict)}) do update set ${updates.join(", ")}`
       : `on conflict (${q(t.conflict)}) do nothing`;
   return [
@@ -204,7 +224,7 @@ async function main() {
   for (const t of TABLES) {
     const { error } = await db
       .from(t.name)
-      .upsert(t.rows, { onConflict: t.conflict, ignoreDuplicates: !RESET });
+      .upsert(t.rows, { onConflict: t.conflict, ignoreDuplicates: !(RESET || ALWAYS_UPDATE.has(t.name)) });
     if (error) {
       console.error(`✗ ${t.name} : ${error.message}`);
       process.exit(1);
