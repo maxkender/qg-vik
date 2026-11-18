@@ -2,6 +2,8 @@
 
 import { useSyncExternalStore } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { toast } from "sonner";
+import { SECRET_MESSAGE, containsSecret } from "@/lib/secrets";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 /**
@@ -137,7 +139,15 @@ export class TableStore<T extends Row> {
     return !failed;
   }
 
+  /** Règle absolue : rien qui ressemble à un mot de passe ou à une clé n'est enregistré. */
+  private blocked(value: unknown): boolean {
+    if (!containsSecret(value)) return false;
+    toast.error(SECRET_MESSAGE, { description: "Ça ressemble à un mot de passe ou à une clé API. Note seulement où il est rangé." });
+    return true;
+  }
+
   insert(row: T): Promise<boolean> {
+    if (this.blocked(row)) return Promise.resolve(false);
     const id = this.key(row);
     this.rows.set(id, row);
     this.emit();
@@ -150,6 +160,7 @@ export class TableStore<T extends Row> {
   update(id: string, patch: Partial<T>): Promise<boolean> {
     const prev = this.rows.get(id);
     if (!prev) return Promise.resolve(false);
+    if (this.blocked(patch)) return Promise.resolve(false);
     this.rows.set(id, { ...prev, ...patch });
     this.emit();
     return this.write(
@@ -159,6 +170,7 @@ export class TableStore<T extends Row> {
   }
 
   upsert(row: T): Promise<boolean> {
+    if (this.blocked(row)) return Promise.resolve(false);
     const id = this.key(row);
     const prev = this.rows.get(id);
     this.rows.set(id, { ...prev, ...row });

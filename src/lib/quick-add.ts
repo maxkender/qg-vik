@@ -26,7 +26,7 @@ const WEEKDAYS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi",
  *   mois prochain, année, inbox, vie, S48, 25/11 → horizon
  * Les mots de date ne sont reconnus qu'en fin de ligne, pour ne pas manger le titre.
  */
-export function parseQuickAdd(input: string, today: Date): QuickAdd {
+export function parseQuickAdd(input: string, today: Date, opts: { dates?: boolean } = {}): QuickAdd {
   const out: QuickAdd = { title: "" };
   const t = startOfDay(today);
   let words = input.trim().split(/\s+/).filter(Boolean);
@@ -50,6 +50,14 @@ export function parseQuickAdd(input: string, today: Date): QuickAdd {
     return true;
   });
 
+  if (opts.dates === false) {
+    out.title = words.join(" ").trim();
+    return out;
+  }
+  // « la réunion du lundi », « le point de mardi » : le jour fait partie du titre, ce n'est pas une échéance.
+  const before = words.length >= 2 ? strip(words[words.length - 2]) : "";
+  const partOfTitle = ["du", "de", "des", "au", "d'un", "chaque"].includes(before);
+
   // Date : un ou deux derniers mots.
   const last = (n: number) => strip(words.slice(-n).join(" ")).replace(/[’']/g, "'");
   const take = (n: number, bucket: string) => {
@@ -72,7 +80,7 @@ export function parseQuickAdd(input: string, today: Date): QuickAdd {
   else if (one === "annee") take(1, yearKey(t));
   else if (one === "inbox") take(1, "inbox");
   else if (one === "vie") take(1, "life");
-  else if (WEEKDAYS.includes(one)) {
+  else if (WEEKDAYS.includes(one) && !partOfTitle) {
     // Prochain jour de ce nom (aujourd'hui exclu).
     const diff = (WEEKDAYS.indexOf(one) - t.getDay() + 7) % 7 || 7;
     take(1, dayKey(addDays(t, diff)));

@@ -2,54 +2,80 @@
 
 import { useView } from "@/components/app/view-state";
 import { Comments } from "@/components/comments";
-import { EditableTitle, Tick } from "@/components/planner/item-card";
-import { PersonAvatar } from "@/components/person-avatar";
+import { AddLine, EditableTitle, Tick } from "@/components/planner/item-card";
+import { BucketPicker, Field, OwnerPicker, PrioPicker } from "@/components/planner/task-form";
+import { useMe } from "@/components/session-provider";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
-import { itemsStore } from "@/lib/data";
-import { bucketLabel } from "@/lib/dates";
-import { OWNER_LABEL, PRIO_LABEL, toggleDone } from "@/lib/items";
+import { itemsStore, profilesStore } from "@/lib/data";
+import { isLate } from "@/lib/dates";
+import { byOrder, createItem, toggleDone } from "@/lib/items";
+import { ago } from "@/lib/pages";
 import { useRows } from "@/lib/store";
 
-/** Panneau de détail d'une tâche : notes et commentaires. */
+/** Panneau d'une tâche : titre, description, urgence, personne, échéance, sous-objectifs, commentaires. */
 export function ItemSheet() {
+  const me = useMe();
   const { openItem, setOpenItem, today } = useView();
   const items = useRows(itemsStore);
+  const profiles = useRows(profilesStore);
   const item = items.find((i) => i.id === openItem);
+  const kids = item ? items.filter((i) => i.parent_id === item.id).sort(byOrder) : [];
+  const author = profiles.find((p) => p.id === item?.created_by)?.name;
 
   return (
     <Sheet open={Boolean(item)} onOpenChange={(o) => !o && setOpenItem(null)}>
-      <SheetContent className="glass-strong w-full gap-0 overflow-y-auto border-0 p-5 sm:max-w-md">
+      <SheetContent className="glass-strong w-full gap-0 overflow-y-auto border-0 p-5 sm:max-w-lg">
         <SheetTitle className="sr-only">Détail de la tâche</SheetTitle>
-        <SheetDescription className="sr-only">Notes et commentaires de la tâche</SheetDescription>
+        <SheetDescription className="sr-only">Titre, description, urgence, personne, échéance, sous-objectifs et commentaires</SheetDescription>
         {item && (
           <div className="flex flex-col gap-5 pt-6">
             <div className="flex items-start gap-2.5">
               <Tick checked={item.done} onChange={() => void toggleDone(item)} label="Fait" />
-              <EditableTitle value={item.title} done={item.done} onSave={(title) => void itemsStore.update(item.id, { title })} className="text-[17px] leading-6 font-semibold" />
+              <EditableTitle value={item.title} done={item.done} onSave={(title) => void itemsStore.update(item.id, { title })} className="font-heading text-[20px] leading-7 font-extrabold tracking-[-0.01em]" />
             </div>
-            <p className="flex flex-wrap items-center gap-2 text-[12px] text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-1.5 py-0.5"><PersonAvatar who={item.owner} size="xs" /> {OWNER_LABEL[item.owner]}</span>
-              <span className="rounded-md bg-muted px-1.5 py-0.5">{PRIO_LABEL[item.prio]}</span>
-              <span className="num rounded-md bg-muted px-1.5 py-0.5">{bucketLabel(item.bucket, today)}</span>
-            </p>
-            <label className="block">
-              <span className="mb-1.5 block text-[12px] font-semibold tracking-[0.08em] text-faint uppercase">Notes</span>
+            {!item.done && isLate(item.bucket, today) && <p className="-mt-3 pl-[27px] text-[12.5px] font-semibold text-bad">En retard</p>}
+
+            <Field title="Description">
               <textarea
                 key={item.id + (item.notes ?? "")}
                 defaultValue={item.notes ?? ""}
-                placeholder="Contexte, liens, détails…"
+                placeholder="Le contexte, ce qui est attendu, les liens utiles…"
+                aria-label="Description"
                 onKeyDown={(e) => e.stopPropagation()}
                 onBlur={(e) => {
-                  const v = e.currentTarget.value.trim();
-                  if (v !== (item.notes ?? "")) void itemsStore.update(item.id, { notes: v || null });
+                  const el = e.currentTarget;
+                  const v = el.value.trim();
+                  if (v !== (item.notes ?? "")) void itemsStore.update(item.id, { notes: v || null }).then((ok) => { if (!ok) el.value = item.notes ?? ""; });
                 }}
-                className="min-h-24 w-full resize-y rounded-xl border border-line bg-glass p-3 text-[13.5px] outline-none transition-colors duration-100 placeholder:text-faint focus:border-line-strong [field-sizing:content]"
+                className="min-h-28 w-full resize-y rounded-xl border border-line bg-glass p-3 text-[13.5px] leading-relaxed outline-none transition-colors duration-100 placeholder:text-faint focus:border-line-strong [field-sizing:content]"
               />
-            </label>
-            <div>
-              <p className="mb-2 text-[12px] font-semibold tracking-[0.08em] text-faint uppercase">Commentaires</p>
-              <Comments target={{ itemId: item.id }} />
-            </div>
+            </Field>
+            <Field title="Urgence"><PrioPicker value={item.prio} onChange={(prio) => void itemsStore.update(item.id, { prio })} /></Field>
+            <Field title="Assignée à"><OwnerPicker value={item.owner} onChange={(owner) => void itemsStore.update(item.id, { owner })} /></Field>
+            <Field title="Échéance">
+              <BucketPicker
+                value={item.bucket}
+                onChange={(bucket) => {
+                  void itemsStore.update(item.id, { bucket });
+                  kids.forEach((k) => void itemsStore.update(k.id, { bucket }));
+                }}
+              />
+            </Field>
+
+            <Field title={`Sous-objectifs${kids.length ? ` · ${kids.filter((k) => k.done).length}/${kids.length}` : ""}`}>
+              <div className="flex flex-col">
+                {kids.map((k) => (
+                  <div key={k.id} className="flex items-start gap-2 py-1">
+                    <Tick small checked={k.done} onChange={() => void toggleDone(k)} label="Fait" />
+                    <EditableTitle value={k.title} done={k.done} className="text-[13.5px] leading-5" onSave={(title) => void itemsStore.update(k.id, { title })} />
+                  </div>
+                ))}
+                <AddLine small placeholder="Ajouter un sous-objectif…" onAdd={(title) => void createItem({ title, bucket: item.bucket, owner: item.owner, parent_id: item.id, created_by: me.id })} />
+              </div>
+            </Field>
+
+            <Field title="Commentaires"><Comments target={{ itemId: item.id }} /></Field>
+            <p className="text-[11.5px] text-faint">Créée {author ? `par ${author} ` : ""}{ago(item.created_at)}</p>
           </div>
         )}
       </SheetContent>

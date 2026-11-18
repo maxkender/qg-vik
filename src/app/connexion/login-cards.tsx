@@ -40,7 +40,9 @@ export function LoginCards() {
     startTransition(async () => {
       const res = await enter(who);
       if (res.ok) {
-        window.location.replace("/");
+        // Retour à la page demandée (interne uniquement) après une reconnexion.
+        const back = params.get("retour");
+        window.location.replace(back && /^\/[a-z0-9\-/?=&]*$/i.test(back) && !back.startsWith("//") ? back : "/");
         return;
       }
       if ("askPassword" in res && res.askPassword !== "inconnu") {

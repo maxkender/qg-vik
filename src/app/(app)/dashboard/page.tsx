@@ -8,6 +8,7 @@ import { useView } from "@/components/app/view-state";
 import { Bars, Lines, Panel } from "@/components/dashboard/charts";
 import { Decisions } from "@/components/dashboard/decisions";
 import { Flags, MonthlyByPoste, TopVendors, Transactions } from "@/components/dashboard/expenses";
+import { QuickLinks } from "@/components/dashboard/quick-links";
 import { Src, SyncBar } from "@/components/dashboard/sync-bar";
 import { useDash, type Dash, type SourceInfo } from "@/components/dashboard/use-dash";
 import { verdictsStore } from "@/lib/data";
@@ -119,6 +120,7 @@ export default function DashboardPage() {
       </ViewHeader>
 
       <div className="flex flex-col gap-3 px-4 pb-16 md:px-6">
+        <QuickLinks />
         <SyncBar dash={dash} />
 
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

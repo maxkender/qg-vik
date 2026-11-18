@@ -16,6 +16,7 @@ export const byOrder = (a: Item, b: Item) =>
 
 export function createItem(input: {
   title: string;
+  notes?: string | null;
   bucket: string;
   owner: Owner;
   prio?: Prio;
@@ -27,7 +28,7 @@ export function createItem(input: {
   const item: Item = {
     id: newId(),
     title: input.title,
-    notes: null,
+    notes: input.notes ?? null,
     bucket: input.bucket,
     owner: input.owner,
     prio: input.prio ?? "normal",

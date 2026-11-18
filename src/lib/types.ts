@@ -49,6 +49,11 @@ export type AccessRow = {
   who: string | null;
   used_by: string | null;
   rotated_at: string | null;
+  account_email: string | null;
+  owner: "Max" | "Adrien" | "Vik Studios" | null;
+  payment_method: string | null;
+  monthly_cost: number | null;
+  renewal_date: string | null;
   created_at: string;
 };
 
@@ -64,6 +69,15 @@ export type Legal = {
   dirigeant: string | null;
   comptable: string | null;
   banque: string | null;
+  nom_commercial: string | null;
+  code_ape: string | null;
+  capital: string | null;
+  ville_rcs: string | null;
+  iban: string | null;
+  bic: string | null;
+  banque_titulaire: string | null;
+  banque_domiciliation: string | null;
+  vault_url: string | null;
   updated_at: string;
 };
 
@@ -244,3 +258,11 @@ export type OsDaily = {
   /** Seulement pour les chiffres repris du seed (pas de détail par post ni par ticket). */
   viraux_pct?: number | null; support_pct?: number | null;
 };
+
+export const DOC_CATEGORIES = ["Société", "Fiscal & social", "Banque", "Contrats", "Apps & stores", "Juridique", "Assurances"] as const;
+export type DocCategory = (typeof DOC_CATEGORIES)[number];
+export type DocRow = {
+  id: string; name: string; category: DocCategory; doc_date: string | null; expires_at: string | null; notes: string | null;
+  path: string; mime: string | null; size: number | null; alerted_for: string | null; added_by: string | null; created_at: string;
+};
+export type DocLog = { id: string; document_id: string | null; document_name: string; action: "ajouté" | "ouvert" | "téléchargé" | "supprimé"; actor: string; at: string };

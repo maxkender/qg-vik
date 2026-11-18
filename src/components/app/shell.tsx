@@ -4,9 +4,10 @@ import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, Moon, Plus, Search, Sun } from "lucide-react";
+import { useDocumentAlerts } from "@/components/acces/use-document-alerts";
 import { useView, type WhoFilter } from "@/components/app/view-state";
 import { PersonAvatar } from "@/components/person-avatar";
-import { QuickAdd } from "@/components/planner/quick-add";
+import { NewTaskForm } from "@/components/planner/task-form";
 import { logout, useMe } from "@/components/session-provider";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { itemsStore } from "@/lib/data";
@@ -23,6 +24,7 @@ export function AppShell({ children, pagesNav, search }: { children: ReactNode; 
   const pathname = usePathname();
   const router = useRouter();
   const { quickAddOpen, setQuickAddOpen, setSearchOpen } = useView();
+  useDocumentAlerts();
 
   // Raccourcis : N = nouvelle tâche, 1 à 9 = changer de vue, / = recherche.
   useEffect(() => {
@@ -62,12 +64,12 @@ export function AppShell({ children, pagesNav, search }: { children: ReactNode; 
       <main className="flex min-h-0 min-w-0 flex-1 flex-col pb-[env(safe-area-inset-bottom)]">{children}</main>
 
       <Dialog open={quickAddOpen} onOpenChange={setQuickAddOpen}>
-        <DialogContent showCloseButton={false} className="glass-strong top-[22%] translate-y-0 gap-0 rounded-3xl border-0 p-2 sm:max-w-xl">
+        <DialogContent showCloseButton={false} className="glass-strong top-[14%] translate-y-0 gap-0 rounded-3xl border-0 p-5 sm:max-w-xl">
           <DialogTitle className="sr-only">Nouvelle tâche</DialogTitle>
           <DialogDescription className="sr-only">
-            Tape la tâche. Tu peux ajouter !urgent, @adrien ou une date comme demain.
+            Titre, description, urgence, personne et échéance de la tâche.
           </DialogDescription>
-          <QuickAdd autoFocus onDone={() => setQuickAddOpen(false)} className="border-0 bg-transparent shadow-none backdrop-blur-none" />
+          <NewTaskForm onDone={() => setQuickAddOpen(false)} />
         </DialogContent>
       </Dialog>
       {search}

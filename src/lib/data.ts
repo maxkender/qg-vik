@@ -3,7 +3,7 @@
 import type { VendorRule } from "@/lib/postes";
 import { TableStore } from "@/lib/store";
 import type {
-  AccessRow, AppRow, CommentRow, CountryVerdict, ExpenseFlag, MetaSpend, OsDaily, QontoBalance, QontoTx, RcCountryWeekly, RcDaily, SyncRun, Decision, Expense, ExpenseCheck, ExpenseRule, Item, Legal,
+  AccessRow, AppRow, CommentRow, DocLog, DocRow, CountryVerdict, ExpenseFlag, MetaSpend, OsDaily, QontoBalance, QontoTx, RcCountryWeekly, RcDaily, SyncRun, Decision, Expense, ExpenseCheck, ExpenseRule, Item, Legal,
   LinkRow, MetricsSnapshot, PageRow, ProcessRow, Profile, ReadRow, Routine,
 } from "@/lib/types";
 
@@ -36,3 +36,6 @@ export const vendorRulesStore = new TableStore<VendorRule & Record<string, unkno
 export const flagsStore = new TableStore<ExpenseFlag>("expense_flags", "id");
 export const metaStore = new TableStore<MetaSpend>("meta_spend_daily", "date", (r) => `${r.date}|${r.campaign_id}`);
 export const osStore = new TableStore<OsDaily>("os_daily", "date", (r) => `${r.date}|${r.app}`);
+
+export const documentsStore = new TableStore<DocRow>("documents", "id");
+export const documentLogStore = new TableStore<DocLog>("document_log", "id");

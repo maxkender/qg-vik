@@ -1,5 +1,45 @@
 [
  {
+  "id": "big-site",
+  "group": "Accès rapides",
+  "title": "Site Vik Studios",
+  "url": "https://vikstudios.com",
+  "note": "Le site",
+  "order": 1
+ },
+ {
+  "id": "big-ugc",
+  "group": "Accès rapides",
+  "title": "OS UGC",
+  "url": "https://vik-ugc-os.vercel.app",
+  "note": "Le site UGC",
+  "order": 2
+ },
+ {
+  "id": "big-hub",
+  "group": "Accès rapides",
+  "title": "Candidatures slideshows",
+  "url": "https://vik-studios-creators.com/hub",
+  "note": "Le Hub des créateurs",
+  "order": 3
+ },
+ {
+  "id": "big-slides",
+  "group": "Accès rapides",
+  "title": "OS Slideshows",
+  "url": "https://sophia-marketing-orga.vercel.app/",
+  "note": "Le site des slideshows",
+  "order": 4
+ },
+ {
+  "id": "big-asc",
+  "group": "Accès rapides",
+  "title": "App Store Connect",
+  "url": "https://appstoreconnect.apple.com/apps",
+  "note": "Les apps iOS",
+  "order": 5
+ },
+ {
   "id": "lk00",
   "group": "Guides & job posts (Notion)",
   "title": "TikTok Poster Guide",

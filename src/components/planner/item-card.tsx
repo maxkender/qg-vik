@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useRef, useState, type KeyboardEvent } from "react";
-import { Check, ChevronDown, Ellipsis, MessageSquare, Plus, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Ellipsis, Maximize2, MessageSquare, Plus, Trash2 } from "lucide-react";
 import { PersonAvatar } from "@/components/person-avatar";
 import { useMe } from "@/components/session-provider";
 import { useView } from "@/components/app/view-state";
@@ -179,6 +179,17 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
         >
           <PersonAvatar who={item.owner} size="xs" />
         </button>
+        {onOpen && (
+          <button
+            type="button"
+            onClick={() => onOpen(item)}
+            aria-label="Ouvrir la tâche"
+            title="Ouvrir : description, urgence, commentaires"
+            className="mt-[1px] grid size-5 shrink-0 place-items-center rounded-md text-faint opacity-0 transition-opacity duration-100 outline-none group-hover/card:opacity-100 hover:text-foreground focus-visible:opacity-100 max-md:opacity-100"
+          >
+            <Maximize2 className="size-3.5" aria-hidden />
+          </button>
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label="Actions"
@@ -189,7 +200,7 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
           <DropdownMenuContent align="end" className="w-52">
             {onOpen && (
               <DropdownMenuItem onSelect={() => onOpen(item)}>
-                <MessageSquare aria-hidden /> Notes et commentaires
+                <Maximize2 aria-hidden /> Ouvrir la tâche
               </DropdownMenuItem>
             )}
             <DropdownMenuItem
@@ -247,6 +258,11 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
         </DropdownMenu>
       </div>
 
+      {item.notes && onOpen && (
+        <button type="button" onClick={() => onOpen(item)} className="mt-0.5 block w-full truncate pl-[25px] text-left text-[12px] text-muted-foreground hover:text-foreground">
+          {item.notes.split("\n")[0]}
+        </button>
+      )}
       {(showHorizon || late || showLate || kids.length > 0 || comments > 0) && (
         <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 pl-[25px] text-[11.5px] text-faint">
           {(showHorizon || late) && (
