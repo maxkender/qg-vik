@@ -59,6 +59,22 @@ export async function accountState(who: Who): Promise<AccountState> {
   return data === "nouveau" || data === "pret" ? data : "inconnu";
 }
 
+/**
+ * Connexion en un clic (provisoire, sans mot de passe à taper) : active tant que
+ * QG_AUTO_LOGIN_SECRET est défini côté serveur. Retirer la variable la désactive.
+ */
+export async function enter(who: Who): Promise<LoginResult | { ok: false; askPassword: AccountState }> {
+  if (!isWho(who)) return { ok: false, message: "Choix inconnu." };
+  const secret = process.env.QG_AUTO_LOGIN_SECRET;
+  if (!secret) return { ok: false, askPassword: await accountState(who) };
+  const email = allowedEmails()[who];
+  if (!email) return { ok: false, message: NOT_READY };
+  const supabase = await supabaseServer();
+  const { error } = await supabase.auth.signInWithPassword({ email, password: secret });
+  if (error) return { ok: false, message: "La connexion n'a pas abouti. Réessaie dans un instant." };
+  return { ok: true, who };
+}
+
 const NOT_READY = "Ce compte n'est pas encore prêt côté serveur (variable ALLOWED_EMAILS ou seed).";
 
 /**

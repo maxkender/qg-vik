@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MEMBERS, type Who } from "@/lib/members";
 import { cn } from "@/lib/utils";
-import { accountState, signInWithGoogle, signInWithPassword, type AccountState } from "./actions";
+import { enter, signInWithGoogle, signInWithPassword, type AccountState } from "./actions";
 
 const ERRORS: Record<string, string> = {
   refuse: "Ce compte n'est pas autorisé. Seuls Maximilien et Adrien peuvent entrer.",
@@ -38,13 +38,17 @@ export function LoginCards() {
     setPicked(who);
     setError(null);
     startTransition(async () => {
-      const s = await accountState(who);
-      if (s === "inconnu") {
-        setPicked(null);
-        setError(`Le compte de ${MEMBERS[who].nick} n'est pas encore prêt côté serveur.`);
-      } else {
-        setState(s);
+      const res = await enter(who);
+      if (res.ok) {
+        window.location.replace("/");
+        return;
       }
+      if ("askPassword" in res && res.askPassword !== "inconnu") {
+        setState(res.askPassword);
+        return;
+      }
+      setPicked(null);
+      setError("message" in res ? res.message : `Le compte de ${MEMBERS[who].nick} n'est pas encore prêt côté serveur.`);
     });
   }
 
