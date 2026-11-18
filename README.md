@@ -2,6 +2,10 @@
 
 Le QG privé de Vik Studios (Maximilien et Adrien). Le brief complet est dans [`CLAUDE.md`](./CLAUDE.md).
 
+## Déploiement
+
+Dépôt GitHub privé `maxkender/qg-vik`, relié au projet Vercel `qg-vik` : chaque push sur `main` se déploie tout seul sur https://qg-vik.vercel.app.
+
 ## Lancer en local
 
 ```bash
