@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { LogOut } from "lucide-react";
-import { signOut } from "@/app/connexion/actions";
 import { PersonAvatar } from "@/components/person-avatar";
-import { useMe } from "@/components/session-provider";
+import { logout, useMe } from "@/components/session-provider";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 type Counts = { urgent: number; total: number };
@@ -40,16 +39,15 @@ export default function Home() {
         <div className="flex items-center gap-2.5">
           <PersonAvatar who={me.short} />
           <span className="text-[13px] font-medium">{me.name}</span>
-          <form action={signOut}>
-            <button
-              type="submit"
-              className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-colors duration-100 hover:bg-accent hover:text-foreground"
-              aria-label="Se déconnecter"
-              title="Se déconnecter"
-            >
-              <LogOut className="size-4" aria-hidden />
-            </button>
-          </form>
+          <button
+            type="button"
+            onClick={() => void logout()}
+            className="grid size-8 place-items-center rounded-lg text-muted-foreground transition-colors duration-100 hover:bg-accent hover:text-foreground"
+            aria-label="Se déconnecter"
+            title="Se déconnecter"
+          >
+            <LogOut className="size-4" aria-hidden />
+          </button>
         </div>
       </header>
 

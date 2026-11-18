@@ -47,6 +47,55 @@ export async function sendMagicLink(who: Who): Promise<LoginResult> {
   return { ok: true, who };
 }
 
+export type AccountState = "nouveau" | "pret" | "inconnu";
+
+/** Ce compte a-t-il déjà son mot de passe ? (pour savoir quoi demander) */
+export async function accountState(who: Who): Promise<AccountState> {
+  if (!isWho(who)) return "inconnu";
+  const email = allowedEmails()[who];
+  if (!email) return "inconnu";
+  const supabase = await supabaseServer();
+  const { data } = await supabase.rpc("qg_login_state", { p_email: email });
+  return data === "nouveau" || data === "pret" ? data : "inconnu";
+}
+
+const NOT_READY = "Ce compte n'est pas encore prêt côté serveur (variable ALLOWED_EMAILS ou seed).";
+
+/**
+ * Connexion par mot de passe, sans email. À la première connexion, la personne
+ * choisit son mot de passe ; il est haché dans la base, jamais stocké en clair.
+ */
+export async function signInWithPassword(who: Who, password: string): Promise<LoginResult> {
+  if (!isWho(who)) return { ok: false, message: "Choix inconnu." };
+  const email = allowedEmails()[who];
+  if (!email) return { ok: false, message: NOT_READY };
+  if (typeof password !== "string" || password.length === 0 || password.length > 200) {
+    return { ok: false, message: "Mot de passe manquant." };
+  }
+
+  const supabase = await supabaseServer();
+  const { data: state } = await supabase.rpc("qg_login_state", { p_email: email });
+  if (state !== "nouveau" && state !== "pret") return { ok: false, message: NOT_READY };
+
+  if (state === "nouveau") {
+    if (password.length < 10) return { ok: false, message: "Il faut au moins 10 caractères." };
+    const { data: claimed, error } = await supabase.rpc("qg_claim", { p_email: email, p_password: password });
+    if (error) return { ok: false, message: "Le mot de passe n'a pas pu être enregistré. Réessaie." };
+    // 'deja' : quelqu'un vient de le choisir à l'instant ; on tente simplement la connexion.
+    if (claimed !== "ok" && claimed !== "deja") return { ok: false, message: NOT_READY };
+  }
+
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    const tooMany = error.status === 429;
+    return {
+      ok: false,
+      message: tooMany ? "Trop d'essais d'un coup. Attends une minute." : "Mot de passe incorrect.",
+    };
+  }
+  return { ok: true, who };
+}
+
 /** Connexion Google : la base refuse tout compte hors des 2 emails autorisés. */
 export async function signInWithGoogle(): Promise<void> {
   const supabase = await supabaseServer();
@@ -56,10 +105,4 @@ export async function signInWithGoogle(): Promise<void> {
   });
   if (error || !data.url) redirect("/connexion?erreur=google");
   redirect(data.url);
-}
-
-export async function signOut(): Promise<void> {
-  const supabase = await supabaseServer();
-  await supabase.auth.signOut();
-  redirect("/connexion");
 }

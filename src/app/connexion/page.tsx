@@ -21,7 +21,7 @@ export default function ConnexionPage() {
         </Suspense>
 
         <p className="text-[12.5px] text-faint">
-          Accès privé. Un lien de connexion est envoyé par email, sans mot de passe.
+          Accès privé, réservé à Maximilien et Adrien.
         </p>
       </div>
     </main>

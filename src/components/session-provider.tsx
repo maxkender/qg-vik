@@ -15,6 +15,12 @@ export function useMe(): Me {
   return me;
 }
 
+/** Déconnexion : on vide la session puis on recharge tout, pour ne rien garder en mémoire. */
+export async function logout() {
+  await supabaseBrowser().auth.signOut();
+  window.location.replace("/connexion");
+}
+
 /**
  * Charge la session et le profil dans le navigateur.
  * Pas de profil = pas membre : on déconnecte et on renvoie à l'accueil.

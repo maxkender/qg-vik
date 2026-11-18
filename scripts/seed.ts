@@ -202,7 +202,8 @@ function toSql(t: Table): string {
 
 async function main() {
   if (SQL_ONLY) {
-    console.log("begin;\n" + TABLES.map(toSql).join("\n\n") + "\ncommit;");
+    const accounts = allowedEmails.rows.length ? "\n\nselect public.qg_ensure_accounts();" : "";
+    console.log("begin;\n" + TABLES.map(toSql).join("\n\n") + accounts + "\ncommit;");
     return;
   }
 
@@ -231,6 +232,14 @@ async function main() {
     }
     const { count } = await db.from(t.name).select("*", { count: "exact", head: true });
     console.log(`✓ ${t.name.padEnd(18)} ${String(t.rows.length).padStart(3)} dans le seed · ${count ?? "?"} en base`);
+  }
+  if (allowedEmails.rows.length) {
+    const { data, error } = await db.rpc("qg_ensure_accounts");
+    if (error) {
+      console.error(`✗ comptes des membres : ${error.message}`);
+      process.exit(1);
+    }
+    console.log(`✓ comptes des membres  ${data} créé(s)`);
   }
   console.log(RESET ? "Seed réappliqué (valeurs d'origine)." : "Seed importé (rien d'existant n'a été écrasé).");
 }
