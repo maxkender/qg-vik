@@ -1,4 +1,3 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { blocksToText, buildContext, isoWeekKey, todayParis } from "@/lib/assistant/context";
 import { CATEGORY_KEYS } from "@/lib/categories";
@@ -8,48 +7,48 @@ import { supabaseServer } from "@/lib/supabase/server";
 
 export const maxDuration = 120;
 
-const MODEL = "claude-opus-5-5";
+// Modèle Gemini. « gemini-flash-latest » suit la dernière version ; GEMINI_MODEL permet d'en choisir un autre.
+const MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
+const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
 const BUCKET = /^(inbox|life|d:\d{4}-\d{2}-\d{2}|w:\d{4}-W\d{2}|m:\d{4}-\d{2}|y:\d{4})$/;
 
-const TOOLS: Anthropic.Beta.BetaTool[] = [
+type Part = { text?: string; functionCall?: { name: string; args?: Record<string, unknown> }; functionResponse?: { name: string; response: Record<string, unknown> }; [k: string]: unknown };
+type Content = { role: "user" | "model"; parts: Part[] };
+
+const TOOLS = [
   {
     name: "ajouter_tache",
     description: "Crée une tâche dans le QG. À utiliser dès que la personne demande d'ajouter, de noter ou d'assigner quelque chose à faire. Plusieurs tâches = plusieurs appels.",
-    strict: true,
-    input_schema: {
-      type: "object",
-      additionalProperties: false,
-      required: ["titre", "description", "pour", "priorite", "categorie", "echeance"],
+    parameters: {
+      type: "OBJECT",
+      required: ["titre", "pour", "priorite", "echeance"],
       properties: {
-        titre: { type: "string", description: "Titre court, à l'infinitif." },
-        description: { type: ["string", "null"], description: "Détails utiles, sinon null." },
-        pour: { type: "string", enum: ["max", "adrien", "both"], description: "Personne assignée. Par défaut : la personne qui parle." },
-        priorite: { type: "string", enum: ["urgent", "normal", "later"] },
-        categorie: { type: ["string", "null"], enum: [...CATEGORY_KEYS, null], description: "La catégorie qui correspond, sinon null." },
-        echeance: { type: "string", description: "inbox (sans date), life, d:AAAA-MM-JJ (un jour), w:AAAA-Wnn (une semaine ISO), m:AAAA-MM (un mois) ou y:AAAA." },
+        titre: { type: "STRING", description: "Titre court, à l'infinitif." },
+        description: { type: "STRING", description: "Détails utiles, si besoin." },
+        pour: { type: "STRING", enum: ["max", "adrien", "both"], description: "Personne assignée. Par défaut : la personne qui parle." },
+        priorite: { type: "STRING", enum: ["urgent", "normal", "later"] },
+        categorie: { type: "STRING", enum: CATEGORY_KEYS, description: "La catégorie qui correspond, si l'une convient." },
+        echeance: { type: "STRING", description: "inbox (sans date), life, d:AAAA-MM-JJ (un jour), w:AAAA-Wnn (une semaine ISO), m:AAAA-MM (un mois) ou y:AAAA." },
       },
     },
   },
   {
     name: "envoyer_message",
     description: "Envoie un retour ou un lien à l'autre membre : il le verra sur son profil.",
-    strict: true,
-    input_schema: {
-      type: "object",
-      additionalProperties: false,
-      required: ["a", "texte", "lien"],
+    parameters: {
+      type: "OBJECT",
+      required: ["a"],
       properties: {
-        a: { type: "string", enum: ["max", "adrien"] },
-        texte: { type: ["string", "null"] },
-        lien: { type: ["string", "null"], description: "Adresse https complète, sinon null." },
+        a: { type: "STRING", enum: ["max", "adrien"] },
+        texte: { type: "STRING" },
+        lien: { type: "STRING", description: "Adresse https complète." },
       },
     },
   },
   {
     name: "lire_page",
     description: "Lit le contenu d'une page (document) du QG à partir de son id, donné dans la liste « pages ».",
-    strict: true,
-    input_schema: { type: "object", additionalProperties: false, required: ["id"], properties: { id: { type: "string" } } },
+    parameters: { type: "OBJECT", required: ["id"], properties: { id: { type: "STRING" } } },
   },
 ];
 
@@ -85,8 +84,9 @@ export async function POST(request: Request) {
   const me: Who = profile.short;
   const userId = auth.user.id;
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json({ error: "L'assistant n'est pas encore branché : il manque la variable ANTHROPIC_API_KEY dans Vercel." }, { status: 503 });
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return NextResponse.json({ error: "L'assistant n'est pas encore branché : il manque la variable GEMINI_API_KEY dans Vercel." }, { status: 503 });
   }
 
   const body = (await request.json().catch(() => null)) as { messages?: { role: string; text: string }[] } | null;
@@ -94,9 +94,8 @@ export async function POST(request: Request) {
   if (!history.length || history.at(-1)!.role !== "user") return NextResponse.json({ error: "Question vide." }, { status: 400 });
   if (containsSecret(history.at(-1)!.text)) return NextResponse.json({ error: `${SECRET_MESSAGE}.` }, { status: 400 });
 
-  const client = new Anthropic();
   const system = systemPrompt(me, await buildContext(db, me));
-  const messages: Anthropic.Beta.BetaMessageParam[] = history.map((m) => ({ role: m.role as "user" | "assistant", content: m.text }));
+  const contents: Content[] = history.map((m) => ({ role: m.role === "user" ? "user" : "model", parts: [{ text: m.text }] }));
 
   async function runTool(name: string, input: Record<string, unknown>): Promise<{ result: string; label?: string; error?: boolean }> {
     if (containsSecret(input)) return { result: `Refusé : ${SECRET_MESSAGE}.`, error: true };
@@ -107,7 +106,7 @@ export async function POST(request: Request) {
       if (!BUCKET.test(bucket)) return { result: "Échéance invalide. Formats : inbox, d:AAAA-MM-JJ, w:AAAA-Wnn, m:AAAA-MM, y:AAAA.", error: true };
       const { error } = await db.from("items").insert({
         title, notes: input.description ? String(input.description) : null, bucket,
-        owner: input.pour, prio: input.priorite, category: input.categorie ?? null, sort_order: Date.now(), created_by: userId,
+        owner: ["max", "adrien", "both"].includes(String(input.pour)) ? input.pour : me, prio: ["urgent", "normal", "later"].includes(String(input.priorite)) ? input.priorite : "normal", category: CATEGORY_KEYS.includes(input.categorie as never) ? input.categorie : null, sort_order: Date.now(), created_by: userId,
       });
       if (error) return { result: `Échec : ${error.message}`, error: true };
       return { result: "Tâche créée.", label: `Tâche ajoutée : ${title}` };
@@ -137,42 +136,72 @@ export async function POST(request: Request) {
       const send = (event: Record<string, unknown>) => controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));
       try {
         for (let turn = 0; turn < 8; turn++) {
-          const run = client.beta.messages.stream({
-            model: MODEL,
-            max_tokens: 16000,
-            betas: ["server-side-fallback-2026-07-01"],
-            fallbacks: "default",
-            system,
-            tools: TOOLS,
-            messages,
+          const res = await fetch(`${ENDPOINT}/${MODEL}:streamGenerateContent?alt=sse`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: system }] },
+              contents,
+              tools: [{ functionDeclarations: TOOLS }],
+            }),
           });
-          run.on("text", (delta) => send({ t: "text", v: delta }));
-          const message = await run.finalMessage();
+          if (!res.ok || !res.body) {
+            const detail = ((await res.json().catch(() => null)) as { error?: { message?: string } } | null)?.error?.message ?? "";
+            console.error("assistant: Gemini a répondu", res.status, detail.slice(0, 300));
+            send({
+              t: "error",
+              v: res.status === 400 && /API key/i.test(detail) ? "La clé GEMINI_API_KEY est refusée : vérifie-la dans Vercel."
+                : res.status === 401 || res.status === 403 ? "La clé GEMINI_API_KEY n'a pas accès à Gemini : vérifie que l'API « Generative Language » est activée et autorisée pour cette clé."
+                : res.status === 404 ? `Le modèle « ${MODEL} » est introuvable.`
+                : res.status === 429 ? "Quota Gemini atteint. Réessaie dans une minute."
+                : `L'assistant est indisponible (erreur ${res.status}).`,
+            });
+            break;
+          }
 
-          if (message.stop_reason === "refusal") {
+          // Lecture du flux : chaque ligne « data: » porte un morceau de réponse.
+          const parts: Part[] = [];
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+          let blocked = false;
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() ?? "";
+            for (const line of lines) {
+              if (!line.startsWith("data:")) continue;
+              const chunk = JSON.parse(line.slice(5)) as { candidates?: { content?: { parts?: Part[] }; finishReason?: string }[]; promptFeedback?: { blockReason?: string } };
+              if (chunk.promptFeedback?.blockReason || ["SAFETY", "PROHIBITED_CONTENT", "BLOCKLIST"].includes(chunk.candidates?.[0]?.finishReason ?? "")) blocked = true;
+              for (const part of chunk.candidates?.[0]?.content?.parts ?? []) {
+                parts.push(part);
+                if (part.text && !part.thought) send({ t: "text", v: part.text });
+              }
+            }
+          }
+          if (blocked) {
             send({ t: "text", v: "Je ne peux pas répondre à cette demande." });
             break;
           }
-          const calls = message.content.filter((b): b is Anthropic.Beta.BetaToolUseBlock => b.type === "tool_use");
-          if (message.stop_reason !== "tool_use" || !calls.length) break;
 
-          messages.push({ role: "assistant", content: message.content });
-          const results: Anthropic.Beta.BetaToolResultBlockParam[] = [];
+          const calls = parts.filter((p) => p.functionCall);
+          if (!calls.length) break;
+          // Les morceaux du modèle sont renvoyés tels quels (ils portent sa signature de raisonnement).
+          contents.push({ role: "model", parts });
+          const results: Part[] = [];
           for (const call of calls) {
-            const out = await runTool(call.name, (call.input ?? {}) as Record<string, unknown>);
+            const out = await runTool(call.functionCall!.name, call.functionCall!.args ?? {});
             if (out.label) send({ t: "action", v: out.label });
-            results.push({ type: "tool_result", tool_use_id: call.id, content: out.result, is_error: out.error });
+            results.push({ functionResponse: { name: call.functionCall!.name, response: out.error ? { error: out.result } : { result: out.result } } });
           }
-          messages.push({ role: "user", content: results });
+          contents.push({ role: "user", parts: results });
           send({ t: "text", v: "\n" });
         }
       } catch (error) {
-        const message =
-          error instanceof Anthropic.AuthenticationError ? "La clé ANTHROPIC_API_KEY est refusée : vérifie-la dans Vercel."
-          : error instanceof Anthropic.RateLimitError ? "Trop de demandes d'un coup. Réessaie dans une minute."
-          : error instanceof Anthropic.APIError ? `L'assistant est indisponible (erreur ${error.status ?? "réseau"}).`
-          : "L'assistant a rencontré un problème.";
-        send({ t: "error", v: message });
+        console.error("assistant:", error instanceof Error ? error.message : error);
+        send({ t: "error", v: "L'assistant a rencontré un problème." });
       }
       controller.close();
     },
