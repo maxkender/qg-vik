@@ -67,7 +67,7 @@ export async function syncRevenueCat(db: SupabaseClient): Promise<number> {
 
   const today = isoDay(new Date());
   // Les apps en parallèle (une clé par projet), les graphiques d'une app à la suite.
-  const counts = await Promise.all(
+  const settled = await Promise.allSettled(
     ready.map(async (app) => {
       const key = rcKey(app.key)!;
       const { count } = await db.from("rc_daily").select("date", { count: "exact", head: true }).eq("app", app.key);
@@ -106,8 +106,14 @@ export async function syncRevenueCat(db: SupabaseClient): Promise<number> {
       return dailyRows.length + weeklyRows.length;
     }),
   );
-  if (missing.length) throw new PartialSync(counts.reduce((a, b) => a + b, 0), `Clé manquante pour : ${missing.join(", ")}`);
-  return counts.reduce((a, b) => a + b, 0);
+  // Une app en échec (clé refusée…) ne fait pas perdre les autres.
+  const rows = settled.reduce((a, r) => a + (r.status === "fulfilled" ? r.value : 0), 0);
+  const problems = [
+    ...settled.flatMap((r, i) => (r.status === "rejected" ? [`${ready[i].key} : ${(r.reason as Error).message.replace(/\s+/g, " ").slice(0, 160)}`] : [])),
+    ...(missing.length ? [`clé manquante pour ${missing.join(", ")}`] : []),
+  ];
+  if (problems.length) throw new PartialSync(rows, problems.join(" · "));
+  return rows;
 }
 
 /** Une partie a été synchronisée, mais il manque quelque chose : on le dit sans perdre le reste. */
