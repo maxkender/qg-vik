@@ -47,6 +47,17 @@ Prévu pour plus tard (le code est déjà là, routes `/auth/callback` et `/auth
 
 En local, dans certains environnements derrière un proxy, lancer le serveur avec `NODE_USE_ENV_PROXY=1`.
 
+## Phase 2 : chiffres en direct
+
+Deux intégrations **en lecture seule** (uniquement des `GET`, aucun virement, aucune écriture ailleurs que dans la base du QG) :
+
+- `src/lib/integrations/qonto.ts` : soldes et sorties d'argent ;
+- `src/lib/integrations/revenuecat.ts` : revenus par app et par pays.
+
+`POST /api/snapshot` (bouton « Mettre à jour » du dashboard) et `GET /api/cron/snapshot` (Vercel, chaque lundi à 6h UTC, soit 7h à Paris en hiver) créent un nouveau snapshot et importent les nouvelles dépenses. Les chiffres qui viennent de l'OS (vues, posts viraux, comptes, kills, support) ne sont pas encore branchés : ils sont repris du snapshot précédent.
+
+Variables à poser dans Vercel pour l'activer : `SUPABASE_SECRET_KEY`, `QONTO_LOGIN`, `QONTO_SECRET_KEY`, `REVENUECAT_KEY_SOPHIA`, `REVENUECAT_KEY_MICABO`, `REVENUECAT_KEY_UNSWIPE`, `CRON_SECRET`. Tant qu'elles manquent, les routes répondent « pas encore configuré » et le dashboard reste sur le dernier snapshot.
+
 ## Base de données
 
 - Schéma : `supabase/migrations/` (RLS activée sur toutes les tables, accès réservé aux 2 membres).

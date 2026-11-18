@@ -2,7 +2,8 @@
 
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowDownRight, ArrowRight, ArrowUpRight, CircleAlert, CircleCheck, CircleMinus, CircleX, Trash2 } from "lucide-react";
+import { ArrowDownRight, ArrowRight, ArrowUpRight, CircleAlert, CircleCheck, CircleMinus, CircleX, RefreshCw, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { ViewHeader } from "@/components/app/shell";
 import { Bars, Lines, Panel, type Serie } from "@/components/dashboard/charts";
 import { Tick } from "@/components/planner/item-card";
@@ -40,7 +41,7 @@ function Dashboard({ m, asOf }: { m: MetricsPayload; asOf: string }) {
   const margin = cur ? cur.rev - cur.dep : null;
   const prevMargin = prev ? prev.rev - prev.dep : null;
 
-  const weekData = weeks.map((w) => ({ ...w, viraux_pct: w.viraux * 100 }));
+  const weekData = weeks.map((w) => ({ ...w, viraux_pct: w.viraux == null ? null : w.viraux * 100 }));
 
   // Dépenses par mois : les 5 plus gros postes, le reste en « Autres ».
   const { monthData, monthSeries } = useMemo(() => {
@@ -70,7 +71,9 @@ function Dashboard({ m, asOf }: { m: MetricsPayload; asOf: string }) {
             {cur && <> · dernière semaine pleine : <span className="num">{cur.label}</span></>}
           </>
         }
-      />
+      >
+        <RefreshButton />
+      </ViewHeader>
       <div className="flex flex-col gap-3 px-4 pb-16 md:px-6">
         {/* ------------------------------------------------------------ KPI */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-[1.35fr_repeat(3,1fr)]">
@@ -192,6 +195,40 @@ function Dashboard({ m, asOf }: { m: MetricsPayload; asOf: string }) {
         {m.source && <p className="pt-2 text-[12px] text-faint">{m.source}</p>}
       </div>
     </div>
+  );
+}
+
+/** Demande au serveur de relire Qonto et RevenueCat (lecture seule) et de créer un nouveau snapshot. */
+function RefreshButton() {
+  const [busy, setBusy] = useState(false);
+  async function run() {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/snapshot", { method: "POST" });
+      const body = (await res.json()) as { ok?: boolean; error?: string; imported?: number; warnings?: string[]; status?: { missing: string[] } };
+      if (body.ok) {
+        toast("Chiffres mis à jour", { description: [body.imported ? `${body.imported} nouvelles dépenses importées` : null, ...(body.warnings ?? [])].filter(Boolean).join(" · ") || undefined });
+      } else {
+        toast.error(body.error ?? "Mise à jour impossible", {
+          description: body.status?.missing.length ? `À ajouter dans les variables Vercel : ${body.status.missing.join(", ")}` : undefined,
+          duration: 9000,
+        });
+      }
+    } catch {
+      toast.error("Mise à jour impossible pour l'instant.");
+    }
+    setBusy(false);
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => void run()}
+      disabled={busy}
+      className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-[13px] text-muted-foreground transition-colors duration-100 hover:border-line-strong hover:text-foreground disabled:opacity-50"
+    >
+      <RefreshCw className={cn("size-3.5", busy && "animate-spin")} aria-hidden />
+      Mettre à jour
+    </button>
   );
 }
 

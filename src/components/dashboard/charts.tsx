@@ -62,6 +62,7 @@ type TipProps = {
 function Tip({ active, label, payload, series, format, total }: TipProps) {
   if (!active || !payload?.length) return null;
   const rows = payload
+    .filter((p) => p.value !== null && p.value !== undefined)
     .map((p) => ({ s: series.find((x) => x.key === p.dataKey), v: Number(p.value) }))
     .filter((r) => r.s && Number.isFinite(r.v));
   const partial = Boolean(payload[0]?.payload?.partial);
