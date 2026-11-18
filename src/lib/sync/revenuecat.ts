@@ -48,15 +48,31 @@ async function chart(app: App, key: string, name: string, params: Record<string,
 
 // Nom anglais du pays → code ISO (RevenueCat renvoie « Germany », « Türkiye »…).
 const EN = new Intl.DisplayNames(["en"], { type: "region" });
-const CODES = "AD AE AF AG AL AM AO AR AT AU AZ BA BB BD BE BF BG BH BI BJ BN BO BR BS BT BW BY BZ CA CD CG CH CI CL CM CN CO CR CU CV CY CZ DE DJ DK DM DO DZ EC EE EG ER ES ET FI FJ FR GA GB GD GE GH GM GN GQ GR GT GW GY HK HN HR HT HU ID IE IL IN IQ IR IS IT JM JO JP KE KG KH KR KW KZ LA LB LI LK LR LS LT LU LV LY MA MC MD ME MG MK ML MM MN MO MR MT MU MV MW MX MY MZ NA NE NG NI NL NO NP NZ OM PA PE PG PH PK PL PR PS PT PY QA RO RS RU RW SA SC SD SE SG SI SK SL SM SN SO SR SV SY SZ TD TG TH TJ TM TN TR TT TW TZ UA UG US UY UZ VE VN YE ZA ZM ZW".split(" ");
-const flat = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-const BY_NAME = new Map<string, string>([["turkey", "TR"], ["turkiye", "TR"], ["czech republic", "CZ"], ["usa", "US"], ["uk", "GB"], ["south korea", "KR"], ["russia", "RU"], ["hong kong", "HK"]]);
-CODES.forEach((c) => {
-  try {
-    const n = EN.of(c);
-    if (n) BY_NAME.set(flat(n), c);
-  } catch {}
-});
+const flat = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/&/g, "and").replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();
+// Quelques noms que RevenueCat écrit autrement que la norme.
+const BY_NAME = new Map<string, string>([
+  ["turkey", "TR"], ["turkiye", "TR"], ["czech republic", "CZ"], ["usa", "US"], ["uk", "GB"], ["south korea", "KR"], ["russian federation", "RU"],
+  ["kosovo", "XK"], ["macao", "MO"], ["palestine state of", "PS"], ["congo", "CG"], ["congo the democratic republic of the", "CD"],
+  ["brunei darussalam", "BN"], ["cabo verde", "CV"], ["virgin islands british", "VG"], ["virgin islands u s", "VI"],
+  ["saint martin french part", "MF"], ["bonaire sint eustatius and saba", "BQ"], ["korea republic of", "KR"], ["viet nam", "VN"],
+  ["iran islamic republic of", "IR"], ["moldova republic of", "MD"], ["tanzania united republic of", "TZ"], ["taiwan province of china", "TW"],
+  ["bolivia plurinational state of", "BO"], ["venezuela bolivarian republic of", "VE"], ["lao people s democratic republic", "LA"], ["syrian arab republic", "SY"],
+]);
+// Tous les codes à deux lettres que le navigateur ou le serveur sait nommer.
+for (let a = 65; a <= 90; a++) {
+  for (let b = 65; b <= 90; b++) {
+    const code = String.fromCharCode(a, b);
+    try {
+      const n = EN.of(code);
+      if (n && n !== code && !BY_NAME.has(flat(n))) BY_NAME.set(flat(n), code);
+    } catch {}
+  }
+}
+/** Lundi de la semaine d'une date AAAA-MM-JJ (en UTC, comme les jours de RevenueCat). */
+function mondayOf(iso: string): string {
+  const d = new Date(iso + "T00:00:00Z");
+  return isoDay(new Date(d.getTime() - ((d.getUTCDay() + 6) % 7) * 864e5));
+}
 export const countryCode = (name: string) => (/^[A-Z]{2}$/.test(name) ? name : (BY_NAME.get(flat(name)) ?? name));
 
 /** Mesure → valeur, par date (et par segment si le graphique est segmenté). */
@@ -102,22 +118,29 @@ export async function syncRevenueCat(db: SupabaseClient): Promise<number> {
       const dailyRows = [...daily.values()].map((r) => ({ ...r, updated_at: new Date().toISOString() }));
       await upsertChunks(db, "rc_daily", dailyRows, "date,app");
 
-      // Par semaine et par pays : revenus et nouveaux utilisateurs.
-      const weekStart = count ? daysAgo(28) : HISTORY_START;
-      const seg = { start_date: weekStart, end_date: today, resolution: "1", segment: "country", limit_num_segments: "250" };
-      const weekly = new Map<string, Record<string, unknown>>();
+      // Par pays : on demande les chiffres PAR JOUR et on les regroupe nous-mêmes en semaines du lundi
+      // au dimanche. (RevenueCat découpe les semaines selon le réglage de chaque projet, parfois le dimanche.)
+      const from = mondayOf(HISTORY_START);
+      const seg = { start_date: from, end_date: today, resolution: "0", segment: "country", limit_num_segments: "250" };
+      const weekly = new Map<string, { week: string; app: string; country: string; country_name: string; revenue: number; new_users: number }>();
       const put = (r: ReturnType<typeof readChart>[number], col: "revenue" | "new_users") => {
         if (!r.segment || r.isTotal) return;
         const code = countryCode(r.segment);
-        const k = `${r.date}|${code}`;
-        const row: Record<string, unknown> = weekly.get(k) ?? { week: r.date, app: app.key, country: code, country_name: r.segment, revenue: 0, new_users: 0 };
-        row[col] = col === "new_users" ? Math.round(r.value) : r.value;
+        const week = mondayOf(r.date);
+        const k = `${week}|${code}`;
+        const row = weekly.get(k) ?? { week, app: app.key, country: code, country_name: r.segment, revenue: 0, new_users: 0 };
+        row[col] += r.value;
         weekly.set(k, row);
       };
       readChart(await chart(app, key, "revenue", seg)).filter((r) => r.measure === "Revenue").forEach((r) => put(r, "revenue"));
       readChart(await chart(app, key, "customers_new", seg)).filter((r) => r.measure === "New Customers").forEach((r) => put(r, "new_users"));
-      const weeklyRows = [...weekly.values()].map((r) => ({ ...r, updated_at: new Date().toISOString() }));
-      await upsertChunks(db, "rc_country_weekly", weeklyRows, "week,app,country");
+      const weeklyRows = [...weekly.values()].map((r) => ({ ...r, revenue: Math.round(r.revenue * 100) / 100, new_users: Math.round(r.new_users), updated_at: new Date().toISOString() }));
+      // On remplace tout l'historique par pays de l'app : pas de vieille ligne qui traîne.
+      if (weeklyRows.length) {
+        const { error: delError } = await db.from("rc_country_weekly").delete().eq("app", app.key);
+        if (delError) throw new Error(`rc_country_weekly : ${delError.message}`);
+        await upsertChunks(db, "rc_country_weekly", weeklyRows, "week,app,country");
+      }
       return dailyRows.length + weeklyRows.length;
     }),
   );
