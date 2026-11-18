@@ -15,16 +15,16 @@ import type { Item, Prio } from "@/lib/types";
 type When = "all" | "today" | "week" | "late" | "nodate";
 const WHEN: [When, string][] = [["all", "Toutes les échéances"], ["today", "Aujourd'hui et en retard"], ["week", "Cette semaine"], ["late", "En retard"], ["nodate", "Sans date"]];
 
-const COLUMNS: { prio: Prio; title: string; sub: string; dot: string }[] = [
-  { prio: "urgent", title: "Urgent", sub: "Ce qui doit partir aujourd'hui ou demain", dot: "bg-bad" },
-  { prio: "normal", title: "À faire", sub: "Cette semaine, sans urgence", dot: "bg-info" },
-  { prio: "later", title: "Plus tard", sub: "Quand on aura le temps", dot: "bg-faint" },
+const COLUMNS: { prio: Prio; title: string; dot: string }[] = [
+  { prio: "urgent", title: "Urgent", dot: "bg-bad" },
+  { prio: "normal", title: "À faire", dot: "bg-info" },
+  { prio: "later", title: "Plus tard", dot: "bg-faint" },
 ];
 
 // Écran d'accueil : trois colonnes de priorité.
 export default function TodoPage() {
   const me = useMe();
-  const { who, today, setOpenItem } = useView();
+  const { today, setOpenItem } = useView();
   const { all, roots, kidsOf, commentsOf } = usePlanner();
   const create = useQuickCreate();
 
@@ -55,7 +55,6 @@ export default function TodoPage() {
   const columns: ColumnDef[] = COLUMNS.map((c) => ({
     id: c.prio,
     title: c.title,
-    subtitle: c.sub,
     dot: c.dot,
     showCount: true,
     wide: true,
@@ -78,7 +77,6 @@ export default function TodoPage() {
           </>
         }
         title="À faire"
-        sub={who === "all" ? "Toutes les tâches. Glisse une carte pour changer sa priorité." : "Glisse une carte d'une colonne à l'autre pour changer sa priorité."}
       >
         <WhoSwitch className="w-[220px] max-md:w-full" />
       </ViewHeader>

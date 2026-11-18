@@ -10,9 +10,9 @@ import { PersonAvatar } from "@/components/person-avatar";
 import { NewTaskForm } from "@/components/planner/task-form";
 import { logout, useMe } from "@/components/session-provider";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { itemsStore } from "@/lib/data";
+import { itemsStore, messagesStore } from "@/lib/data";
 import { DAYS_SHORT, MONTHS_SHORT, isoWeek } from "@/lib/dates";
-import { NAV_ALL, NAV_PILOTAGE, NAV_PLANNING, type NavItem } from "@/lib/nav";
+import { NAV_ALL, NAV_EQUIPE, NAV_PILOTAGE, NAV_PLANNING, type NavItem } from "@/lib/nav";
 import { useRows, useSync } from "@/lib/store";
 import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
@@ -83,6 +83,8 @@ function Rail({ pathname, pagesNav }: { pathname: string; pagesNav?: ReactNode }
   const { today, setQuickAddOpen, setSearchOpen } = useView();
   const items = useRows(itemsStore);
   const { sees } = useView();
+  const me = useMe();
+  const unread = useRows(messagesStore).filter((m) => m.to_who === me.short && !m.read_at).length;
   const urgent = items.filter((i) => !i.parent_id && !i.done && i.prio === "urgent" && sees(i.owner)).length;
 
   return (
@@ -121,6 +123,7 @@ function Rail({ pathname, pagesNav }: { pathname: string; pagesNav?: ReactNode }
       <nav aria-label="Sections" className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2.5 pb-2">
         <NavGroup label="Planning" items={NAV_PLANNING} pathname={pathname} badge={{ "/": urgent }} />
         <NavGroup label="Pilotage" items={NAV_PILOTAGE} pathname={pathname} />
+        <NavGroup label="Équipe" items={NAV_EQUIPE} pathname={pathname} badge={{ "/profils": unread }} />
         {pagesNav}
       </nav>
 
@@ -215,7 +218,7 @@ export function ThemeToggle() {
     try {
       localStorage.setItem("qg-theme", next ? "dark" : "light");
     } catch {}
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", next ? "#000a26" : "#fbfcff");
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", next ? "#0f1012" : "#f6f6f7");
   }
   return (
     <button

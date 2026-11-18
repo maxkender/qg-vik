@@ -49,7 +49,7 @@ function slots(kind: RangeKind, today: Date, offset: number): Slot[] {
   return out;
 }
 
-/** Jours, Semaines, Mois, Années : des colonnes de temps qui défilent, celle en cours en bleu Vik. */
+/** Jours, Semaines, Mois, Années : des colonnes de temps qui défilent, celle en cours en orange. */
 export function RangeView({ kind }: { kind: RangeKind }) {
   const { today, setOpenItem } = useView();
   const { kidsOf, commentsOf, inBucket } = usePlanner();

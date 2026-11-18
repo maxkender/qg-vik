@@ -18,7 +18,7 @@ export type ColumnDef = {
   id: string;
   title: ReactNode;
   subtitle?: string;
-  /** Colonne « maintenant » : en bleu Vik. */
+  /** Colonne « maintenant » : en orange. */
   now?: boolean;
   wide?: boolean;
   /** Tâches de la colonne, déjà triées. */

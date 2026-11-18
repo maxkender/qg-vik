@@ -71,7 +71,7 @@ export default function LinksPage() {
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
-      <ViewHeader title="Liens & guides" sub="Les guides Notion, le job post et tous les outils, à un clic." />
+      <ViewHeader title="Liens & guides" />
       <div className="flex flex-col gap-3 px-4 pb-16 md:px-6">
         <div className="grid items-start gap-3 lg:grid-cols-2 2xl:grid-cols-3">
           {groups.map(([group, links]) => (

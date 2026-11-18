@@ -268,3 +268,9 @@ export type DocRow = {
   path: string; mime: string | null; size: number | null; alerted_for: string | null; added_by: string | null; created_at: string;
 };
 export type DocLog = { id: string; document_id: string | null; document_name: string; action: "ajouté" | "ouvert" | "téléchargé" | "supprimé"; actor: string; at: string };
+
+/** Un retour ou un lien envoyé directement à l'autre membre. */
+export type MessageRow = {
+  id: string; to_who: "max" | "adrien"; from_who: "max" | "adrien"; body: string | null; url: string | null;
+  read_at: string | null; created_by: string | null; created_at: string;
+};

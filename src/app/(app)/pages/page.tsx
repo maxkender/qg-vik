@@ -56,7 +56,7 @@ function PagesIndex() {
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
-      <ViewHeader title="Pages" sub="Vos documents : notes de réunion, guides, idées. Tape / dans une page pour insérer un bloc ou une sous-page.">
+      <ViewHeader title="Pages">
         <button type="button" onClick={create} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-foreground px-3.5 text-[13.5px] font-semibold text-background">
           <Plus className="size-4" aria-hidden /> Nouvelle page
         </button>

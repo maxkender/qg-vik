@@ -80,7 +80,7 @@ export default function HorizonsPage() {
 
   return (
     <>
-      <ViewHeader title="Horizons" sub="Clique sur une bande pour l'ouvrir. Glisse une tâche d'une colonne à l'autre." />
+      <ViewHeader title="Horizons" />
       <Board columns={columns} kidsOf={kidsOf} commentsOf={commentsOf} onDrop={onDrop} onOpen={(i) => setOpenItem(i.id)} />
     </>
   );

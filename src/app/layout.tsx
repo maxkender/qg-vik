@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#fbfcff",
+  themeColor: "#f6f6f7",
   colorScheme: "light dark",
   viewportFit: "cover",
 };
@@ -33,7 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {/* Applique le thème choisi avant le premier affichage (pas de flash). */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{if(localStorage.getItem("qg-theme")==="dark"){document.documentElement.classList.add("dark");document.querySelector('meta[name="theme-color"]')?.setAttribute("content","#000a26")}}catch(e){}`,
+            __html: `try{if(localStorage.getItem("qg-theme")==="dark"){document.documentElement.classList.add("dark");document.querySelector('meta[name="theme-color"]')?.setAttribute("content","#0f1012")}}catch(e){}`,
           }}
         />
       </head>

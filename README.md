@@ -70,6 +70,11 @@ Le QG ne fait que **lire** RevenueCat, Qonto, Meta et l'OS (uniquement des `GET`
 - Ajouter une app (Runvik) : une ligne dans la table `apps` (clé, nom, identifiant de projet RevenueCat) et la variable `REVENUECAT_KEY_RUNVIK`.
 - Postes de dépense : table `vendor_rules`, modifiable dans la page Dépenses. Un poste changé à la main sur une transaction n'est plus touché par la synchro.
 
+## Assistant et profils
+
+- **Assistant** (`/assistant`, route `src/app/api/assistant/route.ts`) : répond à partir des données du QG et peut créer une tâche ou envoyer un message. Il lit la base avec la session de la personne connectée (RLS). Variable Vercel : `ANTHROPIC_API_KEY`. Les données utiles à la réponse sont envoyées à l'API Anthropic à chaque question.
+- **Profils** (`/profils`) : chiffres et activité de chacun, retours et liens envoyés à l'autre (table `messages`).
+
 ## Base de données
 
 - Schéma : `supabase/migrations/` (RLS activée sur toutes les tables, accès réservé aux 2 membres).

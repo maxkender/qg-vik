@@ -48,7 +48,7 @@ export default function ProcessPage() {
   return (
     <MotionConfig reducedMotion="user">
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <ViewHeader title="Process" sub="Qui fait quoi, quand, et comment ça marche." />
+        <ViewHeader title="Process" />
         <div className="flex flex-col gap-3 px-4 pb-16 md:px-6">
           {/* ------------------------------------------------ la semaine type */}
           <h2 className="text-[20px] font-semibold">La semaine type</h2>

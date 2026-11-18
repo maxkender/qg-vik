@@ -13,7 +13,7 @@ export default function ConnexionPage() {
           <Logo className="h-9 max-sm:h-7" />
           <p className="eyebrow mt-6 text-faint">Le QG · accès privé</p>
           <h1 className="mt-2 text-[clamp(2.5rem,9vw,3.75rem)] leading-[0.98] font-medium tracking-[-0.045em]">
-            Qui se <span className="brand-text">connecte</span> ?
+            Qui se connecte ?
           </h1>
         </header>
 

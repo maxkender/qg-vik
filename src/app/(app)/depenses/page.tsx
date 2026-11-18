@@ -25,7 +25,7 @@ export default function ExpensesPage() {
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
-      <ViewHeader title="Dépenses" sub="D'où part l'argent : par poste, par fournisseur, et ce qui mérite un coup d'œil.">
+      <ViewHeader title="Dépenses">
         <select value={kind} onChange={(e) => setKind(e.target.value as PeriodKind)} aria-label="Période" className={field}>
           <option value="month">Mois en cours</option>
           <option value="7">7 derniers jours</option>
