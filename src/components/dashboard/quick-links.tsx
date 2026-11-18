@@ -46,8 +46,8 @@ export function QuickLinks() {
         >
           <Icon url={l.url} title={l.title} />
           <span className="min-w-0 flex-1">
-            <span className="flex items-center gap-1 font-heading text-[16px] leading-tight font-extrabold tracking-[-0.01em]">
-              <span className="truncate">{l.title}</span>
+            <span className="flex items-start gap-1 font-heading text-[15.5px] leading-tight font-extrabold tracking-[-0.01em]">
+              <span className="line-clamp-2">{l.title}</span>
               <ArrowUpRight className="size-4 shrink-0 text-faint transition-colors duration-100 group-hover:text-now" aria-hidden />
             </span>
             <span className="num mt-0.5 block truncate text-[11.5px] text-muted-foreground">{host(l.url)}</span>
