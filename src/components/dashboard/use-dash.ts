@@ -37,7 +37,11 @@ export function useDash() {
       apps: [...apps].filter((a) => a.active).sort((a, b) => a.sort_order - b.sort_order),
       rc: live.revenuecat ? rc : seedRc(payload),
       rcCountry,
-      tx: live.qonto ? tx : seedTx(payload),
+      // Les dépenses sont nettes : un remboursement d'un fournisseur rangé dans un poste (ex. Upwork)
+      // vient en déduction de ce poste. Les autres entrées d'argent (revenus) ne sont pas des dépenses.
+      tx: live.qonto
+        ? tx.filter((t) => t.side === "debit" || t.poste !== "Autre").map((t) => (t.side === "credit" ? { ...t, side: "debit" as const, amount: -Number(t.amount), refund: true } : t))
+        : seedTx(payload),
       bal: bal.length ? bal : seedBalance(payload),
       meta,
       os: live.os ? os : seedOs(payload),

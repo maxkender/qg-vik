@@ -186,7 +186,7 @@ export function Transactions({ dash, period, app }: { dash: Dash; period: Period
   return (
     <Panel
       title="Détail des transactions"
-      caption={<><span className="num">{rows.length}</span> sorties d&apos;argent · <span className="num">{eur(total(rows))}</span></>}
+      caption={<><span className="num">{rows.length}</span> opérations · <span className="num">{eur(total(rows))}</span> net des remboursements</>}
       action={<Src s={dash.sources.qonto} seedDate={dash.seedDate} />}
     >
       {!dash.live.qonto ? (
@@ -218,7 +218,10 @@ export function Transactions({ dash, period, app }: { dash: Dash; period: Period
                   <tr key={t.id} className="border-b border-line last:border-0 hover:bg-glass">
                     <td className="num px-2 py-1.5 text-[12px] whitespace-nowrap text-muted-foreground">{shortDate(t.date)}</td>
                     <td className="max-w-[300px] px-2 py-1.5">
-                      <p className="truncate font-medium">{t.counterparty}</p>
+                      <p className="truncate font-medium">
+                        {t.counterparty}
+                        {t.refund && <span className="ml-2 rounded-full bg-good-soft px-1.5 py-px text-[11px] font-semibold text-good">remboursement</span>}
+                      </p>
                       {(t.label || t.reference) && <p className="truncate text-[11.5px] text-faint">{[t.label, t.reference].filter(Boolean).join(" · ")}</p>}
                     </td>
                     <td className="max-w-[160px] truncate px-2 py-1.5 text-[12px] text-muted-foreground">{t.qonto_category ?? "–"}</td>
@@ -268,7 +271,7 @@ export function VendorRules({ dash }: { dash: Dash }) {
   /** Reclasse tout de suite les transactions que personne n'a rangées à la main. */
   function apply() {
     let changed = 0;
-    (dash.tx as QontoTx[]).filter((t) => !t.poste_locked && !t.id.startsWith("seed:")).forEach((t) => {
+    (dash.tx as QontoTx[]).filter((t) => !t.poste_locked && !t.refund && !t.id.startsWith("seed:")).forEach((t) => {
       const r = matchRule(`${t.counterparty} ${t.label ?? ""}`, rules);
       const poste = r?.poste ?? "Autre";
       const app = r?.app ?? null;

@@ -244,6 +244,8 @@ export type CountryVerdict = { code: string; zone: string | null; verdict: strin
 export type QontoTx = {
   id: string; date: string; amount: number; side: "debit" | "credit"; operation_type: string | null; counterparty: string; label: string | null;
   reference: string | null; qonto_category: string | null; poste: string; app: string | null; poste_locked: boolean;
+  /** Remboursement d'un fournisseur : montant négatif, déduit des dépenses de son poste. */
+  refund?: boolean;
 };
 export type QontoBalance = { date: string; balance: number };
 export type ExpenseFlag = {
