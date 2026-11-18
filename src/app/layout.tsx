@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Inter, JetBrains_Mono } from "next/font/google";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
 const bricolage = Bricolage_Grotesque({
@@ -35,9 +37,21 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="fr"
+      suppressHydrationWarning
       className={`${bricolage.variable} ${inter.variable} ${jetbrains.variable} dark h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <head>
+        {/* Applique le thème choisi avant le premier affichage (pas de flash). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem("qg-theme")==="light"){document.documentElement.classList.remove("dark");document.querySelector('meta[name="theme-color"]')?.setAttribute("content","#f6f5f2")}}catch(e){}`,
+          }}
+        />
+      </head>
+      <body className="flex min-h-full flex-col">
+        <TooltipProvider delayDuration={300}>{children}</TooltipProvider>
+        <Toaster position="bottom-right" />
+      </body>
     </html>
   );
 }

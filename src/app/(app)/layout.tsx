@@ -1,3 +1,5 @@
+import { AppShell } from "@/components/app/shell";
+import { ViewStateProvider } from "@/components/app/view-state";
 import { SessionProvider } from "@/components/session-provider";
 
 function Loading() {
@@ -12,5 +14,11 @@ function Loading() {
 
 // Toutes les pages du QG (une fois connecté) vivent sous ce layout.
 export default function AppLayout({ children }: LayoutProps<"/">) {
-  return <SessionProvider fallback={<Loading />}>{children}</SessionProvider>;
+  return (
+    <SessionProvider fallback={<Loading />}>
+      <ViewStateProvider>
+        <AppShell>{children}</AppShell>
+      </ViewStateProvider>
+    </SessionProvider>
+  );
 }
