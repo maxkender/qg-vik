@@ -55,17 +55,27 @@ ${await buildContext(db, me)}`;
   let buffer = "";
   const stream = new ReadableStream<Uint8Array>({
     async pull(controller) {
-      const { done, value } = await reader.read();
-      if (done) return controller.close();
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() ?? "";
-      for (const line of lines) {
-        if (!line.startsWith("data:")) continue;
-        try {
-          const chunk = JSON.parse(line.slice(5)) as { candidates?: { content?: { parts?: Part[] } }[] };
-          for (const part of chunk.candidates?.[0]?.content?.parts ?? []) if (part.text && !part.thought) controller.enqueue(encoder.encode(part.text));
-        } catch {}
+      // On lit jusqu'à avoir du texte à envoyer : un morceau sans texte ne doit pas figer le flux.
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) return controller.close();
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        let sent = false;
+        for (const line of lines) {
+          if (!line.startsWith("data:")) continue;
+          try {
+            const chunk = JSON.parse(line.slice(5)) as { candidates?: { content?: { parts?: Part[] } }[] };
+            for (const part of chunk.candidates?.[0]?.content?.parts ?? []) {
+              if (part.text && !part.thought) {
+                controller.enqueue(encoder.encode(part.text));
+                sent = true;
+              }
+            }
+          } catch {}
+        }
+        if (sent) return;
       }
     },
     cancel: () => void reader.cancel(),
