@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Repeat, X } from "lucide-react";
+import { ChevronDown, Plus, Repeat, X } from "lucide-react";
 import { useView } from "@/components/app/view-state";
 import { Tick } from "@/components/planner/item-card";
 import { useMe } from "@/components/session-provider";
@@ -27,6 +27,23 @@ export function TodayRoutines() {
   const routines = useRows(routinesStore);
   const checks = useRows(routineChecksStore);
   const [adding, setAdding] = useState(false);
+  // Replié ou non : le choix est gardé sur l'appareil.
+  const [folded, setFolded] = useState(() => {
+    try {
+      // Sur téléphone, replié par défaut : la to-do reste en vue.
+      return (localStorage.getItem("qg-habitudes") ?? (window.innerWidth < 768 ? "repliees" : "ouvertes")) === "repliees";
+    } catch {
+      return false;
+    }
+  });
+  function fold() {
+    setFolded((v) => {
+      try {
+        localStorage.setItem("qg-habitudes", v ? "ouvertes" : "repliees");
+      } catch {}
+      return !v;
+    });
+  }
   const [title, setTitle] = useState("");
   const [when, setWhen] = useState<"day" | "daily">("day");
   const [who, setWho] = useState<Owner>(me.short);
@@ -62,17 +79,19 @@ export function TodayRoutines() {
     );
   }
   return (
-    <section aria-label="Habitudes du jour" className="glass rounded-2xl px-4 py-3">
+    <section aria-label="Habitudes du jour" className="glass rounded-2xl px-4 py-2.5">
       <div className="flex items-center gap-2">
-        <Repeat className="size-3.5 text-faint" aria-hidden />
-        <h2 className="font-sans text-[13px] font-semibold tracking-normal">Comme chaque {DAYS[today.getDay()]}</h2>
-        <span className="num text-[12px] text-faint">{left ? `${left} à faire` : "tout est fait"}</span>
-        <span className="flex-1" />
-        <button type="button" onClick={() => setAdding((v) => !v)} aria-label="Ajouter une habitude" title="Ajouter une habitude" className="grid size-6 place-items-center rounded-md text-faint hover:bg-accent hover:text-foreground">
+        <button type="button" onClick={fold} aria-expanded={!folded} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+          <Repeat className="size-3.5 shrink-0 text-faint" aria-hidden />
+          <h2 className="truncate font-sans text-[13px] font-semibold tracking-normal">Comme chaque {DAYS[today.getDay()]}</h2>
+          <span className="num shrink-0 text-[12px] text-faint">{left ? `${left} à faire` : "tout est fait"}</span>
+          <ChevronDown className={cn("size-3.5 shrink-0 text-faint transition-transform duration-100", !folded && "rotate-180")} aria-hidden />
+        </button>
+        <button type="button" onClick={() => { setAdding((v) => !v); if (folded) fold(); }} aria-label="Ajouter une habitude" title="Ajouter une habitude" className="grid size-6 place-items-center rounded-md text-faint hover:bg-accent hover:text-foreground">
           <Plus className="size-3.5" aria-hidden />
         </button>
       </div>
-      <ul className="mt-2 grid gap-x-6 gap-y-1.5 sm:grid-cols-2 xl:grid-cols-3">
+      {!folded && <ul className="mt-2 grid gap-x-6 gap-y-1.5 sm:grid-cols-2 xl:grid-cols-3">
         {mine.map((r) => {
           const done = Boolean(checkOf(r.id));
           return (
@@ -98,7 +117,7 @@ export function TodayRoutines() {
             </li>
           );
         })}
-      </ul>
+      </ul>}
       {adding && (
         <form
           onSubmit={(e) => {

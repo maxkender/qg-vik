@@ -41,6 +41,8 @@ type Props = {
   kidsOf: Map<string, Item[]>;
   commentsOf?: Map<string, number>;
   showHorizon?: boolean;
+  /** Toutes les colonnes tiennent dans la largeur ; sur téléphone elles s'empilent. */
+  fit?: boolean;
   /** Une carte a été déposée dans une colonne, à cette position. */
   onDrop: (item: Item, columnId: string, sortOrder: number) => void;
   onOpen?: (item: Item) => void;
@@ -56,7 +58,7 @@ const collision: CollisionDetection = (args) => {
   return cards.length ? cards : list;
 };
 
-export function Board({ columns, kidsOf, commentsOf, showHorizon, onDrop, onOpen }: Props) {
+export function Board({ columns, kidsOf, commentsOf, showHorizon, fit, onDrop, onOpen }: Props) {
   const [active, setActive] = useState<Item | null>(null);
   const [overCol, setOverCol] = useState<string | null>(null);
 
@@ -124,7 +126,7 @@ export function Board({ columns, kidsOf, commentsOf, showHorizon, onDrop, onOpen
         setOverCol(null);
       }}
     >
-      <div className="flex min-h-0 flex-1 snap-x snap-mandatory overflow-x-auto border-t border-line md:snap-none">
+      <div className={cn("flex min-h-0 flex-1 border-t border-line", fit ? "max-md:flex-col md:overflow-hidden" : "snap-x snap-mandatory overflow-x-auto md:snap-none")}>
         {columns.map((c) =>
           c.collapsed ? (
             <Strip key={c.id} col={c} over={overCol === c.id && active !== null} />
@@ -132,6 +134,7 @@ export function Board({ columns, kidsOf, commentsOf, showHorizon, onDrop, onOpen
             <Column
               key={c.id}
               col={c}
+              fit={fit}
               over={overCol === c.id && active !== null}
               kidsOf={kidsOf}
               commentsOf={commentsOf}
@@ -153,8 +156,9 @@ export function Board({ columns, kidsOf, commentsOf, showHorizon, onDrop, onOpen
 }
 
 function Column({
-  col, over, kidsOf, commentsOf, showHorizon, onOpen,
+  col, over, kidsOf, commentsOf, showHorizon, fit, onOpen,
 }: {
+  fit?: boolean;
   col: ColumnDef;
   over: boolean;
   kidsOf: Map<string, Item[]>;
@@ -171,13 +175,13 @@ function Column({
       aria-label={typeof col.title === "string" ? col.title : undefined}
       className={cn(
         "flex min-w-0 shrink-0 snap-start flex-col border-r border-line transition-colors duration-100",
-        col.wide ? "w-[88vw] md:w-auto md:min-w-[340px] md:max-w-[640px] md:flex-[1_1_420px]" : "w-[82vw] sm:w-[300px]",
+        fit ? "w-full max-md:border-r-0 max-md:border-b md:w-auto md:min-w-0 md:flex-1" : col.wide ? "w-[88vw] md:w-auto md:min-w-[340px] md:max-w-[640px] md:flex-[1_1_420px]" : "w-[82vw] sm:w-[300px]",
         over && "bg-glass",
       )}
     >
       <header className="flex items-start justify-between gap-2 px-4 pt-4 pb-2">
         <div className="min-w-0">
-          <h2 className={cn("flex items-center gap-2 text-[19px] leading-tight font-semibold tracking-[-0.01em]", col.now && "text-now")}>
+          <h2 className={cn("flex items-center gap-2 leading-tight font-semibold tracking-[-0.01em]", fit ? "text-[16px] xl:text-[19px]" : "text-[19px]", col.now && "text-now")}>
             {col.dot && <span className={cn("size-2 shrink-0 rounded-full", col.dot)} aria-hidden />}
             <span className="truncate">{col.title}</span>
             {col.showCount && <span className="num text-[12px] font-medium text-faint">{openCount}</span>}
@@ -196,7 +200,7 @@ function Column({
           </button>
         )}
       </header>
-      <div ref={setNodeRef} className="flex min-h-[140px] flex-1 flex-col gap-px overflow-y-auto px-2 pb-10">
+      <div ref={setNodeRef} className={cn("flex flex-1 flex-col gap-px px-2", fit ? "min-h-[72px] pb-4 md:min-h-[140px] md:overflow-y-auto md:pb-10" : "min-h-[140px] overflow-y-auto pb-10")}>
         <SortableContext items={col.items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
           {col.items.map((item, i) => (
             <div key={item.id} className="contents">

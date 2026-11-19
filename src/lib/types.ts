@@ -1,7 +1,7 @@
 import type { Category } from "@/lib/categories";
 import type { Owner } from "@/lib/members";
 
-export type Prio = "urgent" | "normal" | "later";
+export type Prio = "urgent" | "doing" | "normal";
 export type RepeatRule = "daily" | "weekdays" | "weekly" | "biweekly" | "monthly";
 
 export type Item = {
@@ -12,6 +12,8 @@ export type Item = {
   owner: Owner;
   prio: Prio;
   category: Category | null;
+  /** Labels libres : Sophia, Micabo, Atala… */
+  tags: string[];
   page_id: string | null;
   /** Heure d'une réunion, « 14:30 ». */
   at_time: string | null;

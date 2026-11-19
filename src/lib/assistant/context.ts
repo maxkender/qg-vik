@@ -57,7 +57,7 @@ export async function buildContext(db: SupabaseClient, me: "max" | "adrien"): Pr
 
   const [legal, items, itemLinks, decisions, links, access, documents, pages, routines, processes, apps, verdicts, flags, messages, balance, snapshot, rc, os, countries, tx] = await Promise.all([
     one("legal", "*"),
-    one("items", "id,title,notes,bucket,owner,prio,category,at_time,meet_url,repeat_rule,parent_id", (q) => q.eq("done", false).limit(400)),
+    one("items", "id,title,notes,bucket,owner,prio,category,tags,at_time,meet_url,repeat_rule,parent_id", (q) => q.eq("done", false).limit(400)),
     one("item_links", "item_id,page_id,url"),
     one("decisions", "date,title,why,domain", (q) => q.order("date", { ascending: false }).limit(40)),
     one("links", "group,title,url,note"),

@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 
 /** Horizon par défaut selon la priorité : urgent = aujourd'hui, à faire = cette semaine, plus tard = inbox. */
 export function defaultBucket(prio: Prio, today: Date): string {
-  return prio === "urgent" ? dayKey(today) : prio === "later" ? "inbox" : weekKey(today);
+  return prio === "normal" ? weekKey(today) : dayKey(today);
 }
 
 /** Crée une tâche à partir d'une ligne tapée (« Appeler le comptable !urgent @adrien demain »). */
@@ -32,6 +32,7 @@ export function useQuickCreate() {
       owner,
       category: q.category ?? (q.at_time ? "reunion" : undefined),
       at_time: q.at_time,
+      tags: q.tags,
       bucket: q.bucket ?? defaults.bucket ?? defaultBucket(prio, today),
       created_by: me.id,
     });
@@ -41,7 +42,7 @@ export function useQuickCreate() {
 const PRIO_TONE: Record<Prio, string> = {
   urgent: "bg-bad-soft text-bad",
   normal: "bg-info-soft text-info",
-  later: "bg-muted text-muted-foreground",
+  doing: "bg-now-soft text-now",
 };
 
 /** Ajout rapide en une ligne, avec aperçu de ce qui a été compris. */
@@ -98,7 +99,7 @@ export function QuickAdd({
               }
             }
           }}
-          placeholder="Nouvelle tâche…  ex. Relancer le comptable #finance !urgent @adrien demain"
+          placeholder="Nouvelle tâche…  ex. Relancer le comptable #finance #sophia !urgent @adrien demain"
           aria-label="Nouvelle tâche"
           className="min-w-0 flex-1 bg-transparent text-[14.5px] outline-none placeholder:text-faint"
         />

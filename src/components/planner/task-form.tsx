@@ -10,17 +10,17 @@ import { useMe } from "@/components/session-provider";
 import { itemsStore } from "@/lib/data";
 import { CATEGORIES, type Category } from "@/lib/categories";
 import { addDays, addMonths, bucketLabel, dayKey, monday, monthKey, parseBucket, weekKey, yearKey } from "@/lib/dates";
-import { cleanMeetUrl, createItem, OWNER_LABEL, PRIO_LABEL, REPEAT_LABEL } from "@/lib/items";
+import { allTags, cleanMeetUrl, createItem, OWNER_LABEL, PRIO_LABEL, REPEAT_LABEL } from "@/lib/items";
 import type { Owner } from "@/lib/members";
 import { parseQuickAdd } from "@/lib/quick-add";
 import type { Prio, RepeatRule } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-const PRIO_HINT: Record<Prio, string> = { urgent: "aujourd'hui ou demain", normal: "cette semaine", later: "quand on aura le temps" };
+const PRIO_HINT: Record<Prio, string> = { urgent: "aujourd'hui ou demain", doing: "commencé, pas fini", normal: "cette semaine" };
 const PRIO_ON: Record<Prio, string> = {
   urgent: "border-bad/60 bg-bad-soft text-bad",
   normal: "border-info/60 bg-info-soft text-info",
-  later: "border-line-strong bg-accent text-foreground",
+  doing: "border-now/60 bg-now-soft text-now",
 };
 const pill = "flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border px-2 text-[13px] font-medium transition-colors duration-100";
 const off = "border-line text-muted-foreground hover:text-foreground";
@@ -73,6 +73,44 @@ export function CategoryPicker({ value, onChange }: { value: Category | null; on
 }
 
 const field = "h-9 rounded-lg border border-line bg-glass px-2.5 text-[13px] outline-none focus:border-line-strong";
+
+/** Labels libres d'une tâche : on coche ceux qui existent, ou on en tape un nouveau. */
+export function TagPicker({ value, options, onChange }: { value: string[]; options: string[]; onChange: (tags: string[]) => void }) {
+  const [draft, setDraft] = useState("");
+  const all = [...new Set([...options, ...value])];
+  const toggle = (tag: string) => onChange(value.includes(tag) ? value.filter((t) => t !== tag) : [...value, tag]);
+  function add() {
+    const tag = draft.trim().replace(/^#/, "").slice(0, 30);
+    if (!tag) return;
+    const known = all.find((t) => t.toLowerCase() === tag.toLowerCase());
+    if (!value.includes(known ?? tag)) onChange([...value, known ?? tag.charAt(0).toUpperCase() + tag.slice(1)]);
+    setDraft("");
+  }
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {all.map((tag) => (
+        <button key={tag} type="button" aria-pressed={value.includes(tag)} onClick={() => toggle(tag)} className={cn("h-8 rounded-full border px-3 text-[12.5px] font-medium transition-colors duration-100", value.includes(tag) ? "border-foreground bg-foreground text-background" : off)}>
+          {tag}
+        </button>
+      ))}
+      <input
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => {
+          e.stopPropagation();
+          if (e.key === "Enter") {
+            e.preventDefault();
+            add();
+          }
+        }}
+        onBlur={add}
+        placeholder="+ Nouveau label"
+        aria-label="Nouveau label"
+        className="h-8 w-32 rounded-full border border-dashed border-line-strong bg-transparent px-3 text-[12.5px] outline-none placeholder:text-faint focus:border-foreground"
+      />
+    </div>
+  );
+}
 
 /** Réunion : l'heure et le lien Google Meet, qu'on colle ou qu'on fait générer. */
 export function MeetingFields({ time, url, onTime, onUrl }: { time: string | null; url: string | null; onTime: (t: string | null) => void; onUrl: (u: string | null) => void }) {
@@ -187,6 +225,7 @@ export function NewTaskForm({ onDone }: { onDone: () => void }) {
   const [owner, setOwner] = useState<Owner>(who !== "all" ? who : me.short);
   const [bucket, setBucket] = useState<string | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
+  const [tags, setTags] = useState<string[]>([]);
   const [time, setTime] = useState<string | null>(null);
   // Par défaut, le dernier lien Meet utilisé : la salle habituelle.
   const [meet, setMeet] = useState<string | null>(() => itemsStore.getSnapshot().filter((i) => i.meet_url).sort((a, b) => b.created_at.localeCompare(a.created_at))[0]?.meet_url ?? null);
@@ -198,7 +237,7 @@ export function NewTaskForm({ onDone }: { onDone: () => void }) {
     const q = parseQuickAdd(title, today, { dates: false });
     if (!q.title) return;
     const p = q.prio ?? prio;
-    createItem({ title: q.title, notes: notes.trim() || null, prio: p, owner: q.owner ?? owner, category: q.category ?? category, at_time: meeting ? (q.at_time ?? time) : null, meet_url: meeting ? meet : null, repeat_rule: repeat, bucket: bucket ?? (meeting ? dayKey(today) : defaultBucket(p, today)), created_by: me.id });
+    createItem({ title: q.title, notes: notes.trim() || null, prio: p, owner: q.owner ?? owner, category: q.category ?? category, tags: [...new Set([...tags, ...(q.tags ?? [])])], at_time: meeting ? (q.at_time ?? time) : null, meet_url: meeting ? meet : null, repeat_rule: repeat, bucket: bucket ?? (meeting ? dayKey(today) : defaultBucket(p, today)), created_by: me.id });
     onDone();
   }
 
@@ -232,6 +271,7 @@ export function NewTaskForm({ onDone }: { onDone: () => void }) {
         className="min-h-20 w-full resize-y rounded-xl border border-line bg-glass p-3 text-[13.5px] outline-none placeholder:text-faint focus:border-line-strong [field-sizing:content]"
       />
       <Field title="Catégorie"><CategoryPicker value={category} onChange={setCategory} /></Field>
+      <Field title="Labels"><TagPicker value={tags} options={allTags(itemsStore.getSnapshot())} onChange={setTags} /></Field>
       {meeting && <Field title="Réunion"><MeetingFields time={time} url={meet} onTime={setTime} onUrl={setMeet} /></Field>}
       <Field title="Urgence"><PrioPicker value={prio} onChange={setPrio} /></Field>
       <Field title="Assignée à"><OwnerPicker value={owner} onChange={setOwner} /></Field>

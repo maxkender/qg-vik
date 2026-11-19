@@ -5,12 +5,12 @@ import { useView } from "@/components/app/view-state";
 import { Comments } from "@/components/comments";
 import { AddLine, EditableTitle, Tick } from "@/components/planner/item-card";
 import { ItemLinks } from "@/components/planner/item-links";
-import { BucketPicker, Field, MeetingFields, OwnerPicker, CategoryPicker, PrioPicker, RepeatPicker } from "@/components/planner/task-form";
+import { BucketPicker, Field, MeetingFields, OwnerPicker, CategoryPicker, PrioPicker, RepeatPicker, TagPicker } from "@/components/planner/task-form";
 import { useMe } from "@/components/session-provider";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { itemsStore, profilesStore } from "@/lib/data";
 import { isLate } from "@/lib/dates";
-import { byOrder, createItem, toggleDone } from "@/lib/items";
+import { allTags, byOrder, createItem, toggleDone } from "@/lib/items";
 import { ago } from "@/lib/pages";
 import { useRows } from "@/lib/store";
 
@@ -54,6 +54,7 @@ export function ItemSheet() {
             </Field>
             <Field title="Pages et liens"><ItemLinks item={item} /></Field>
             <Field title="Catégorie"><CategoryPicker value={item.category} onChange={(category) => void itemsStore.update(item.id, { category })} /></Field>
+            <Field title="Labels"><TagPicker value={item.tags ?? []} options={allTags(items)} onChange={(tags) => void itemsStore.update(item.id, { tags })} /></Field>
             {item.category === "reunion" && (
               <Link href={`/reunions?id=${item.id}`} onClick={() => setOpenItem(null)} className="-mt-2 inline-flex w-fit items-center gap-1.5 text-[13px] font-medium underline underline-offset-4">
                 Ouvrir la page de la réunion : ordre du jour, tâches à discuter, compte rendu à la voix

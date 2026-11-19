@@ -7,7 +7,10 @@ import { newId } from "@/lib/store";
 import { addDays, addMonths, dayKey, monthKey, parseBucket, weekKey } from "@/lib/dates";
 import type { Item, Prio, RepeatRule } from "@/lib/types";
 
-export const PRIO_LABEL: Record<Prio, string> = { urgent: "Urgent", normal: "À faire", later: "Plus tard" };
+export const PRIO_LABEL: Record<Prio, string> = { urgent: "Urgent", doing: "En train de faire", normal: "À faire" };
+/** Les labels proposés d'office ; ceux qu'on ajoute sur une tâche s'y joignent. */
+export const TAG_PRESETS = ["Sophia", "Micabo", "Unswipe", "Runvik", "Atala"];
+export const allTags = (items: Pick<Item, "tags">[]) => [...new Set([...TAG_PRESETS, ...items.flatMap((i) => i.tags ?? [])])];
 export const OWNER_LABEL: Record<Owner, string> = { max: "Max", adrien: "Adrien", both: "Les deux" };
 export const OWNER_NAME: Record<Owner, string> = { max: "Maximilien", adrien: "Adrien", both: "Les deux" };
 export const REPEAT_LABEL: Record<RepeatRule, string> = {
@@ -37,7 +40,7 @@ export const cleanMeetUrl = (v: string): string | null => {
 };
 
 export const nextOwner = (o: Owner): Owner => (o === "both" ? "max" : o === "max" ? "adrien" : "both");
-export const nextPrio = (p: Prio): Prio => (p === "normal" ? "urgent" : p === "urgent" ? "later" : "normal");
+export const nextPrio = (p: Prio): Prio => (p === "normal" ? "doing" : p === "doing" ? "urgent" : "normal");
 
 /** Ordre d'affichage : pas fait d'abord, puis l'ordre choisi à la main. */
 export const byOrder = (a: Item, b: Item) =>
@@ -50,6 +53,7 @@ export function createItem(input: {
   owner: Owner;
   prio?: Prio;
   category?: Category | null;
+  tags?: string[];
   at_time?: string | null;
   meet_url?: string | null;
   repeat_rule?: RepeatRule | null;
@@ -66,6 +70,7 @@ export function createItem(input: {
     owner: input.owner,
     prio: input.prio ?? "normal",
     category: input.category ?? null,
+    tags: input.tags ?? [],
     page_id: null,
     at_time: input.at_time ?? null,
     meet_url: input.meet_url ?? null,

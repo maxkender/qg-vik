@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useRef, useState, type KeyboardEvent } from "react";
-import { Check, ChevronDown, Ellipsis, Repeat, Video, Maximize2, MessageSquare, Plus, Trash2 } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, Ellipsis, Repeat, Video, Maximize2, MessageSquare, Plus, Trash2 } from "lucide-react";
 import { LinkedSummary } from "@/components/planner/item-links";
 import { PersonAvatar } from "@/components/person-avatar";
 import { useMe } from "@/components/session-provider";
@@ -175,13 +175,15 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
             onEditing={onEditing}
           />
         </div>
+        {/* Les boutons flottent au survol : ils ne prennent pas de place au titre. Sur téléphone ils restent visibles. */}
+        <div className="flex shrink-0 gap-0.5 md:absolute md:top-1 md:right-1 md:rounded-md md:bg-background md:px-0.5 md:opacity-0 md:shadow-[0_0_0_1px_var(--line)] md:transition-opacity md:duration-100 md:group-hover/card:opacity-100 md:focus-within:opacity-100 md:has-[[data-state=open]]:opacity-100">
         {onOpen && (
           <button
             type="button"
             onClick={() => onOpen(item)}
             aria-label="Ouvrir la tâche"
             title="Ouvrir : description, urgence, commentaires"
-            className="mt-[1px] grid size-5 shrink-0 place-items-center rounded-md text-faint opacity-0 transition-opacity duration-100 outline-none group-hover/card:opacity-100 hover:text-foreground focus-visible:opacity-100 max-md:opacity-100"
+            className="mt-[1px] grid size-5 shrink-0 place-items-center rounded-md text-faint outline-none hover:text-foreground"
           >
             <Maximize2 className="size-3.5" aria-hidden />
           </button>
@@ -189,7 +191,7 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label="Actions"
-            className="mt-[1px] grid size-5 shrink-0 place-items-center rounded-md text-faint opacity-0 transition-opacity duration-100 outline-none group-hover/card:opacity-100 hover:text-foreground focus-visible:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100"
+            className="mt-[1px] grid size-5 shrink-0 place-items-center rounded-md text-faint outline-none hover:text-foreground"
           >
             <Ellipsis className="size-4" aria-hidden />
           </DropdownMenuTrigger>
@@ -263,6 +265,7 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </div>
 
       <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 pl-[25px] text-[11.5px] text-faint">
@@ -282,12 +285,15 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
           </span>
         )}
         {showPrio && !item.done && item.prio !== "normal" && (
-          <span className={cn("text-[10.5px] font-semibold tracking-[0.06em] uppercase", item.prio === "urgent" ? "text-bad" : "text-faint")}>{item.prio === "urgent" ? "Urgent" : "Plus tard"}</span>
+          <span className={cn("text-[10.5px] font-semibold tracking-[0.06em] uppercase", item.prio === "urgent" ? "text-bad" : "text-now")}>{item.prio === "urgent" ? "Urgent" : "En cours"}</span>
         )}
+        {(item.tags ?? []).map((tag) => (
+          <span key={tag} className="rounded-md border border-line px-1.5 text-[11px] leading-[18px] font-medium text-muted-foreground">{tag}</span>
+        ))}
         {(showHorizon || late || showLate) && (
-          <span className={cn("num", late && "text-bad")}>
-            {late && "en retard · "}
-            {bucketLabel(item.bucket, today)}
+          <span className={cn("inline-flex items-center gap-1", late ? "font-semibold text-bad" : "text-muted-foreground")} title="Échéance">
+            <CalendarDays className="size-3" aria-hidden />
+            <span className="num">{late && "en retard · "}{bucketLabel(item.bucket, today)}</span>
           </span>
         )}
         {item.at_time && <span className="num text-foreground">{item.at_time.replace(":", "h")}</span>}

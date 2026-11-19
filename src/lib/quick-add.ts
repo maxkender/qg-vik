@@ -3,14 +3,14 @@ import { parseCategory, type Category } from "@/lib/categories";
 import type { Owner } from "@/lib/members";
 import type { Prio } from "@/lib/types";
 
-export type QuickAdd = { title: string; prio?: Prio; owner?: Owner; bucket?: string; category?: Category; at_time?: string };
+export type QuickAdd = { title: string; prio?: Prio; owner?: Owner; bucket?: string; category?: Category; at_time?: string; tags?: string[] };
 
 const strip = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 const PRIO: Record<string, Prio> = {
   urgent: "urgent", u: "urgent", "!": "urgent",
   normal: "normal", afaire: "normal", n: "normal",
-  "plus-tard": "later", plustard: "later", tard: "later", later: "later", l: "later",
+  encours: "doing", "en-cours": "doing", doing: "doing", e: "doing",
 };
 const OWNER: Record<string, Owner> = {
   max: "max", maximilien: "max", m: "max",
@@ -21,9 +21,9 @@ const WEEKDAYS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi",
 
 /**
  * Lit une ligne d'ajout rapide : « Appeler le comptable !urgent @adrien demain ».
- *   !urgent  !tard             → priorité
+ *   !urgent  !encours          → priorité
  *   @max  @adrien  @tous       → personne
- *   #support  #réunion  #legal → catégorie
+ *   #support  #réunion  #legal → catégorie ; tout autre #mot (#sophia, #atala) → label
  *   14h  9h30                  → heure (réunion)
  *   aujourd'hui, demain, lundi…dimanche, semaine, semaine prochaine, mois,
  *   mois prochain, année, inbox, vie, S48, 25/11 → horizon
@@ -59,6 +59,12 @@ export function parseQuickAdd(input: string, today: Date, opts: { dates?: boolea
       const c = parseCategory(w.slice(1));
       if (c) {
         out.category = c;
+        return false;
+      }
+      // Tout autre « #mot » est un label : #sophia, #atala…
+      const tag = w.slice(1).replace(/[,;.]+$/, "");
+      if (/^[\p{L}\p{N}_-]{2,30}$/u.test(tag)) {
+        out.tags = [...(out.tags ?? []), tag.charAt(0).toUpperCase() + tag.slice(1)];
         return false;
       }
     }

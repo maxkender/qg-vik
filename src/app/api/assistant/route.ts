@@ -11,7 +11,7 @@ export const maxDuration = 120;
 
 const BUCKET = /^(inbox|life|d:\d{4}-\d{2}-\d{2}|w:\d{4}-W\d{2}|m:\d{4}-\d{2}|y:\d{4})$/;
 const OWNERS = ["max", "adrien", "both"];
-const PRIOS = ["urgent", "normal", "later"];
+const PRIOS = ["urgent", "doing", "normal"];
 const REPEATS = ["daily", "weekdays", "weekly", "biweekly", "monthly"];
 const ECHEANCE = "inbox (sans date), life, d:AAAA-MM-JJ (un jour), w:AAAA-Wnn (une semaine ISO), m:AAAA-MM (un mois) ou y:AAAA.";
 
@@ -28,6 +28,7 @@ const TOOLS = [
         pour: { type: "STRING", enum: OWNERS, description: "Personne assignée. Par défaut : la personne qui parle." },
         priorite: { type: "STRING", enum: PRIOS },
         categorie: { type: "STRING", enum: CATEGORY_KEYS, description: "La catégorie qui correspond, si l'une convient." },
+        labels: { type: "ARRAY", items: { type: "STRING" }, description: "Labels libres si la personne en cite : Sophia, Micabo, Unswipe, Runvik, Atala…" },
         heure: { type: "STRING", description: "Heure d'une réunion, au format HH:MM." },
         lien_meet: { type: "STRING", description: "Lien Google Meet (https) donné par la personne. Ne jamais en inventer." },
         repetition: { type: "STRING", enum: REPEATS, description: "Seulement si la tâche ou la réunion se répète." },
@@ -157,6 +158,7 @@ export async function POST(request: Request) {
         owner: OWNERS.includes(String(input.pour)) ? input.pour : me,
         prio: PRIOS.includes(String(input.priorite)) ? input.priorite : "normal",
         category: CATEGORY_KEYS.includes(input.categorie as never) ? input.categorie : null,
+        tags: Array.isArray(input.labels) ? input.labels.map((l) => String(l).trim().slice(0, 30)).filter(Boolean).slice(0, 8) : [],
         at_time: /^\d{2}:\d{2}$/.test(String(input.heure ?? "")) ? input.heure : null,
         meet_url: /^https:\/\/\S+$/.test(String(input.lien_meet ?? "")) ? input.lien_meet : null,
         repeat_rule: REPEATS.includes(String(input.repetition)) ? input.repetition : null,
