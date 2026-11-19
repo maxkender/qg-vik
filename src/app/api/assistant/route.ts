@@ -1,37 +1,79 @@
 import { NextResponse } from "next/server";
-import { blocksToText, buildContext, isoWeekKey, todayParis } from "@/lib/assistant/context";
+import { blocksToText, buildContext } from "@/lib/assistant/context";
+import { callGemini, cleanImages, geminiError, type Content, type Part } from "@/lib/assistant/gemini";
+import { assistantSession, openPage, whoWeAre, WRITING_FORMAT } from "@/lib/assistant/session";
 import { CATEGORY_KEYS } from "@/lib/categories";
+import { markdownToBlocks } from "@/lib/markdown-blocks";
 import { MEMBERS, isWho, type Who } from "@/lib/members";
 import { containsSecret, SECRET_MESSAGE } from "@/lib/secrets";
-import { supabaseServer } from "@/lib/supabase/server";
 
 export const maxDuration = 120;
 
-// Modèle Gemini. « gemini-flash-latest » suit la dernière version ; GEMINI_MODEL permet d'en choisir un autre.
-const MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
-const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
 const BUCKET = /^(inbox|life|d:\d{4}-\d{2}-\d{2}|w:\d{4}-W\d{2}|m:\d{4}-\d{2}|y:\d{4})$/;
-
-type Part = { text?: string; functionCall?: { name: string; args?: Record<string, unknown> }; functionResponse?: { name: string; response: Record<string, unknown> }; [k: string]: unknown };
-type Content = { role: "user" | "model"; parts: Part[] };
+const OWNERS = ["max", "adrien", "both"];
+const PRIOS = ["urgent", "normal", "later"];
+const REPEATS = ["daily", "weekdays", "weekly", "biweekly", "monthly"];
+const ECHEANCE = "inbox (sans date), life, d:AAAA-MM-JJ (un jour), w:AAAA-Wnn (une semaine ISO), m:AAAA-MM (un mois) ou y:AAAA.";
 
 const TOOLS = [
   {
     name: "ajouter_tache",
-    description: "Crée une tâche dans le QG. À utiliser dès que la personne demande d'ajouter, de noter ou d'assigner quelque chose à faire. Plusieurs tâches = plusieurs appels.",
+    description: "Crée une tâche ou une réunion dans le QG. À utiliser dès que la personne demande d'ajouter, de noter ou d'assigner quelque chose à faire. Plusieurs tâches = plusieurs appels.",
     parameters: {
       type: "OBJECT",
       required: ["titre", "pour", "priorite", "echeance"],
       properties: {
         titre: { type: "STRING", description: "Titre court, à l'infinitif." },
         description: { type: "STRING", description: "Détails utiles, si besoin." },
-        pour: { type: "STRING", enum: ["max", "adrien", "both"], description: "Personne assignée. Par défaut : la personne qui parle." },
-        priorite: { type: "STRING", enum: ["urgent", "normal", "later"] },
+        pour: { type: "STRING", enum: OWNERS, description: "Personne assignée. Par défaut : la personne qui parle." },
+        priorite: { type: "STRING", enum: PRIOS },
         categorie: { type: "STRING", enum: CATEGORY_KEYS, description: "La catégorie qui correspond, si l'une convient." },
         heure: { type: "STRING", description: "Heure d'une réunion, au format HH:MM." },
         lien_meet: { type: "STRING", description: "Lien Google Meet (https) donné par la personne. Ne jamais en inventer." },
-        repetition: { type: "STRING", enum: ["daily", "weekdays", "weekly", "biweekly", "monthly"], description: "Seulement si la tâche ou la réunion se répète." },
-        echeance: { type: "STRING", description: "inbox (sans date), life, d:AAAA-MM-JJ (un jour), w:AAAA-Wnn (une semaine ISO), m:AAAA-MM (un mois) ou y:AAAA." },
+        repetition: { type: "STRING", enum: REPEATS, description: "Seulement si la tâche ou la réunion se répète." },
+        echeance: { type: "STRING", description: ECHEANCE },
+      },
+    },
+  },
+  {
+    name: "modifier_tache",
+    description: "Modifie une tâche existante (son id est dans « taches_ouvertes ») : la marquer faite, changer la personne, l'urgence, l'échéance ou le titre.",
+    parameters: {
+      type: "OBJECT",
+      required: ["id"],
+      properties: {
+        id: { type: "STRING" },
+        faite: { type: "BOOLEAN" },
+        titre: { type: "STRING" },
+        pour: { type: "STRING", enum: OWNERS },
+        priorite: { type: "STRING", enum: PRIOS },
+        echeance: { type: "STRING", description: ECHEANCE },
+      },
+    },
+  },
+  {
+    name: "ecrire_dans_page",
+    description: "Écrit dans une page du QG : un plan, un texte, un tableau, un graphique. Sans page_id, écrit dans la page ouverte à l'écran.",
+    parameters: {
+      type: "OBJECT",
+      required: ["contenu", "mode"],
+      properties: {
+        page_id: { type: "STRING", description: "Id de la page. À omettre pour la page ouverte." },
+        contenu: { type: "STRING", description: "Le texte à écrire, au format indiqué dans les consignes." },
+        mode: { type: "STRING", enum: ["ajouter", "remplacer"], description: "« ajouter » à la fin (par défaut), « remplacer » tout le contenu seulement si la personne le demande." },
+      },
+    },
+  },
+  {
+    name: "creer_page",
+    description: "Crée une nouvelle page avec son contenu. À utiliser quand aucune page n'est ouverte ou que la personne demande un nouveau document.",
+    parameters: {
+      type: "OBJECT",
+      required: ["titre", "contenu"],
+      properties: {
+        titre: { type: "STRING" },
+        contenu: { type: "STRING", description: "Le texte de la page, au format indiqué dans les consignes." },
+        dossier: { type: "STRING", description: "Nom d'un dossier existant où la ranger, si la personne en cite un." },
       },
     },
   },
@@ -41,11 +83,7 @@ const TOOLS = [
     parameters: {
       type: "OBJECT",
       required: ["a"],
-      properties: {
-        a: { type: "STRING", enum: ["max", "adrien"] },
-        texte: { type: "STRING" },
-        lien: { type: "STRING", description: "Adresse https complète." },
-      },
+      properties: { a: { type: "STRING", enum: ["max", "adrien"] }, texte: { type: "STRING" }, lien: { type: "STRING", description: "Adresse https complète." } },
     },
   },
   {
@@ -55,12 +93,8 @@ const TOOLS = [
   },
 ];
 
-function systemPrompt(me: Who, data: string): string {
-  const today = todayParis();
-  const jour = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(today);
-  return `Tu es l'assistant du QG de Vik Studios, l'outil privé de Maximilien (Max) et Adrien, les deux fondateurs. Vik Studios fait la promotion de ses apps (Sophia, Micabo, Unswipe, bientôt Runvik) avec des comptes TikTok de slideshows tenus par des posteurs.
-
-Tu parles à ${MEMBERS[me].name}. Nous sommes le ${jour}, semaine ${isoWeekKey(today).slice(7)}.
+function systemPrompt(me: Who, data: string, page: Awaited<ReturnType<typeof openPage>>): string {
+  return `${whoWeAre(me)}
 
 Tu réponds à partir des données du QG fournies plus bas, et uniquement d'elles pour tout ce qui est chiffre, date ou fait sur la société. Si l'information n'y est pas, dis-le en une phrase et indique où elle pourrait se trouver, sans inventer. Quand un chiffre vient d'un relevé ancien, donne sa date.
 
@@ -70,70 +104,127 @@ Les réunions sont les tâches de catégorie « reunion » (avec leur heure, leu
 
 Le QG ne contient aucun mot de passe ni clé API, seulement l'endroit où ils sont rangés : donne cet endroit si on te le demande.
 
-Style : français, tutoiement, direct et court. Commence par la réponse. Texte simple, sans titres, sans gras, sans tableaux ; des tirets pour une liste. Montants en euros arrondis, dates au format « mercredi 18 novembre ».
+Tu agis toi-même dans le QG : créer ou modifier une tâche, envoyer un message, écrire dans une page, créer une page. Quand la demande est claire, fais-le sans demander de confirmation, puis confirme en une ligne ce qui a été fait.
 
-Quand tu crées une tâche ou envoies un message, fais-le sans demander de confirmation si la demande est claire, puis confirme en une ligne ce qui a été créé (titre, personne, échéance).
+Quand la personne te demande de rédiger quelque chose de long (un plan, un compte rendu, une réponse à des consignes, un tableau, un graphique), écris-le dans une page plutôt que dans la discussion : dans la page ouverte s'il y en a une, sinon dans une nouvelle page. Si elle joint une image (une capture de consignes, un mail, un document), lis-la attentivement et appuie-toi sur ce qu'elle contient ; cite les contraintes importantes (dates limites, formats, critères).
+
+${WRITING_FORMAT}
+
+Dans la discussion elle-même : français, tutoiement, direct et court. Commence par la réponse. Texte simple, sans titres, sans gras, sans tableaux ; des tirets pour une liste. Montants en euros arrondis, dates au format « mercredi 18 novembre ».
+
+${page ? `Page ouverte à l'écran : « ${page.title} » (id ${page.id})${page.folder ? ", un dossier" : ""}. Son contenu actuel :\n${page.text || "(vide)"}` : "Aucune page n'est ouverte à l'écran."}
 
 Données du QG (JSON) :
 ${data}`;
 }
 
+type Turn = { role: string; text: string; images?: unknown };
+
 export async function POST(request: Request) {
-  const db = await supabaseServer();
-  const { data: auth } = await db.auth.getUser();
-  if (!auth.user) return NextResponse.json({ error: "Non connecté." }, { status: 401 });
-  const { data: profile } = await db.from("profiles").select("id, short").eq("id", auth.user.id).maybeSingle();
-  if (!profile || !isWho(profile.short)) return NextResponse.json({ error: "Accès réservé aux membres du QG." }, { status: 403 });
-  const me: Who = profile.short;
-  const userId = auth.user.id;
+  const session = await assistantSession();
+  if ("error" in session) return session.error;
+  const { db, me, userId, apiKey } = session;
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json({ error: "L'assistant n'est pas encore branché : il manque la variable GEMINI_API_KEY dans Vercel." }, { status: 503 });
-  }
+  const body = (await request.json().catch(() => null)) as { messages?: Turn[]; page_id?: unknown } | null;
+  const history = (body?.messages ?? []).filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.text === "string").slice(-30);
+  const last = history.at(-1);
+  const images = cleanImages(last?.images);
+  if (!last || last.role !== "user" || (!last.text.trim() && !images.length)) return NextResponse.json({ error: "Question vide." }, { status: 400 });
+  if (containsSecret(last.text)) return NextResponse.json({ error: `${SECRET_MESSAGE}.` }, { status: 400 });
 
-  const body = (await request.json().catch(() => null)) as { messages?: { role: string; text: string }[] } | null;
-  const history = (body?.messages ?? []).filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.text === "string" && m.text.trim()).slice(-30);
-  if (!history.length || history.at(-1)!.role !== "user") return NextResponse.json({ error: "Question vide." }, { status: 400 });
-  if (containsSecret(history.at(-1)!.text)) return NextResponse.json({ error: `${SECRET_MESSAGE}.` }, { status: 400 });
+  const page = await openPage(db, body?.page_id);
+  const system = systemPrompt(me, await buildContext(db, me), page);
+  const contents: Content[] = history
+    .filter((m) => m.text.trim() || m === last)
+    .map((m) => ({ role: m.role === "user" ? "user" : "model", parts: [{ text: m.text.trim() || "Regarde cette image." }] }));
+  // Les images n'accompagnent que le dernier message.
+  contents.at(-1)!.parts.unshift(...images.map((inlineData) => ({ inlineData })));
 
-  const system = systemPrompt(me, await buildContext(db, me));
-  const contents: Content[] = history.map((m) => ({ role: m.role === "user" ? "user" : "model", parts: [{ text: m.text }] }));
+  type Out = { result: string; label?: string; href?: string; error?: boolean };
+  const fail = (result: string): Out => ({ result, error: true });
 
-  async function runTool(name: string, input: Record<string, unknown>): Promise<{ result: string; label?: string; error?: boolean }> {
-    if (containsSecret(input)) return { result: `Refusé : ${SECRET_MESSAGE}.`, error: true };
+  async function runTool(name: string, input: Record<string, unknown>): Promise<Out> {
+    if (containsSecret(input)) return fail(`Refusé : ${SECRET_MESSAGE}.`);
+    const now = new Date().toISOString();
+
     if (name === "ajouter_tache") {
       const title = String(input.titre ?? "").trim();
       const bucket = String(input.echeance ?? "inbox");
-      if (!title) return { result: "Titre manquant.", error: true };
-      if (!BUCKET.test(bucket)) return { result: "Échéance invalide. Formats : inbox, d:AAAA-MM-JJ, w:AAAA-Wnn, m:AAAA-MM, y:AAAA.", error: true };
+      if (!title) return fail("Titre manquant.");
+      if (!BUCKET.test(bucket)) return fail(`Échéance invalide. Formats : ${ECHEANCE}`);
       const { error } = await db.from("items").insert({
         title, notes: input.description ? String(input.description) : null, bucket,
-        owner: ["max", "adrien", "both"].includes(String(input.pour)) ? input.pour : me, prio: ["urgent", "normal", "later"].includes(String(input.priorite)) ? input.priorite : "normal", category: CATEGORY_KEYS.includes(input.categorie as never) ? input.categorie : null,
+        owner: OWNERS.includes(String(input.pour)) ? input.pour : me,
+        prio: PRIOS.includes(String(input.priorite)) ? input.priorite : "normal",
+        category: CATEGORY_KEYS.includes(input.categorie as never) ? input.categorie : null,
         at_time: /^\d{2}:\d{2}$/.test(String(input.heure ?? "")) ? input.heure : null,
         meet_url: /^https:\/\/\S+$/.test(String(input.lien_meet ?? "")) ? input.lien_meet : null,
-        repeat_rule: ["daily", "weekdays", "weekly", "biweekly", "monthly"].includes(String(input.repetition)) ? input.repetition : null, sort_order: Date.now(), created_by: userId,
+        repeat_rule: REPEATS.includes(String(input.repetition)) ? input.repetition : null,
+        sort_order: Date.now(), created_by: userId,
       });
-      if (error) return { result: `Échec : ${error.message}`, error: true };
-      return { result: "Tâche créée.", label: `Tâche ajoutée : ${title}` };
+      return error ? fail(`Échec : ${error.message}`) : { result: "Tâche créée.", label: `Tâche ajoutée : ${title}` };
     }
+
+    if (name === "modifier_tache") {
+      const patch: Record<string, unknown> = {};
+      if (typeof input.faite === "boolean") Object.assign(patch, { done: input.faite, done_at: input.faite ? now : null });
+      if (typeof input.titre === "string" && input.titre.trim()) patch.title = input.titre.trim();
+      if (OWNERS.includes(String(input.pour))) patch.owner = input.pour;
+      if (PRIOS.includes(String(input.priorite))) patch.prio = input.priorite;
+      if (input.echeance !== undefined) {
+        if (!BUCKET.test(String(input.echeance))) return fail(`Échéance invalide. Formats : ${ECHEANCE}`);
+        patch.bucket = input.echeance;
+      }
+      if (!Object.keys(patch).length) return fail("Rien à modifier.");
+      const { data, error } = await db.from("items").update(patch).eq("id", String(input.id)).select("title").maybeSingle();
+      if (error) return fail(`Échec : ${error.message}`);
+      return data ? { result: "Tâche modifiée.", label: `Tâche modifiée : ${data.title}` } : fail("Tâche introuvable.");
+    }
+
+    if (name === "ecrire_dans_page") {
+      const target = input.page_id ? await openPage(db, input.page_id) : page;
+      if (!target) return fail("Aucune page ouverte ni page_id valide : utilise creer_page.");
+      if (target.folder) return fail("C'est un dossier : crée une page dedans avec creer_page.");
+      const blocks = markdownToBlocks(String(input.contenu ?? ""));
+      if (!blocks.length) return fail("Contenu vide.");
+      const empty = (b: unknown) => (b as { type?: string }).type === "paragraph" && !blocksToText([b]);
+      const kept = input.mode === "remplacer" ? [] : target.content.filter((b, i, all) => !(empty(b) && i === all.length - 1));
+      const { error } = await db.from("pages").update({ content: [...kept, ...blocks], updated_by: userId, updated_at: now }).eq("id", target.id);
+      return error ? fail(`Échec : ${error.message}`) : { result: "Écrit dans la page.", label: `Écrit dans « ${target.title} »`, href: `/pages?id=${target.id}` };
+    }
+
+    if (name === "creer_page") {
+      const title = String(input.titre ?? "").trim();
+      if (!title) return fail("Titre manquant.");
+      let parent: string | null = null;
+      if (typeof input.dossier === "string" && input.dossier.trim()) {
+        const { data } = await db.from("pages").select("id").eq("icon", "folder").is("archived_at", null).ilike("title", input.dossier.trim()).limit(1);
+        parent = (data?.[0]?.id as string | undefined) ?? null;
+      }
+      const { data, error } = await db
+        .from("pages")
+        .insert({ title, parent_id: parent, content: markdownToBlocks(String(input.contenu ?? "")), sort_order: Date.now(), created_by: userId, updated_by: userId })
+        .select("id")
+        .single();
+      return error ? fail(`Échec : ${error.message}`) : { result: `Page créée (id ${data.id}).`, label: `Page créée : ${title}`, href: `/pages?id=${data.id}` };
+    }
+
     if (name === "envoyer_message") {
       const to = input.a;
       const text = input.texte ? String(input.texte).trim() : null;
       const url = input.lien ? String(input.lien).trim() : null;
-      if (!isWho(to)) return { result: "Destinataire inconnu.", error: true };
-      if (!text && !url) return { result: "Message vide.", error: true };
-      if (url && !/^https?:\/\//i.test(url)) return { result: "Le lien doit commencer par https://", error: true };
+      if (!isWho(to)) return fail("Destinataire inconnu.");
+      if (!text && !url) return fail("Message vide.");
+      if (url && !/^https?:\/\//i.test(url)) return fail("Le lien doit commencer par https://");
       const { error } = await db.from("messages").insert({ to_who: to, from_who: me, body: text, url, created_by: userId });
-      if (error) return { result: `Échec : ${error.message}`, error: true };
-      return { result: "Message envoyé.", label: `Envoyé à ${MEMBERS[to].nick}` };
+      return error ? fail(`Échec : ${error.message}`) : { result: "Message envoyé.", label: `Envoyé à ${MEMBERS[to].nick}` };
     }
+
     if (name === "lire_page") {
-      const { data } = await db.from("pages").select("title, content").eq("id", String(input.id)).maybeSingle();
-      if (!data) return { result: "Page introuvable.", error: true };
-      return { result: `# ${data.title}\n${blocksToText(data.content).slice(0, 40000) || "(page vide)"}` };
+      const found = await openPage(db, input.id);
+      return found ? { result: `# ${found.title}\n${found.text || "(page vide)"}` } : fail("Page introuvable.");
     }
-    return { result: "Outil inconnu.", error: true };
+    return fail("Outil inconnu.");
   }
 
   const encoder = new TextEncoder();
@@ -142,26 +233,11 @@ export async function POST(request: Request) {
       const send = (event: Record<string, unknown>) => controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));
       try {
         for (let turn = 0; turn < 8; turn++) {
-          const res = await fetch(`${ENDPOINT}/${MODEL}:streamGenerateContent?alt=sse`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-            body: JSON.stringify({
-              systemInstruction: { parts: [{ text: system }] },
-              contents,
-              tools: [{ functionDeclarations: TOOLS }],
-            }),
-          });
+          const res = await callGemini(apiKey, "streamGenerateContent", { systemInstruction: { parts: [{ text: system }] }, contents, tools: [{ functionDeclarations: TOOLS }] });
           if (!res.ok || !res.body) {
             const detail = ((await res.json().catch(() => null)) as { error?: { message?: string } } | null)?.error?.message ?? "";
             console.error("assistant: Gemini a répondu", res.status, detail.slice(0, 300));
-            send({
-              t: "error",
-              v: res.status === 400 && /API key/i.test(detail) ? "La clé GEMINI_API_KEY est refusée : vérifie-la dans Vercel."
-                : res.status === 401 || res.status === 403 ? "La clé GEMINI_API_KEY n'a pas accès à Gemini : vérifie que l'API « Generative Language » est activée et autorisée pour cette clé."
-                : res.status === 404 ? `Le modèle « ${MODEL} » est introuvable.`
-                : res.status === 429 ? "Quota Gemini atteint. Réessaie dans une minute."
-                : `L'assistant est indisponible (erreur ${res.status}).`,
-            });
+            send({ t: "error", v: geminiError(res.status, detail) });
             break;
           }
 
@@ -199,7 +275,7 @@ export async function POST(request: Request) {
           const results: Part[] = [];
           for (const call of calls) {
             const out = await runTool(call.functionCall!.name, call.functionCall!.args ?? {});
-            if (out.label) send({ t: "action", v: out.label });
+            if (out.label) send({ t: "action", v: out.label, href: out.href });
             results.push({ functionResponse: { name: call.functionCall!.name, response: out.error ? { error: out.result } : { result: out.result } } });
           }
           contents.push({ role: "user", parts: results });
