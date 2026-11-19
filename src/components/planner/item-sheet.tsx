@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useView } from "@/components/app/view-state";
 import { Comments } from "@/components/comments";
 import { AddLine, EditableTitle, Tick } from "@/components/planner/item-card";
@@ -53,6 +54,11 @@ export function ItemSheet() {
             </Field>
             <Field title="Pages et liens"><ItemLinks item={item} /></Field>
             <Field title="Catégorie"><CategoryPicker value={item.category} onChange={(category) => void itemsStore.update(item.id, { category })} /></Field>
+            {item.category === "reunion" && (
+              <Link href={`/reunions?id=${item.id}`} onClick={() => setOpenItem(null)} className="-mt-2 inline-flex w-fit items-center gap-1.5 text-[13px] font-medium underline underline-offset-4">
+                Ouvrir la page de la réunion : ordre du jour, tâches à discuter, compte rendu à la voix
+              </Link>
+            )}
             {item.category === "reunion" && (
               <Field title="Réunion">
                 <MeetingFields time={item.at_time} url={item.meet_url} onTime={(at_time) => void itemsStore.update(item.id, { at_time })} onUrl={(meet_url) => void itemsStore.update(item.id, { meet_url })} />

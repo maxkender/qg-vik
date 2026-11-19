@@ -1,5 +1,5 @@
 import {
-  Activity, Calendar, CalendarDays, CalendarRange, ChartColumn, Columns3, KeyRound, Link2, ListTodo, Milestone, Receipt, Users, Workflow,
+  Activity, Calendar, CalendarDays, CalendarRange, ChartColumn, Columns3, KeyRound, Link2, ListTodo, Milestone, Receipt, Users, Video, Workflow,
   type LucideIcon,
 } from "lucide-react";
 
@@ -8,6 +8,7 @@ export type NavItem = { href: string; label: string; icon: LucideIcon; key?: str
 export const NAV_PLANNING: NavItem[] = [
   { href: "/", label: "À faire", icon: ListTodo, key: "1" },
   { href: "/semaine", label: "Semaine", icon: Activity },
+  { href: "/reunions", label: "Réunions", icon: Video },
   { href: "/horizons", label: "Horizons", icon: Columns3, key: "2" },
   { href: "/jours", label: "Jours", icon: CalendarDays, key: "3" },
   { href: "/semaines", label: "Semaines", icon: CalendarRange, key: "4" },
