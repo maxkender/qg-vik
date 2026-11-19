@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { Video } from "lucide-react";
+import { toast } from "sonner";
 import { PersonAvatar } from "@/components/person-avatar";
 import { useView } from "@/components/app/view-state";
 import { defaultBucket } from "@/components/planner/quick-add";
@@ -73,8 +74,30 @@ export function CategoryPicker({ value, onChange }: { value: Category | null; on
 
 const field = "h-9 rounded-lg border border-line bg-glass px-2.5 text-[13px] outline-none focus:border-line-strong";
 
-/** Réunion : l'heure et le lien Google Meet. « Créer » ouvre un Meet tout neuf dont on colle l'adresse. */
+/** Réunion : l'heure et le lien Google Meet, qu'on colle ou qu'on fait générer. */
 export function MeetingFields({ time, url, onTime, onUrl }: { time: string | null; url: string | null; onTime: (t: string | null) => void; onUrl: (u: string | null) => void }) {
+  const [busy, setBusy] = useState(false);
+  /** Demande à Google un lien Meet tout neuf, sans ouvrir la réunion. */
+  async function generate() {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/meet", { method: "POST" });
+      const json = (await res.json().catch(() => null)) as { url?: string; error?: string; client?: boolean } | null;
+      if (res.ok && json?.url) {
+        onUrl(json.url);
+        toast("Lien Meet créé", { description: "Personne n'est encore dans la réunion." });
+      } else if (res.status === 503) {
+        toast("Pas encore branché à Google Meet", {
+          description: json?.client ? "Il reste à donner l'autorisation, une seule fois." : "En attendant, ce bouton ouvre un Meet dont tu colles l'adresse.",
+          action: json?.client ? { label: "Autoriser", onClick: () => window.open("/api/meet/connect", "_self") } : { label: "Ouvrir Meet", onClick: () => window.open("https://meet.google.com/new", "_blank", "noreferrer") },
+          duration: 12000,
+        });
+      } else toast.error(json?.error ?? "Google Meet n'a pas pu créer la salle.");
+    } catch {
+      toast.error("Google Meet est injoignable.");
+    }
+    setBusy(false);
+  }
   return (
     <div className="flex flex-wrap gap-1.5">
       <input type="time" aria-label="Heure" value={time ?? ""} onChange={(e) => onTime(e.target.value || null)} className={field} />
@@ -97,9 +120,9 @@ export function MeetingFields({ time, url, onTime, onUrl }: { time: string | nul
           <Video className="size-4" aria-hidden /> Rejoindre
         </a>
       ) : (
-        <a href="https://meet.google.com/new" target="_blank" rel="noreferrer" title="Ouvre un nouveau Meet : copie son adresse et colle-la ici" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-[13px] text-muted-foreground hover:border-line-strong hover:text-foreground">
-          <Video className="size-4" aria-hidden /> Créer
-        </a>
+        <button type="button" disabled={busy} onClick={() => void generate()} title="Crée un lien Meet sans entrer dans la réunion" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-[13px] font-medium transition-colors duration-100 hover:border-line-strong disabled:opacity-50">
+          <Video className={cn("size-4", busy && "animate-pulse")} aria-hidden /> {busy ? "Création…" : "Générer un lien"}
+        </button>
       )}
     </div>
   );

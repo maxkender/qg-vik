@@ -75,6 +75,14 @@ Le QG ne fait que **lire** RevenueCat, Qonto, Meta et l'OS (uniquement des `GET`
 - **Assistant** (rond en bas à droite de chaque page, `src/components/assistant/bubble.tsx`, route `src/app/api/assistant/route.ts`) : répond à partir des données du QG et peut créer une tâche ou envoyer un message. Il lit la base avec la session de la personne connectée (RLS). Il utilise Gemini : variable Vercel `GEMINI_API_KEY` (et `GEMINI_MODEL` pour changer de modèle). Les données utiles à la réponse sont envoyées à l'API Gemini de Google à chaque question.
 - **Profils** (`/profils`) : chiffres et activité de chacun, retours et liens envoyés à l'autre (table `messages`).
 
+## Google Meet (générer un lien sans entrer dans la réunion)
+
+Bouton « Générer un lien » d'une réunion → `POST /api/meet` → API Google Meet (`spaces.create`). Seul droit demandé : créer des salles.
+
+1. Dans le projet Google Cloud de Vik Studios : activer « Google Meet REST API », créer un client OAuth « Application Web » avec l'URI de redirection `https://qg-vik.vercel.app/api/meet/callback`, et passer l'écran de consentement « En production » (en mode test, l'autorisation expire au bout de 7 jours).
+2. Dans Vercel : `GOOGLE_CLIENT_ID` et `GOOGLE_CLIENT_SECRET`, puis redéployer.
+3. Dans le QG, cliquer « Générer un lien » puis « Autoriser » : Google affiche l'accord, le QG affiche une valeur à ranger dans Vercel sous `GOOGLE_MEET_REFRESH_TOKEN`. Redéployer.
+
 ## Base de données
 
 - Schéma : `supabase/migrations/` (RLS activée sur toutes les tables, accès réservé aux 2 membres).
