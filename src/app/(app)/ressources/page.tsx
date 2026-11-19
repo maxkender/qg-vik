@@ -94,7 +94,7 @@ export default function ResourcesPage() {
       onDrop={(e) => {
         e.preventDefault();
         setDropping(false);
-        void add(e.dataTransfer.files);
+        void add([...e.dataTransfer.files]);
       }}
     >
       <ViewHeader title="Ressources">
@@ -105,7 +105,7 @@ export default function ResourcesPage() {
         <button type="button" onClick={() => input.current?.click()} disabled={busy > 0} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-foreground px-3.5 text-[13.5px] font-semibold text-background disabled:opacity-50">
           <Upload className="size-4" aria-hidden /> {busy > 0 ? "Envoi…" : "Ajouter des fichiers"}
         </button>
-        <input ref={input} type="file" multiple className="sr-only" aria-label="Ajouter des fichiers" onChange={(e) => { void add(e.target.files ?? []); e.target.value = ""; }} />
+        <input ref={input} type="file" multiple className="sr-only" aria-label="Ajouter des fichiers" onChange={(e) => { void add([...(e.target.files ?? [])]); e.target.value = ""; }} />
       </ViewHeader>
 
       <div className={cn("flex min-w-0 flex-col gap-6 px-4 pb-24 md:px-6", dropping && "opacity-60")}>

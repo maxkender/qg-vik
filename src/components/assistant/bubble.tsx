@@ -132,7 +132,7 @@ export function AssistantBubble() {
           onDrop={(e) => {
             e.preventDefault();
             setDropping(false);
-            void attach(e.dataTransfer.files);
+            void attach([...e.dataTransfer.files]);
           }}
           data-dropping={dropping || undefined}
           className="glass-strong fixed right-4 bottom-[calc(max(1rem,env(safe-area-inset-bottom))+3.75rem)] z-40 flex h-[min(620px,calc(100dvh-7rem))] w-[min(420px,calc(100vw-2rem))] flex-col overflow-hidden rounded-3xl data-[dropping]:ring-2 data-[dropping]:ring-now md:right-6 md:bottom-[5.25rem]"
@@ -208,7 +208,7 @@ export function AssistantBubble() {
               onPaste={(e) => {
                 if (e.clipboardData.files.length) {
                   e.preventDefault();
-                  void attach(e.clipboardData.files);
+                  void attach([...e.clipboardData.files]);
                 }
               }}
               rows={1}

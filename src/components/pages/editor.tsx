@@ -339,7 +339,7 @@ export default function PageEditor({ page, dark, onNavigate, onComment }: Props)
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
             e.preventDefault();
-            void attach(e.dataTransfer.files);
+            void attach([...e.dataTransfer.files]);
           }}
           className="glass-strong fixed bottom-6 left-1/2 z-30 w-[min(620px,calc(100vw-2rem))] -translate-x-1/2 rounded-3xl p-2 md:left-[calc(50%+120px)]"
         >
@@ -375,7 +375,7 @@ export default function PageEditor({ page, dark, onNavigate, onComment }: Props)
                 onPaste={(e) => {
                   if (e.clipboardData.files.length) {
                     e.preventDefault();
-                    void attach(e.clipboardData.files);
+                    void attach([...e.clipboardData.files]);
                   }
                 }}
                 placeholder={ai.rewrite ? "Que faire de ce passage ?" : "Que doit écrire l'assistant ? ex. un plan pour le pitch Station F"}
