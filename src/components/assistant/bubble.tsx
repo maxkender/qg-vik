@@ -4,23 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowUp, Check, ImagePlus, RotateCcw, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
+import { readPictures, type Picture } from "@/lib/pictures";
 import { cn } from "@/lib/utils";
 
 type Action = { label: string; href?: string };
-type Picture = { mime: string; data: string };
 type Turn = { role: "user" | "assistant"; text: string; actions?: Action[]; error?: boolean; pictures?: number };
-
-/** Réduit une image (capture d'écran, photo) à 1 600 px de large au plus avant de l'envoyer. */
-async function shrink(file: File): Promise<Picture> {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  return { mime: "image/jpeg", data: canvas.toDataURL("image/jpeg", 0.85).split(",")[1] };
-}
-
 /** L'id de la page ouverte à l'écran, s'il y en a une. */
 const currentPage = () => (window.location.pathname === "/pages" ? new URLSearchParams(window.location.search).get("id") : null);
 
@@ -57,11 +45,9 @@ export function AssistantBubble() {
   }, [turns, open]);
 
   async function attach(files: Iterable<File>) {
-    const images = [...files].filter((f) => f.type.startsWith("image/")).slice(0, 4 - pictures.length);
-    if (!images.length) return;
     try {
-      const made = await Promise.all(images.map(shrink));
-      setPictures((p) => [...p, ...made].slice(0, 4));
+      const made = await readPictures(files, pictures.length);
+      if (made.length) setPictures((p) => [...p, ...made].slice(0, 4));
     } catch {
       toast.error("Impossible de lire cette image");
     }

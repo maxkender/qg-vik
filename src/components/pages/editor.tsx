@@ -9,13 +9,14 @@ import {
   FormattingToolbar, FormattingToolbarController, SuggestionMenuController, createReactBlockSpec,
   getDefaultReactSlashMenuItems, getFormattingToolbarItems, useBlockNoteEditor, useComponentsContext, useCreateBlockNote,
 } from "@blocknote/react";
-import { ArrowUp, FilePlus2, MessageSquarePlus, Sparkles, X } from "lucide-react";
+import { ArrowUp, FilePlus2, ImagePlus, MessageSquarePlus, Sparkles, X } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 import { useMe } from "@/components/session-provider";
 import { pagesStore } from "@/lib/data";
 import { markdownToBlocks } from "@/lib/markdown-blocks";
 import { createPage, pageHref, pageTitle } from "@/lib/pages";
+import { readPictures, type Picture } from "@/lib/pictures";
 import { PageIcon } from "@/components/pages/page-icon";
 import { useRows } from "@/lib/store";
 import type { PageRow } from "@/lib/types";
@@ -127,6 +128,7 @@ export default function PageEditor({ page, dark, onNavigate, onComment }: Props)
   const [ai, setAi] = useState<AiRequest | null>(null);
   const [instruction, setInstruction] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pictures, setPictures] = useState<Picture[]>([]);
 
   const editor = useCreateBlockNote({
     schema,
@@ -170,18 +172,28 @@ export default function PageEditor({ page, dark, onNavigate, onComment }: Props)
     const blocks = rewrite ? (editor.getSelection()?.blocks ?? [editor.getTextCursorPosition().block]) : [editor.getTextCursorPosition().block];
     const source = rewrite ? (await editor.blocksToMarkdownLossy(blocks as never)).trim() : "";
     setInstruction("");
+    setPictures([]);
     setAi({ blockIds: blocks.map((b) => b.id), source, rewrite: rewrite && source !== "" });
+  }
+
+  async function attach(files: Iterable<File>) {
+    try {
+      const made = await readPictures(files, pictures.length);
+      if (made.length) setPictures((p) => [...p, ...made].slice(0, 4));
+    } catch {
+      toast.error("Impossible de lire cette image");
+    }
   }
 
   async function runAi(text: string) {
     const request = ai;
-    if (!request || !text.trim() || busy) return;
+    if (!request || (!text.trim() && !pictures.length) || busy) return;
     setBusy(true);
     try {
       const res = await fetch("/api/assistant/texte", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ instruction: text, selection: request.rewrite ? request.source : undefined, page_id: page.id }),
+        body: JSON.stringify({ instruction: text.trim() || "Appuie-toi sur cette image pour écrire ce qui serait utile ici.", images: pictures, selection: request.rewrite ? request.source : undefined, page_id: page.id }),
       });
       const json = (await res.json().catch(() => null)) as { markdown?: string; error?: string } | null;
       if (!res.ok || !json?.markdown) throw new Error(json?.error ?? "L'assistant est indisponible.");
@@ -270,8 +282,26 @@ export default function PageEditor({ page, dark, onNavigate, onComment }: Props)
             e.preventDefault();
             void runAi(instruction);
           }}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            void attach(e.dataTransfer.files);
+          }}
           className="glass-strong fixed bottom-6 left-1/2 z-30 w-[min(620px,calc(100vw-2rem))] -translate-x-1/2 rounded-3xl p-2 md:left-[calc(50%+120px)]"
         >
+          {pictures.length > 0 && (
+            <div className="flex gap-1.5 px-1.5 pt-1 pb-2">
+              {pictures.map((p, i) => (
+                <span key={i} className="relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- aperçu d'une image locale */}
+                  <img src={`data:${p.mime};base64,${p.data}`} alt="" className="size-12 rounded-lg object-cover" />
+                  <button type="button" onClick={() => setPictures((all) => all.filter((_, j) => j !== i))} aria-label="Retirer l'image" className="absolute -top-1 -right-1 grid size-4 place-items-center rounded-full bg-foreground text-background">
+                    <X className="size-3" aria-hidden />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
           {ai.rewrite && (
             <div className="flex flex-wrap gap-1.5 px-1.5 pt-1 pb-2">
               {PRESETS.map((p) => (
@@ -292,14 +322,34 @@ export default function PageEditor({ page, dark, onNavigate, onComment }: Props)
                 e.stopPropagation();
                 if (e.key === "Escape") setAi(null);
               }}
+              onPaste={(e) => {
+                if ([...e.clipboardData.files].some((f) => f.type.startsWith("image/"))) {
+                  e.preventDefault();
+                  void attach(e.clipboardData.files);
+                }
+              }}
               placeholder={busy ? "L'assistant écrit…" : ai.rewrite ? "Que faire de ce passage ?" : "Que doit écrire l'assistant ? ex. un plan pour le pitch Station F"}
               aria-label="Consigne pour l'assistant"
               className="h-9 min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-faint"
             />
+            <label title="Joindre une image (ou colle-la, ou glisse-la ici)" className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground">
+              <ImagePlus className="size-4" aria-hidden />
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                aria-label="Joindre une image à la consigne"
+                className="sr-only"
+                onChange={(e) => {
+                  void attach(e.target.files ?? []);
+                  e.target.value = "";
+                }}
+              />
+            </label>
             <button type="button" onClick={() => setAi(null)} aria-label="Fermer" className="grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground">
               <X className="size-4" aria-hidden />
             </button>
-            <button type="submit" disabled={busy || !instruction.trim()} aria-label="Envoyer" className="grid size-8 shrink-0 place-items-center rounded-full bg-foreground text-background transition-opacity duration-100 disabled:opacity-30">
+            <button type="submit" disabled={busy || (!instruction.trim() && !pictures.length)} aria-label="Envoyer" className="grid size-8 shrink-0 place-items-center rounded-full bg-foreground text-background transition-opacity duration-100 disabled:opacity-30">
               <ArrowUp className="size-4" aria-hidden />
             </button>
           </div>
