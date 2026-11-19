@@ -282,3 +282,6 @@ export type MessageRow = {
   id: string; to_who: "max" | "adrien"; from_who: "max" | "adrien"; body: string | null; url: string | null;
   read_at: string | null; created_by: string | null; created_at: string;
 };
+
+/** Une page ou un lien rattaché à une tâche. */
+export type ItemLink = { id: string; item_id: string; page_id: string | null; url: string | null; title: string | null; created_by: string | null; created_at: string };

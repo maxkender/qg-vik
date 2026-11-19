@@ -1,18 +1,16 @@
 "use client";
 
-import Link from "next/link";
-import { NotebookPen } from "lucide-react";
 import { useView } from "@/components/app/view-state";
-import { PageIcon } from "@/components/pages/page-icon";
 import { Comments } from "@/components/comments";
 import { AddLine, EditableTitle, Tick } from "@/components/planner/item-card";
+import { ItemLinks } from "@/components/planner/item-links";
 import { BucketPicker, Field, MeetingFields, OwnerPicker, CategoryPicker, PrioPicker, RepeatPicker } from "@/components/planner/task-form";
 import { useMe } from "@/components/session-provider";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
-import { itemsStore, pagesStore, profilesStore } from "@/lib/data";
-import { bucketLabel, isLate, longDate, parseBucket } from "@/lib/dates";
+import { itemsStore, profilesStore } from "@/lib/data";
+import { isLate } from "@/lib/dates";
 import { byOrder, createItem, toggleDone } from "@/lib/items";
-import { ago, createMeetingNotes, createPageSaved, livePages, pageHref, pageTitle } from "@/lib/pages";
+import { ago } from "@/lib/pages";
 import { useRows } from "@/lib/store";
 
 /** Panneau d'une tâche : titre, description, urgence, personne, échéance, sous-objectifs, commentaires. */
@@ -23,9 +21,6 @@ export function ItemSheet() {
   const profiles = useRows(profilesStore);
   const item = items.find((i) => i.id === openItem);
   const kids = item ? items.filter((i) => i.parent_id === item.id).sort(byOrder) : [];
-  const pages = useRows(pagesStore);
-  const pageList = livePages(pages).sort((a, b) => pageTitle(a).localeCompare(pageTitle(b), "fr"));
-  const linked = pageList.find((p) => p.id === item?.page_id);
   const author = profiles.find((p) => p.id === item?.created_by)?.name;
 
   return (
@@ -56,48 +51,7 @@ export function ItemSheet() {
                 className="min-h-28 w-full resize-y rounded-xl border border-line bg-glass p-3 text-[13.5px] leading-relaxed outline-none transition-colors duration-100 placeholder:text-faint focus:border-line-strong [field-sizing:content]"
               />
             </Field>
-            <Field title="Page liée">
-              {linked ? (
-                <div className="flex items-center gap-2 rounded-xl border border-line px-3 py-2">
-                  <PageIcon icon={linked.icon} className="size-4 shrink-0 text-muted-foreground" />
-                  <Link href={pageHref(linked.id)} onClick={() => setOpenItem(null)} className="min-w-0 flex-1 truncate text-[13.5px] font-medium hover:underline">{pageTitle(linked)}</Link>
-                  <button type="button" onClick={() => void itemsStore.update(item.id, { page_id: null })} className="text-[12px] text-muted-foreground hover:text-foreground">Retirer</button>
-                </div>
-              ) : (
-                <div className="flex gap-1.5">
-                {item.category === "reunion" && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const { page, saved } = createMeetingNotes(pages, { title: item.title, date: item.bucket.startsWith("d:") ? longDate(parseBucket(item.bucket).start!) : bucketLabel(item.bucket, today), created_by: me.id });
-                      void saved.then((ok) => ok && itemsStore.update(item.id, { page_id: page.id }));
-                    }}
-                    className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-foreground px-3 text-[13px] font-semibold text-background"
-                  >
-                    <NotebookPen className="size-4" aria-hidden /> Compte rendu
-                  </button>
-                )}
-                <select
-                  value=""
-                  aria-label="Relier à une page"
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    if (!v) return;
-                    if (v !== "new") return void itemsStore.update(item.id, { page_id: v });
-                    const { page, saved } = createPageSaved({ title: item.title, created_by: me.id });
-                    void saved.then((ok) => ok && itemsStore.update(item.id, { page_id: page.id }));
-                  }}
-                  className="h-9 min-w-0 flex-1 rounded-lg border border-line bg-glass px-2.5 text-[13px] text-muted-foreground outline-none focus:border-line-strong"
-                >
-                  <option value="">Relier à une page…</option>
-                  <option value="new">+ Nouvelle page pour cette tâche</option>
-                  {pageList.map((p) => (
-                    <option key={p.id} value={p.id}>{pageTitle(p)}</option>
-                  ))}
-                </select>
-                </div>
-              )}
-            </Field>
+            <Field title="Pages et liens"><ItemLinks item={item} /></Field>
             <Field title="Catégorie"><CategoryPicker value={item.category} onChange={(category) => void itemsStore.update(item.id, { category })} /></Field>
             {item.category === "reunion" && (
               <Field title="Réunion">

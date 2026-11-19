@@ -1,8 +1,8 @@
 "use client";
 
 import { memo, useRef, useState, type KeyboardEvent } from "react";
-import Link from "next/link";
-import { Check, ChevronDown, Ellipsis, FileText, Repeat, Video, Maximize2, MessageSquare, Plus, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Ellipsis, Repeat, Video, Maximize2, MessageSquare, Plus, Trash2 } from "lucide-react";
+import { LinkedSummary } from "@/components/planner/item-links";
 import { PersonAvatar } from "@/components/person-avatar";
 import { useMe } from "@/components/session-provider";
 import { useView } from "@/components/app/view-state";
@@ -10,9 +10,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
   DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { itemsStore, pagesStore } from "@/lib/data";
-import { pageHref, pageTitle } from "@/lib/pages";
-import { useRows } from "@/lib/store";
+import { itemsStore } from "@/lib/data";
 import { addDays, addMonths, bucketLabel, dayKey, isLate, monday, monthKey, weekKey, yearKey } from "@/lib/dates";
 import { categoryOf, CATEGORIES } from "@/lib/categories";
 import { byOrder, createItem, nextOwner, OWNER_LABEL, OWNER_NAME, PRIO_LABEL, REPEAT_LABEL, toggleDone } from "@/lib/items";
@@ -151,20 +149,32 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
 
   return (
     <div
+      // Un clic dans le blanc de la carte (hors titre, case et boutons) ouvre le détail.
+      onClick={(e) => {
+        if (!onOpen || dragging || e.defaultPrevented) return;
+        if ((e.target as HTMLElement).closest("button, a, input, select, textarea, label, [role=textbox], [role=checkbox], [role=menu], [role=alertdialog]")) return;
+        if (window.getSelection()?.toString()) return;
+        onOpen(item);
+      }}
       className={cn(
         "group/card relative rounded-[10px] px-2 py-[7px] transition-colors duration-100",
+        onOpen && "cursor-pointer",
         "hover:bg-glass",
         dragging && "glass-strong cursor-grabbing shadow-2xl",
       )}
     >
       <div className="flex items-start gap-2">
         <Tick checked={item.done} onChange={() => void toggleDone(item)} label={item.done ? "Marquer comme pas fait" : "Marquer comme fait"} />
-        <EditableTitle
-          value={item.title}
-          done={item.done}
-          onSave={(title) => void itemsStore.update(item.id, { title })}
-          onEditing={onEditing}
-        />
+        {/* Le titre n'occupe que la largeur de son texte : le blanc à côté ouvre le détail. */}
+        <div className="min-w-0 flex-1">
+          <EditableTitle
+            value={item.title}
+            done={item.done}
+            className="w-fit max-w-full"
+            onSave={(title) => void itemsStore.update(item.id, { title })}
+            onEditing={onEditing}
+          />
+        </div>
         {onOpen && (
           <button
             type="button"
@@ -287,7 +297,7 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
             <Video className="size-3" aria-hidden /> Meet
           </a>
         )}
-        {item.page_id && <LinkedPage id={item.page_id} />}
+        <LinkedSummary itemId={item.id} />
         {kids.length > 0 && (
           <button
             type="button"
@@ -347,18 +357,6 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
     </div>
   );
 });
-
-/** La page reliée à la tâche : un clic l'ouvre. */
-function LinkedPage({ id }: { id: string }) {
-  const page = useRows(pagesStore).find((p) => p.id === id && !p.archived_at);
-  if (!page) return null;
-  return (
-    <Link href={pageHref(page.id)} className="inline-flex max-w-[180px] items-center gap-1 text-muted-foreground hover:text-foreground hover:underline">
-      <FileText className="size-3 shrink-0" aria-hidden />
-      <span className="truncate">{pageTitle(page)}</span>
-    </Link>
-  );
-}
 
 /** Ligne « Ajouter… » en bas d'une colonne ou d'une liste de sous-objectifs. */
 export function AddLine({

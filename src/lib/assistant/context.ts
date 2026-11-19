@@ -55,9 +55,10 @@ export async function buildContext(db: SupabaseClient, me: "max" | "adrien"): Pr
     return (data ?? []) as Row[];
   };
 
-  const [legal, items, decisions, links, access, documents, pages, routines, processes, apps, verdicts, flags, messages, balance, snapshot, rc, os, countries, tx] = await Promise.all([
+  const [legal, items, itemLinks, decisions, links, access, documents, pages, routines, processes, apps, verdicts, flags, messages, balance, snapshot, rc, os, countries, tx] = await Promise.all([
     one("legal", "*"),
-    one("items", "id,title,notes,bucket,owner,prio,category,page_id,at_time,meet_url,repeat_rule,parent_id", (q) => q.eq("done", false).limit(400)),
+    one("items", "id,title,notes,bucket,owner,prio,category,at_time,meet_url,repeat_rule,parent_id", (q) => q.eq("done", false).limit(400)),
+    one("item_links", "item_id,page_id,url"),
     one("decisions", "date,title,why,domain", (q) => q.order("date", { ascending: false }).limit(40)),
     one("links", "group,title,url,note"),
     one("access", "kind,service,url,login_hint,secret_location,two_fa,who,used_by,rotated_at,owner,payment_method,monthly_cost,renewal_date"),
@@ -155,7 +156,10 @@ export async function buildContext(db: SupabaseClient, me: "max" | "adrien"): Pr
     semaine_en_cours: isoWeekKey(today).slice(2),
     fiche_societe: legal[0] ?? null,
     apps,
-    taches_ouvertes: items,
+    taches_ouvertes: items.map((i) => {
+      const liens = itemLinks.filter((l) => l.item_id === i.id).map((l) => (l.page_id ? { page: l.page_id } : { lien: l.url }));
+      return liens.length ? { ...i, liens } : i;
+    }),
     semaine_type: routines,
     process: processes,
     decisions,
