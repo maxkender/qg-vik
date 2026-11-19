@@ -83,9 +83,11 @@ export function markdownToBlocks(markdown: string): PageBlock[] {
     } else if ((m = /^\s*[-*+]\s+(.*)$/.exec(line))) {
       flush();
       blocks.push({ type: "bulletListItem", content: inline(m[1]) });
-    } else if ((m = /^\s*\d+[.)]\s+(.*)$/.exec(line))) {
+    } else if ((m = /^\s*(\d+)[.)]\s+(.*)$/.exec(line))) {
       flush();
-      blocks.push({ type: "numberedListItem", content: inline(m[1]) });
+      // Une liste numérotée coupée par autre chose reprend à son numéro, pas à 1.
+      const resumed = Number(m[1]) > 1 && blocks.at(-1)?.type !== "numberedListItem";
+      blocks.push({ type: "numberedListItem", ...(resumed ? { props: { start: Number(m[1]) } } : {}), content: inline(m[2]) });
     } else if (/^\s*([-*_])\1{2,}\s*$/.test(line)) flush();
     else paragraph.push(line.replace(/^\s*>\s?/, "").trim());
   }
