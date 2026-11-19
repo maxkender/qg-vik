@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowUpRight, CheckCircle2, FileText, Gavel, MessageSquare, PlusCircle, Send, X, type LucideIcon } from "lucide-react";
+import { ArrowUpRight, Camera, CheckCircle2, FileText, Gavel, MessageSquare, PlusCircle, Send, X, type LucideIcon } from "lucide-react";
 import { ViewHeader } from "@/components/app/shell";
 import { useView } from "@/components/app/view-state";
 import { PersonAvatar } from "@/components/person-avatar";
@@ -11,8 +11,27 @@ import { MEMBERS, type Who } from "@/lib/members";
 import { ago, pageTitle } from "@/lib/pages";
 import { containsSecret, SECRET_MESSAGE } from "@/lib/secrets";
 import { newId, useRows } from "@/lib/store";
+import { supabaseBrowser } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+
+/** Réduit la photo à un carré de 128 px et l'enregistre dans le profil. */
+async function savePhoto(file: File, userId: string) {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const side = Math.min(bitmap.width, bitmap.height);
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 128;
+    canvas.getContext("2d")!.drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, 128, 128);
+    const avatar = canvas.toDataURL("image/jpeg", 0.82);
+    const { error } = await supabaseBrowser().from("profiles").update({ avatar }).eq("id", userId);
+    if (error) throw error;
+    await profilesStore.load();
+    toast("Photo mise à jour");
+  } catch {
+    toast.error("Impossible d'enregistrer cette image");
+  }
+}
 
 type Event = { at: string; icon: LucideIcon; text: string };
 const URL_RE = /https?:\/\/\S+/i;
@@ -101,7 +120,25 @@ export default function ProfilesPage() {
       <div className="grid items-start gap-3 px-4 pb-16 md:px-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)]">
         <div className="flex flex-col gap-3">
           <section className="glass flex flex-wrap items-center gap-4 rounded-2xl p-4 sm:p-5">
-            <PersonAvatar who={who} size="lg" />
+            {mine ? (
+              <label title="Changer ma photo" className="group relative cursor-pointer rounded-2xl outline-none focus-within:ring-2 focus-within:ring-ring">
+                <PersonAvatar who={who} size="lg" />
+                <span className="absolute inset-0 grid place-items-center rounded-2xl bg-black/45 text-white opacity-0 transition-opacity duration-100 group-hover:opacity-100"><Camera className="size-5" aria-hidden /></span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  aria-label="Changer ma photo"
+                  className="sr-only"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (file) void savePhoto(file, me.id);
+                  }}
+                />
+              </label>
+            ) : (
+              <PersonAvatar who={who} size="lg" />
+            )}
             <div className="min-w-0 flex-1">
               <h2 className="text-[20px] leading-tight font-semibold">{person.name}</h2>
               <p className="text-[13px] text-muted-foreground">{person.role}</p>

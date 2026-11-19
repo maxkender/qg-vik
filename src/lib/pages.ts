@@ -4,6 +4,7 @@ import {
   BookOpen, Compass, FileText, Flag, Folder, Lightbulb, ListChecks, Megaphone, NotebookPen, Rocket, Target, Users, Wallet,
   type LucideIcon,
 } from "lucide-react";
+import { toast } from "sonner";
 import { pagesStore } from "@/lib/data";
 import { newId } from "@/lib/store";
 import type { PageRow } from "@/lib/types";
@@ -20,14 +21,14 @@ export const pageHref = (id: string) => `/pages?id=${id}`;
 /** Un dossier est une page à l'icône « dossier » : il range d'autres pages et peut aussi contenir du texte. */
 export const isFolder = (p: Pick<PageRow, "icon">) => p.icon === "folder";
 
-export function createPage(input: { parent_id?: string | null; title?: string; folder?: boolean; created_by: string }): PageRow {
+export function createPage(input: { parent_id?: string | null; title?: string; folder?: boolean; icon?: string; content?: unknown[]; created_by: string }): PageRow {
   const now = new Date().toISOString();
   const page: PageRow = {
     id: newId(),
     parent_id: input.parent_id ?? null,
     title: input.title ?? (input.folder ? "Nouveau dossier" : ""),
-    icon: input.folder ? "folder" : null,
-    content: [],
+    icon: input.folder ? "folder" : (input.icon ?? null),
+    content: input.content ?? [],
     sort_order: Date.now(),
     favorite: false,
     archived_at: null,
@@ -38,6 +39,22 @@ export function createPage(input: { parent_id?: string | null; title?: string; f
   };
   void pagesStore.insert(page);
   return page;
+}
+
+// Les enregistrements en attente, pour qu'une page soit en base avant ce qui pointe vers elle.
+const saving = new Map<string, Promise<boolean>>();
+/** Comme createPage, mais on peut attendre que la page soit enregistrée (et son parent avant elle). */
+export function createPageSaved(input: Parameters<typeof createPage>[0]): { page: PageRow; saved: Promise<boolean> } {
+  const now = new Date().toISOString();
+  const page: PageRow = {
+    id: newId(), parent_id: input.parent_id ?? null, title: input.title ?? (input.folder ? "Nouveau dossier" : ""), icon: input.folder ? "folder" : (input.icon ?? null),
+    content: input.content ?? [], sort_order: Date.now(), favorite: false, archived_at: null, created_by: input.created_by, updated_by: input.created_by, created_at: now, updated_at: now,
+  };
+  const parent = page.parent_id ? saving.get(page.parent_id) : undefined;
+  const saved = (parent ?? Promise.resolve(true)).then(() => pagesStore.insert(page));
+  saving.set(page.id, saved);
+  void saved.finally(() => saving.delete(page.id));
+  return { page, saved };
 }
 
 export const livePages = (pages: PageRow[]) => pages.filter((p) => !p.archived_at);
@@ -79,4 +96,42 @@ export function moveTargets(pages: PageRow[], id: string): { page: PageRow; dept
     });
   walk(null, 0);
   return out;
+}
+
+/** Supprime une page et tout ce qu'elle contient. Un bouton « Annuler » la fait revenir. */
+export function deletePage(pages: PageRow[], page: PageRow) {
+  const ids: string[] = [];
+  const collect = (id: string) => {
+    ids.push(id);
+    childrenOf(pages, id).forEach((k) => collect(k.id));
+  };
+  collect(page.id);
+  const at = new Date().toISOString();
+  ids.forEach((id) => void pagesStore.update(id, { archived_at: at }));
+  toast(`« ${pageTitle(page)} » supprimé${ids.length > 1 ? ` avec ${ids.length - 1} page${ids.length > 2 ? "s" : ""}` : ""}`, {
+    action: { label: "Annuler", onClick: () => ids.forEach((id) => void pagesStore.update(id, { archived_at: null })) },
+  });
+}
+
+/** Le dossier « Réunions », créé à la première utilisation. */
+export function meetingsFolder(pages: PageRow[], created_by: string): string {
+  const found = childrenOf(pages, null).find((p) => isFolder(p) && p.title.trim().toLowerCase() === "réunions");
+  return found ? found.id : createPageSaved({ folder: true, title: "Réunions", created_by }).page.id;
+}
+
+/** Un compte rendu de réunion prêt à remplir, rangé dans « Réunions ». */
+export function createMeetingNotes(pages: PageRow[], input: { title: string; date: string; created_by: string }): { page: PageRow; saved: Promise<boolean> } {
+  const h = (text: string) => ({ type: "heading", props: { level: 2 }, content: text });
+  return createPageSaved({
+    parent_id: meetingsFolder(pages, input.created_by),
+    title: `${input.title} · ${input.date}`,
+    icon: "notebook",
+    created_by: input.created_by,
+    content: [
+      h("Présents"), { type: "paragraph", content: "Maximilien, Adrien" },
+      h("Ordre du jour"), { type: "bulletListItem", content: "" },
+      h("Décisions"), { type: "bulletListItem", content: "" },
+      h("Actions"), { type: "checkListItem", content: "" },
+    ],
+  });
 }

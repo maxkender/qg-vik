@@ -227,7 +227,7 @@ export type ExpenseRule = {
   created_at: string;
 };
 
-export type Profile = { id: string; name: string; short: "max" | "adrien"; color: string };
+export type Profile = { id: string; name: string; short: "max" | "adrien"; color: string; avatar?: string | null };
 
 export type ReadRow = {
   id: string;

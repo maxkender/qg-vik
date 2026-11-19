@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { NotebookPen } from "lucide-react";
 import { useView } from "@/components/app/view-state";
 import { PageIcon } from "@/components/pages/page-icon";
 import { Comments } from "@/components/comments";
@@ -9,9 +10,9 @@ import { BucketPicker, Field, MeetingFields, OwnerPicker, CategoryPicker, PrioPi
 import { useMe } from "@/components/session-provider";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { itemsStore, pagesStore, profilesStore } from "@/lib/data";
-import { isLate } from "@/lib/dates";
+import { bucketLabel, isLate, longDate, parseBucket } from "@/lib/dates";
 import { byOrder, createItem, toggleDone } from "@/lib/items";
-import { ago, createPage, livePages, pageHref, pageTitle } from "@/lib/pages";
+import { ago, createMeetingNotes, createPageSaved, livePages, pageHref, pageTitle } from "@/lib/pages";
 import { useRows } from "@/lib/store";
 
 /** Panneau d'une tâche : titre, description, urgence, personne, échéance, sous-objectifs, commentaires. */
@@ -63,15 +64,30 @@ export function ItemSheet() {
                   <button type="button" onClick={() => void itemsStore.update(item.id, { page_id: null })} className="text-[12px] text-muted-foreground hover:text-foreground">Retirer</button>
                 </div>
               ) : (
+                <div className="flex gap-1.5">
+                {item.category === "reunion" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const { page, saved } = createMeetingNotes(pages, { title: item.title, date: item.bucket.startsWith("d:") ? longDate(parseBucket(item.bucket).start!) : bucketLabel(item.bucket, today), created_by: me.id });
+                      void saved.then((ok) => ok && itemsStore.update(item.id, { page_id: page.id }));
+                    }}
+                    className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-foreground px-3 text-[13px] font-semibold text-background"
+                  >
+                    <NotebookPen className="size-4" aria-hidden /> Compte rendu
+                  </button>
+                )}
                 <select
                   value=""
                   aria-label="Relier à une page"
                   onChange={(e) => {
                     const v = e.target.value;
                     if (!v) return;
-                    void itemsStore.update(item.id, { page_id: v === "new" ? createPage({ title: item.title, created_by: me.id }).id : v });
+                    if (v !== "new") return void itemsStore.update(item.id, { page_id: v });
+                    const { page, saved } = createPageSaved({ title: item.title, created_by: me.id });
+                    void saved.then((ok) => ok && itemsStore.update(item.id, { page_id: page.id }));
                   }}
-                  className="h-9 w-full rounded-lg border border-line bg-glass px-2.5 text-[13px] text-muted-foreground outline-none focus:border-line-strong"
+                  className="h-9 min-w-0 flex-1 rounded-lg border border-line bg-glass px-2.5 text-[13px] text-muted-foreground outline-none focus:border-line-strong"
                 >
                   <option value="">Relier à une page…</option>
                   <option value="new">+ Nouvelle page pour cette tâche</option>
@@ -79,6 +95,7 @@ export function ItemSheet() {
                     <option key={p.id} value={p.id}>{pageTitle(p)}</option>
                   ))}
                 </select>
+                </div>
               )}
             </Field>
             <Field title="Catégorie"><CategoryPicker value={item.category} onChange={(category) => void itemsStore.update(item.id, { category })} /></Field>

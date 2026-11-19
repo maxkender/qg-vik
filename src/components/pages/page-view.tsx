@@ -4,9 +4,11 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "reac
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookOpenCheck, ChevronRight, Ellipsis, Link2, MessageSquare, Plus, Send, Star, Trash2 } from "lucide-react";
+import { BookOpenCheck, ChevronRight, Ellipsis, FolderPlus, Link2, MessageSquare, Plus, Send, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Comments } from "@/components/comments";
+import { MarginComments, useMarginThreads } from "@/components/pages/margin-comments";
+import { PageCard } from "@/components/pages/page-card";
 import { PageIcon } from "@/components/pages/page-icon";
 import { PersonAvatar } from "@/components/person-avatar";
 import { useMe } from "@/components/session-provider";
@@ -17,7 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { commentsStore, pagesStore, profilesStore, readsStore } from "@/lib/data";
 import { MEMBERS, type Who } from "@/lib/members";
-import { PAGE_ICONS, ago, breadcrumb, childrenOf, createPage, moveTargets, pageHref, pageTitle } from "@/lib/pages";
+import { PAGE_ICONS, ago, breadcrumb, childrenOf, createPage, deletePage, isFolder, moveTargets, pageHref, pageTitle } from "@/lib/pages";
 import { newId, useRows } from "@/lib/store";
 import type { PageRow } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -47,6 +49,7 @@ export function PageView({ id }: { id: string }) {
   const page = pages.find((p) => p.id === id);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [draft, setDraft] = useState<{ blockId: string; quote: string } | null>(null);
+  const threads = useMarginThreads(id);
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const titleTimer = useRef<number | null>(null);
 
@@ -169,17 +172,11 @@ export function PageView({ id }: { id: string }) {
             <DropdownMenuItem
               variant="destructive"
               onSelect={() => {
-                if (!window.confirm(`Supprimer « ${pageTitle(page)} »${kids.length ? " et ses sous-pages" : ""} ?`)) return;
-                const at = new Date().toISOString();
-                const drop = (pid: string) => {
-                  childrenOf(pages, pid).forEach((k) => drop(k.id));
-                  void pagesStore.update(pid, { archived_at: at });
-                };
-                drop(page.id);
+                deletePage(pages, page);
                 router.push(page.parent_id ? pageHref(page.parent_id) : "/pages");
               }}
             >
-              <Trash2 aria-hidden /> Supprimer la page
+              <Trash2 aria-hidden /> Supprimer
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -187,7 +184,8 @@ export function PageView({ id }: { id: string }) {
 
       {/* --------------------------------------------------------- le document */}
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <article className="mx-auto w-full max-w-[780px] px-5 pt-10 pb-40 md:px-12 md:pt-16">
+        <div className="flex w-full justify-center">
+        <article className="w-full max-w-[780px] min-w-0 px-5 pt-10 pb-40 md:px-12 md:pt-16">
           <Popover>
             <PopoverTrigger className="grid size-12 place-items-center rounded-2xl bg-muted text-muted-foreground transition-colors duration-100 hover:bg-accent hover:text-foreground" aria-label="Changer l'icône de la page">
               <PageIcon icon={page.icon} className="size-6" />
@@ -238,9 +236,29 @@ export function PageView({ id }: { id: string }) {
             }}
             className="mt-5 w-full resize-none bg-transparent font-heading text-[clamp(2rem,5vw,2.75rem)] leading-[1.1] font-semibold tracking-[-0.025em] outline-none placeholder:text-faint [field-sizing:content]"
           />
+          {isFolder(page) ? (
+            <>
+              <div className="mt-4 mb-5 flex flex-wrap gap-2">
+                <button type="button" onClick={() => go(createPage({ parent_id: page.id, created_by: me.id }).id)} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-foreground px-3.5 text-[13.5px] font-semibold text-background">
+                  <Plus className="size-4" aria-hidden /> Nouvelle page
+                </button>
+                <button type="button" onClick={() => go(createPage({ parent_id: page.id, folder: true, created_by: me.id }).id)} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-[13.5px] font-medium text-muted-foreground transition-colors duration-100 hover:border-line-strong hover:text-foreground">
+                  <FolderPlus className="size-4" aria-hidden /> Sous-dossier
+                </button>
+              </div>
+              {kids.length ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {kids.map((k) => <PageCard key={k.id} page={k} pages={pages} by={profiles.find((p) => p.id === k.updated_by)?.name} />)}
+                </div>
+              ) : (
+                <p className="rounded-2xl border border-dashed border-line-strong px-6 py-10 text-center text-[13.5px] text-muted-foreground">Dossier vide.</p>
+              )}
+            </>
+          ) : (
+            <>
           <p className="mt-2 mb-6 flex items-center gap-2 text-[12.5px] text-faint">
             {editorName && <PersonAvatar who={profiles.find((p) => p.id === page.updated_by)?.short ?? "both"} size="xs" />}
-            Modifié {editorName ? `par ${editorName} ` : ""}{ago(page.updated_at)} · tape <kbd className="num rounded bg-muted px-1 text-muted-foreground">/</kbd> pour insérer un bloc ou une sous-page
+            Modifié {editorName ? `par ${editorName} ` : ""}{ago(page.updated_at)}
           </p>
 
           <PageEditor
@@ -261,7 +279,13 @@ export function PageView({ id }: { id: string }) {
               </ul>
             </section>
           )}
+            </>
+          )}
         </article>
+        {threads.length > 0 && !isFolder(page) && (
+          <MarginComments threads={threads} onOpen={(blockId) => { jump(blockId); setCommentsOpen(true); }} />
+        )}
+        </div>
       </div>
 
       <Sheet open={commentsOpen} onOpenChange={(o) => { setCommentsOpen(o); if (!o) setDraft(null); }}>

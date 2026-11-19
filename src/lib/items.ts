@@ -90,7 +90,7 @@ export function toggleDone(item: Item) {
     const exists = itemsStore.getSnapshot().some((i) => !i.done && i.id !== item.id && i.title === item.title && i.repeat_rule === item.repeat_rule && i.bucket === bucket);
     if (!exists && bucket !== item.bucket) {
       const now = new Date().toISOString();
-      void itemsStore.insert({ ...item, id: newId(), bucket, done: false, done_at: null, sort_order: Date.now(), created_at: now, updated_at: now });
+      void itemsStore.insert({ ...item, id: newId(), page_id: null, bucket, done: false, done_at: null, sort_order: Date.now(), created_at: now, updated_at: now });
     }
   }
   return itemsStore.update(item.id, { done, done_at: done ? new Date().toISOString() : null });

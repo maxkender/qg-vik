@@ -7,6 +7,7 @@ import { BookOpenCheck, ChevronRight, Files, FolderPlus, Plus } from "lucide-rea
 import { useMe } from "@/components/session-provider";
 import { pagesStore, readsStore } from "@/lib/data";
 import { breadcrumb, childrenOf, createPage, pageHref, pageTitle } from "@/lib/pages";
+import { PageMenu } from "@/components/pages/page-card";
 import { PageIcon } from "@/components/pages/page-icon";
 import { useRows } from "@/lib/store";
 import type { PageRow } from "@/lib/types";
@@ -71,6 +72,7 @@ function PagesNavInner() {
           >
             <Plus className="size-3.5" aria-hidden />
           </button>
+          <PageMenu page={page} pages={pages} className="size-6 shrink-0 rounded-md text-faint opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100" onDeleted={() => active && router.push("/pages")} />
         </div>
         {open && kids.length > 0 && <ul>{kids.map((k) => Node({ page: k, depth: depth + 1 }))}</ul>}
       </li>
