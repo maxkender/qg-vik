@@ -4,7 +4,7 @@ import type { VendorRule } from "@/lib/postes";
 import { TableStore } from "@/lib/store";
 import type {
   AccessRow, AppRow, CommentRow, DocLog, DocRow, CountryVerdict, ExpenseFlag, MetaSpend, OsDaily, QontoBalance, QontoTx, RcCountryWeekly, RcDaily, SyncRun, Decision, Expense, ExpenseCheck, ExpenseRule, Item, Legal,
-  ItemLink, LinkRow, MessageRow, MetricsSnapshot, PageRow, ProcessRow, Profile, ReadRow, Routine, RoutineCheck,
+  ItemLink, LinkRow, MessageRow, MetricsSnapshot, PageRow, ProcessRow, Profile, ReadRow, Routine, RoutineCheck, TagColor,
 } from "@/lib/types";
 
 // Une instance par table, partagée par toute l'app.
@@ -25,6 +25,7 @@ export const expenseRulesStore = new TableStore<ExpenseRule>("expense_rules", "i
 export const profilesStore = new TableStore<Profile>("profiles", "id");
 export const messagesStore = new TableStore<MessageRow>("messages", "id");
 export const itemLinksStore = new TableStore<ItemLink>("item_links", "id");
+export const tagColorsStore = new TableStore<TagColor>("tag_colors", "name");
 export const readsStore = new TableStore<ReadRow>("reads", "id");
 
 // Données des vraies sources (écrites par le serveur, lues ici).

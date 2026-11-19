@@ -290,3 +290,6 @@ export type ItemLink = { id: string; item_id: string; page_id: string | null; ur
 
 /** Une habitude de la semaine type cochée pour un jour donné. */
 export type RoutineCheck = { id: string; routine_id: string; date: string; checked_by: string | null; created_at: string };
+
+/** La couleur choisie pour un label. */
+export type TagColor = { name: string; color: string; updated_at: string };

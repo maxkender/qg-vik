@@ -3,6 +3,7 @@
 import { memo, useRef, useState, type KeyboardEvent } from "react";
 import { CalendarDays, Check, ChevronDown, Ellipsis, Repeat, Video, Maximize2, MessageSquare, Plus, Trash2 } from "lucide-react";
 import { LinkedSummary } from "@/components/planner/item-links";
+import { tagCardStyle, tagChipStyle, useTagColors } from "@/lib/tags";
 import { PersonAvatar } from "@/components/person-avatar";
 import { useMe } from "@/components/session-provider";
 import { useView } from "@/components/app/view-state";
@@ -134,6 +135,8 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
   const addRef = useRef<HTMLInputElement>(null);
 
   const category = categoryOf(item.category);
+  const colorOf = useTagColors();
+  const tint = !dragging && item.tags?.length ? tagCardStyle(colorOf(item.tags[0]), item.done) : undefined;
   const late = !item.done && isLate(item.bucket, today);
   const doneKids = kids.filter((k) => k.done).length;
   const sorted = [...kids].sort(byOrder);
@@ -156,9 +159,11 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
         if (window.getSelection()?.toString()) return;
         onOpen(item);
       }}
+      style={tint}
       className={cn(
         "group/card relative rounded-[10px] px-2 py-[7px] transition-colors duration-100",
         onOpen && "cursor-pointer",
+        tint && "my-0.5 hover:brightness-[0.98] dark:hover:brightness-110",
         "hover:bg-glass",
         dragging && "glass-strong cursor-grabbing shadow-2xl",
       )}
@@ -288,7 +293,7 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
           <span className={cn("text-[10.5px] font-semibold tracking-[0.06em] uppercase", item.prio === "urgent" ? "text-bad" : "text-now")}>{item.prio === "urgent" ? "Urgent" : "En cours"}</span>
         )}
         {(item.tags ?? []).map((tag) => (
-          <span key={tag} className="rounded-md border border-line px-1.5 text-[11px] leading-[18px] font-medium text-muted-foreground">{tag}</span>
+          <span key={tag} className={cn("rounded-md px-1.5 text-[11px] leading-[19px] font-semibold", item.done && "opacity-60")} style={tagChipStyle(colorOf(tag))}>{tag}</span>
         ))}
         {(showHorizon || late || showLate) && (
           <span className={cn("inline-flex items-center gap-1", late ? "font-semibold text-bad" : "text-muted-foreground")} title="Échéance">

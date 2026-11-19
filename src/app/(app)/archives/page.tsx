@@ -9,6 +9,7 @@ import { itemsStore } from "@/lib/data";
 import { cap, isoDate, longDate } from "@/lib/dates";
 import { OWNER_NAME, toggleDone } from "@/lib/items";
 import { useRows } from "@/lib/store";
+import { tagChipStyle, useTagColors } from "@/lib/tags";
 import type { Item } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,7 @@ export default function ArchivesPage() {
   const { sees, today, setOpenItem } = useView();
   const items = useRows(itemsStore);
   const [q, setQ] = useState("");
+  const colorOf = useTagColors();
 
   const days = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -71,7 +73,7 @@ export default function ArchivesPage() {
                             {category.label}
                           </span>
                         )}
-                        {(i.tags ?? []).map((t) => <span key={t} className="rounded-md border border-line px-1.5 leading-[17px]">{t}</span>)}
+                        {(i.tags ?? []).map((t) => <span key={t} className="rounded-md px-1.5 leading-[18px] font-semibold" style={tagChipStyle(colorOf(t))}>{t}</span>)}
                       </span>
                     </button>
                     <button type="button" onClick={() => void toggleDone(i)} title="Remettre à faire" aria-label={`Remettre à faire : ${i.title}`} className="grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors duration-100 hover:bg-accent hover:text-foreground">

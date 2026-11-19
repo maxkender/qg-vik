@@ -3,6 +3,8 @@
 import { useState, type ReactNode } from "react";
 import { Video } from "lucide-react";
 import { toast } from "sonner";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { setTagColor, tagChipStyle, TAG_PALETTE, useTagColors } from "@/lib/tags";
 import { PersonAvatar } from "@/components/person-avatar";
 import { useView } from "@/components/app/view-state";
 import { defaultBucket } from "@/components/planner/quick-add";
@@ -77,6 +79,7 @@ const field = "h-9 rounded-lg border border-line bg-glass px-2.5 text-[13px] out
 /** Labels libres d'une tâche : on coche ceux qui existent, ou on en tape un nouveau. */
 export function TagPicker({ value, options, onChange }: { value: string[]; options: string[]; onChange: (tags: string[]) => void }) {
   const [draft, setDraft] = useState("");
+  const colorOf = useTagColors();
   const all = [...new Set([...options, ...value])];
   const toggle = (tag: string) => onChange(value.includes(tag) ? value.filter((t) => t !== tag) : [...value, tag]);
   function add() {
@@ -88,11 +91,29 @@ export function TagPicker({ value, options, onChange }: { value: string[]; optio
   }
   return (
     <div className="flex flex-wrap gap-1.5">
-      {all.map((tag) => (
-        <button key={tag} type="button" aria-pressed={value.includes(tag)} onClick={() => toggle(tag)} className={cn("h-8 rounded-full border px-3 text-[12.5px] font-medium transition-colors duration-100", value.includes(tag) ? "border-foreground bg-foreground text-background" : off)}>
-          {tag}
-        </button>
-      ))}
+      {all.map((tag) => {
+        const on = value.includes(tag);
+        const color = colorOf(tag);
+        return (
+          <span key={tag} className={cn("flex h-8 items-center rounded-full border pr-1 pl-1 text-[12.5px] font-medium transition-colors duration-100", on ? "border-transparent" : "border-line")} style={on ? tagChipStyle(color) : undefined}>
+            <Popover>
+              <PopoverTrigger aria-label={`Couleur du label ${tag}`} title="Changer la couleur" className="grid size-6 place-items-center rounded-full outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring">
+                <span className="size-2.5 rounded-full" style={{ background: color }} />
+              </PopoverTrigger>
+              <PopoverContent align="start" className="glass-strong w-auto rounded-2xl border-0 p-2">
+                <div className="grid grid-cols-4 gap-1.5">
+                  {TAG_PALETTE.map((c) => (
+                    <button key={c.color} type="button" aria-label={c.name} aria-pressed={c.color === color} title={c.name} onClick={() => void setTagColor(tag, c.color)} className={cn("size-7 rounded-full outline-none ring-offset-2 ring-offset-popover focus-visible:ring-2", c.color === color && "ring-2 ring-foreground")} style={{ background: c.color }} />
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+            <button type="button" aria-pressed={on} onClick={() => toggle(tag)} className={cn("h-full rounded-full pr-2 pl-1 outline-none focus-visible:underline", !on && "text-muted-foreground hover:text-foreground")}>
+              {tag}
+            </button>
+          </span>
+        );
+      })}
       <input
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
