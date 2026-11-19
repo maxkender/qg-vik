@@ -65,8 +65,8 @@ function Recorder({ item }: { item: Item }) {
           <button type="button" onClick={() => void finish()} className="inline-flex h-10 items-center gap-2 rounded-full bg-bad px-4 text-[13.5px] font-semibold text-white">
             <Square className="size-3.5 fill-current" aria-hidden /> Arrêter et écrire le compte rendu
           </button>
-        ) : (
-          <button type="button" disabled={busy} onClick={() => void rec.start()} className="inline-flex h-10 items-center gap-2 rounded-full bg-foreground px-4 text-[13.5px] font-semibold text-background disabled:opacity-50">
+        ) : busy ? null : (
+          <button type="button" onClick={() => void rec.start()} className="inline-flex h-10 items-center gap-2 rounded-full bg-foreground px-4 text-[13.5px] font-semibold text-background">
             <Mic className="size-4" aria-hidden /> Enregistrer la réunion
           </button>
         )}
