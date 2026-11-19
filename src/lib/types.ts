@@ -284,7 +284,7 @@ export type MessageRow = {
 };
 
 /** Une page ou un lien rattaché à une tâche. */
-export type ItemLink = { id: string; item_id: string; page_id: string | null; url: string | null; title: string | null; created_by: string | null; created_at: string };
+export type ItemLink = { id: string; item_id: string; page_id: string | null; url: string | null; task_id?: string | null; title: string | null; created_by: string | null; created_at: string };
 
 /** Une habitude de la semaine type cochée pour un jour donné. */
 export type RoutineCheck = { id: string; routine_id: string; date: string; checked_by: string | null; created_at: string };
