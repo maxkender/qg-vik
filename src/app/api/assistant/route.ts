@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { blocksToText, buildContext } from "@/lib/assistant/context";
-import { callGemini, cleanImages, geminiError, type Content, type Part } from "@/lib/assistant/gemini";
+import { attachmentParts, callGemini, geminiError, type Content, type Part } from "@/lib/assistant/gemini";
 import { assistantSession, openPage, whoWeAre, WRITING_FORMAT } from "@/lib/assistant/session";
 import { CATEGORY_KEYS } from "@/lib/categories";
 import { markdownToBlocks } from "@/lib/markdown-blocks";
@@ -106,7 +106,7 @@ Le QG ne contient aucun mot de passe ni clé API, seulement l'endroit où ils so
 
 Tu agis toi-même dans le QG : créer ou modifier une tâche, envoyer un message, écrire dans une page, créer une page. Quand la demande est claire, fais-le sans demander de confirmation, puis confirme en une ligne ce qui a été fait.
 
-Quand la personne te demande de rédiger quelque chose de long (un plan, un compte rendu, une réponse à des consignes, un tableau, un graphique), écris-le dans une page plutôt que dans la discussion : dans la page ouverte s'il y en a une, sinon dans une nouvelle page. Si elle joint une image (une capture de consignes, un mail, un document), lis-la attentivement et appuie-toi sur ce qu'elle contient ; cite les contraintes importantes (dates limites, formats, critères).
+Quand la personne te demande de rédiger quelque chose de long (un plan, un compte rendu, une réponse à des consignes, un tableau, un graphique), écris-le dans une page plutôt que dans la discussion : dans la page ouverte s'il y en a une, sinon dans une nouvelle page. Si elle joint un fichier (une capture de consignes, un PDF, un document, un tableur, un enregistrement), lis-le attentivement et appuie-toi sur ce qu'il contient ; cite les contraintes importantes (dates limites, formats, critères).
 
 ${WRITING_FORMAT}
 
@@ -118,7 +118,7 @@ Données du QG (JSON) :
 ${data}`;
 }
 
-type Turn = { role: string; text: string; images?: unknown };
+type Turn = { role: string; text: string; files?: unknown };
 
 export async function POST(request: Request) {
   const session = await assistantSession();
@@ -128,17 +128,17 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as { messages?: Turn[]; page_id?: unknown } | null;
   const history = (body?.messages ?? []).filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.text === "string").slice(-30);
   const last = history.at(-1);
-  const images = cleanImages(last?.images);
-  if (!last || last.role !== "user" || (!last.text.trim() && !images.length)) return NextResponse.json({ error: "Question vide." }, { status: 400 });
+  const files = attachmentParts(last?.files);
+  if (!last || last.role !== "user" || (!last.text.trim() && !files.length)) return NextResponse.json({ error: "Question vide." }, { status: 400 });
   if (containsSecret(last.text)) return NextResponse.json({ error: `${SECRET_MESSAGE}.` }, { status: 400 });
 
   const page = await openPage(db, body?.page_id);
   const system = systemPrompt(me, await buildContext(db, me), page);
   const contents: Content[] = history
     .filter((m) => m.text.trim() || m === last)
-    .map((m) => ({ role: m.role === "user" ? "user" : "model", parts: [{ text: m.text.trim() || "Regarde cette image." }] }));
-  // Les images n'accompagnent que le dernier message.
-  contents.at(-1)!.parts.unshift(...images.map((inlineData) => ({ inlineData })));
+    .map((m) => ({ role: m.role === "user" ? "user" : "model", parts: [{ text: m.text.trim() || "Regarde ce que je t'envoie." }] }));
+  // Les fichiers n'accompagnent que le dernier message.
+  contents.at(-1)!.parts.unshift(...files);
 
   type Out = { result: string; label?: string; href?: string; error?: boolean };
   const fail = (result: string): Out => ({ result, error: true });

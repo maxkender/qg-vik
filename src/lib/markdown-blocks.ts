@@ -6,7 +6,7 @@
  *   {"titre": "Revenus par app", "type": "barres", "donnees": [{"label": "Sophia", "valeur": 50268}]}
  *   ```
  */
-export type PageBlock = { type: string; props?: Record<string, unknown>; content?: unknown };
+export type PageBlock = { type: string; props?: Record<string, unknown>; content?: unknown; children?: PageBlock[] };
 type Inline = { type: "text"; text: string; styles: Record<string, true> } | { type: "link"; href: string; content: { type: "text"; text: string; styles: Record<string, true> }[] };
 
 const TOKEN = /(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\(https?:\/\/[^)\s]+\)|\*[^*\s][^*]*\*)/g;
@@ -70,6 +70,12 @@ export function markdownToBlocks(markdown: string): PageBlock[] {
       i--;
       const width = Math.max(...rows.map((r) => r.length));
       blocks.push({ type: "table", content: { type: "tableContent", rows: rows.map((r) => ({ cells: Array.from({ length: width }, (_, c) => inline(r[c] ?? "")) })) } });
+      continue;
+    }
+    // Une puce en retrait se range sous l'élément de liste qui la précède.
+    const nested = /^(\s{2,}|\t+)([-*+]|\d+[.)])\s+\S/.test(line) && !paragraph.length ? blocks.at(-1) : undefined;
+    if (nested && /ListItem$/.test(nested.type)) {
+      nested.children = [...(nested.children ?? []), ...markdownToBlocks(line.trim())];
       continue;
     }
     let m: RegExpExecArray | null;

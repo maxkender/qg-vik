@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowUp, Check, ImagePlus, RotateCcw, Sparkles, X } from "lucide-react";
+import { ArrowUp, Check, Paperclip, RotateCcw, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
-import { readPictures, type Picture } from "@/lib/pictures";
+import { AttachButton, AttachmentChips } from "@/components/assistant/attachments";
+import { readAttachments, type Attachment } from "@/lib/attachments";
 import { cn } from "@/lib/utils";
 
 type Action = { label: string; href?: string };
@@ -35,7 +36,7 @@ export function AssistantBubble() {
   const [turns, setTurns] = useState<Turn[]>(restore);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
-  const [pictures, setPictures] = useState<Picture[]>([]);
+  const [pictures, setPictures] = useState<Attachment[]>([]);
   const [dropping, setDropping] = useState(false);
   const end = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLTextAreaElement>(null);
@@ -45,12 +46,7 @@ export function AssistantBubble() {
   }, [turns, open]);
 
   async function attach(files: Iterable<File>) {
-    try {
-      const made = await readPictures(files, pictures.length);
-      if (made.length) setPictures((p) => [...p, ...made].slice(0, 4));
-    } catch {
-      toast.error("Impossible de lire cette image");
-    }
+    setPictures(await readAttachments(files, pictures, (message) => toast.error(message)));
   }
 
   async function ask(question: string) {
@@ -68,7 +64,7 @@ export function AssistantBubble() {
       const res = await fetch("/api/assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ page_id: currentPage(), messages: history.map((t, i) => ({ role: t.role, text: t.text, images: i === history.length - 1 ? sent : undefined })) }),
+        body: JSON.stringify({ page_id: currentPage(), messages: history.map((t, i) => ({ role: t.role, text: t.text, files: i === history.length - 1 ? sent : undefined })) }),
       });
       if (!res.ok || !res.body) {
         const err = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -169,7 +165,7 @@ export function AssistantBubble() {
           {turns.map((t, i) =>
             t.role === "user" ? (
               <p key={i} className="max-w-[85%] self-end rounded-2xl bg-foreground px-3.5 py-2 text-[14px] whitespace-pre-wrap text-background">
-                {t.pictures ? <span className="mb-0.5 flex items-center gap-1 text-[12px] opacity-70"><ImagePlus className="size-3.5" aria-hidden /> {t.pictures} image{t.pictures > 1 ? "s" : ""}</span> : null}
+                {t.pictures ? <span className="mb-0.5 flex items-center gap-1 text-[12px] opacity-70"><Paperclip className="size-3.5" aria-hidden /> {t.pictures} fichier{t.pictures > 1 ? "s" : ""}</span> : null}
                 {t.text}
               </p>
             ) : (
@@ -196,33 +192,8 @@ export function AssistantBubble() {
             }}
             className="m-2.5 mt-0 flex shrink-0 flex-wrap items-end gap-2 rounded-3xl border border-line p-1.5 focus-within:border-line-strong"
           >
-            {pictures.length > 0 && (
-              <div className="flex w-full gap-1.5 px-1 pt-1">
-                {pictures.map((p, i) => (
-                  <span key={i} className="relative">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- aperçu d'une image locale */}
-                    <img src={`data:${p.mime};base64,${p.data}`} alt="" className="size-12 rounded-lg object-cover" />
-                    <button type="button" onClick={() => setPictures((all) => all.filter((_, j) => j !== i))} aria-label="Retirer l'image" className="absolute -top-1 -right-1 grid size-4 place-items-center rounded-full bg-foreground text-background">
-                      <X className="size-3" aria-hidden />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-            <label title="Joindre une image (ou glisse-la ici)" className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-muted-foreground transition-colors duration-100 hover:bg-accent hover:text-foreground">
-              <ImagePlus className="size-4" aria-hidden />
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                aria-label="Joindre une image"
-                className="sr-only"
-                onChange={(e) => {
-                  void attach(e.target.files ?? []);
-                  e.target.value = "";
-                }}
-              />
-            </label>
+            <AttachmentChips files={pictures} onRemove={(i) => setPictures((all) => all.filter((_, j) => j !== i))} className="flex w-full flex-wrap gap-1.5 px-1 pt-1" />
+            <AttachButton label="Joindre un fichier" onFiles={(files) => void attach(files)} />
             <textarea
               ref={field}
               value={input}
@@ -235,14 +206,14 @@ export function AssistantBubble() {
                 }
               }}
               onPaste={(e) => {
-                if ([...e.clipboardData.files].some((f) => f.type.startsWith("image/"))) {
+                if (e.clipboardData.files.length) {
                   e.preventDefault();
                   void attach(e.clipboardData.files);
                 }
               }}
               rows={1}
               autoFocus
-              placeholder="Demande, dicte, ou glisse une capture…"
+              placeholder="Demande, dicte, ou glisse un fichier…"
               aria-label="Message à l'assistant"
               className="max-h-32 min-h-8 flex-1 resize-none bg-transparent py-1.5 text-[14px] outline-none [field-sizing:content] placeholder:text-faint"
             />

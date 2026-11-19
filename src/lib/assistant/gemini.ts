@@ -30,12 +30,23 @@ export function callGemini(apiKey: string, method: "generateContent" | "streamGe
   });
 }
 
-const IMAGE = /^image\/(png|jpeg|webp)$/;
-/** Ne garde que de vraies images, de taille raisonnable (4 au plus). */
-export function cleanImages(input: unknown): { mimeType: string; data: string }[] {
+const BINARY = /^(image\/(png|jpeg|webp)|application\/pdf|audio\/[a-z0-9.+-]+)$/;
+/** Les fichiers joints, vérifiés : images, PDF et audio tels quels, le reste sous forme de texte. */
+export function attachmentParts(input: unknown): Part[] {
   if (!Array.isArray(input)) return [];
-  return input
-    .map((i) => ({ mimeType: String((i as { mime?: unknown }).mime ?? ""), data: String((i as { data?: unknown }).data ?? "") }))
-    .filter((i) => IMAGE.test(i.mimeType) && i.data.length > 0 && i.data.length < 4_000_000 && /^[A-Za-z0-9+/=]+$/.test(i.data))
-    .slice(0, 4);
+  const parts: Part[] = [];
+  let weight = 0;
+  for (const raw of input.slice(0, 6)) {
+    const a = raw as { name?: unknown; mime?: unknown; data?: unknown; text?: unknown };
+    const name = String(a.name ?? "fichier").slice(0, 120);
+    if (typeof a.text === "string" && a.text.trim()) {
+      const text = a.text.slice(0, 200_000);
+      weight += text.length;
+      if (weight < 4_200_000) parts.push({ text: `Fichier joint « ${name} » :\n${text}` });
+    } else if (typeof a.data === "string" && BINARY.test(String(a.mime)) && /^[A-Za-z0-9+/=]+$/.test(a.data)) {
+      weight += a.data.length;
+      if (weight < 4_200_000) parts.push({ text: `Fichier joint « ${name} » :` }, { inlineData: { mimeType: String(a.mime), data: a.data } });
+    }
+  }
+  return parts;
 }

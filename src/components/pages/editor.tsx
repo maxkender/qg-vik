@@ -9,14 +9,15 @@ import {
   FormattingToolbar, FormattingToolbarController, SuggestionMenuController, createReactBlockSpec,
   getDefaultReactSlashMenuItems, getFormattingToolbarItems, useBlockNoteEditor, useComponentsContext, useCreateBlockNote,
 } from "@blocknote/react";
-import { ArrowUp, FilePlus2, ImagePlus, MessageSquarePlus, Sparkles, X } from "lucide-react";
+import { ArrowUp, FilePlus2, MessageSquarePlus, Sparkles, X } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 import { useMe } from "@/components/session-provider";
 import { pagesStore } from "@/lib/data";
 import { markdownToBlocks } from "@/lib/markdown-blocks";
 import { createPage, pageHref, pageTitle } from "@/lib/pages";
-import { readPictures, type Picture } from "@/lib/pictures";
+import { AttachButton, AttachmentChips } from "@/components/assistant/attachments";
+import { readAttachments, type Attachment } from "@/lib/attachments";
 import { PageIcon } from "@/components/pages/page-icon";
 import { useRows } from "@/lib/store";
 import type { PageRow } from "@/lib/types";
@@ -128,7 +129,8 @@ export default function PageEditor({ page, dark, onNavigate, onComment }: Props)
   const [ai, setAi] = useState<AiRequest | null>(null);
   const [instruction, setInstruction] = useState("");
   const [busy, setBusy] = useState(false);
-  const [pictures, setPictures] = useState<Picture[]>([]);
+  const abort = useRef<AbortController | null>(null);
+  const [pictures, setPictures] = useState<Attachment[]>([]);
 
   const editor = useCreateBlockNote({
     schema,
@@ -177,36 +179,80 @@ export default function PageEditor({ page, dark, onNavigate, onComment }: Props)
   }
 
   async function attach(files: Iterable<File>) {
-    try {
-      const made = await readPictures(files, pictures.length);
-      if (made.length) setPictures((p) => [...p, ...made].slice(0, 4));
-    } catch {
-      toast.error("Impossible de lire cette image");
-    }
+    setPictures(await readAttachments(files, pictures, (message) => toast.error(message)));
   }
 
   async function runAi(text: string) {
     const request = ai;
     if (!request || (!text.trim() && !pictures.length) || busy) return;
+    const anchor = editor.getBlock(request.blockIds.at(-1)!);
+    if (!anchor) return void toast.error("Le passage a changé entre-temps. Réessaie.");
+    // On remplace la sélection, ou la ligne vide où l'on se trouve ; sinon on écrit juste après.
+    const emptyLine = !request.rewrite && anchor.type === "paragraph" && Array.isArray(anchor.content) && anchor.content.length === 0;
+    const replacing = request.rewrite || emptyLine;
+    const originals = request.blockIds.map((id) => editor.getBlock(id)).filter(Boolean);
+    let written: string[] = [];
+    // Pendant que l'assistant écrit, la page n'est pas enregistrée à chaque mot : une seule fois à la fin.
+    const show = (markdown: string) => {
+      const blocks = markdownToBlocks(markdown.replace(/^\s*```(?:markdown|md)?\n/, "").replace(/\n```\s*$/, ""));
+      if (!blocks.length) return;
+      applyingRemote.current = true;
+      const inserted = written.length
+        ? editor.replaceBlocks(written, blocks as never).insertedBlocks
+        : replacing
+          ? editor.replaceBlocks(request.blockIds, blocks as never).insertedBlocks
+          : editor.insertBlocks(blocks as never, anchor.id, "after");
+      applyingRemote.current = false;
+      written = inserted.map((b) => b.id);
+    };
+
     setBusy(true);
+    abort.current = new AbortController();
+    let text_ = "";
     try {
       const res = await fetch("/api/assistant/texte", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ instruction: text.trim() || "Appuie-toi sur cette image pour écrire ce qui serait utile ici.", images: pictures, selection: request.rewrite ? request.source : undefined, page_id: page.id }),
+        body: JSON.stringify({ instruction: text.trim() || "Appuie-toi sur ce fichier pour écrire ce qui serait utile ici.", files: pictures, selection: request.rewrite ? request.source : undefined, page_id: page.id }),
+        signal: abort.current.signal,
       });
-      const json = (await res.json().catch(() => null)) as { markdown?: string; error?: string } | null;
-      if (!res.ok || !json?.markdown) throw new Error(json?.error ?? "L'assistant est indisponible.");
-      const blocks = markdownToBlocks(json.markdown);
-      const anchor = editor.getBlock(request.blockIds.at(-1)!);
-      if (!blocks.length || !anchor) throw new Error("Le passage a changé entre-temps. Réessaie.");
-      // On remplace la sélection, ou la ligne vide où l'on se trouve ; sinon on écrit juste après.
-      const emptyLine = !request.rewrite && anchor.type === "paragraph" && Array.isArray(anchor.content) && anchor.content.length === 0;
-      if (request.rewrite || emptyLine) editor.replaceBlocks(request.blockIds, blocks as never);
-      else editor.insertBlocks(blocks as never, anchor.id, "after");
+      if (!res.ok || !res.body) throw new Error(((await res.json().catch(() => null)) as { error?: string } | null)?.error ?? "L'assistant est indisponible.");
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let shown = 0;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        text_ += decoder.decode(value, { stream: true });
+        if (Date.now() - shown > 250) {
+          show(text_);
+          shown = Date.now();
+        }
+      }
+      if (!text_.trim()) throw new Error("L'assistant n'a rien écrit. Reformule la consigne.");
+      show(text_);
       setAi(null);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "L'assistant est indisponible.");
+      const stopped = e instanceof DOMException && e.name === "AbortError";
+      if (stopped && text_.trim()) {
+        // Arrêt demandé : on garde ce qui est déjà écrit.
+        show(text_);
+        setAi(null);
+      } else {
+        // Échec : la page revient comme avant.
+        if (written.length) {
+          applyingRemote.current = true;
+          if (replacing) editor.replaceBlocks(written, originals as never);
+          else editor.removeBlocks(written);
+          applyingRemote.current = false;
+          written = [];
+        }
+        if (!stopped) toast.error(e instanceof Error ? e.message : "L'assistant est indisponible.");
+      }
+    }
+    if (written.length) {
+      dirty.current = true;
+      save();
     }
     setBusy(false);
   }
@@ -289,20 +335,8 @@ export default function PageEditor({ page, dark, onNavigate, onComment }: Props)
           }}
           className="glass-strong fixed bottom-6 left-1/2 z-30 w-[min(620px,calc(100vw-2rem))] -translate-x-1/2 rounded-3xl p-2 md:left-[calc(50%+120px)]"
         >
-          {pictures.length > 0 && (
-            <div className="flex gap-1.5 px-1.5 pt-1 pb-2">
-              {pictures.map((p, i) => (
-                <span key={i} className="relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- aperçu d'une image locale */}
-                  <img src={`data:${p.mime};base64,${p.data}`} alt="" className="size-12 rounded-lg object-cover" />
-                  <button type="button" onClick={() => setPictures((all) => all.filter((_, j) => j !== i))} aria-label="Retirer l'image" className="absolute -top-1 -right-1 grid size-4 place-items-center rounded-full bg-foreground text-background">
-                    <X className="size-3" aria-hidden />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-          {ai.rewrite && (
+          <AttachmentChips files={pictures} onRemove={(i) => setPictures((all) => all.filter((_, j) => j !== i))} className="flex flex-wrap gap-1.5 px-1.5 pt-1 pb-2" />
+          {ai.rewrite && !busy && (
             <div className="flex flex-wrap gap-1.5 px-1.5 pt-1 pb-2">
               {PRESETS.map((p) => (
                 <button key={p} type="button" disabled={busy} onClick={() => void runAi(p)} className="rounded-full border border-line px-2.5 py-1 text-[12.5px] transition-colors duration-100 hover:border-line-strong disabled:opacity-40">
@@ -311,48 +345,44 @@ export default function PageEditor({ page, dark, onNavigate, onComment }: Props)
               ))}
             </div>
           )}
-          <div className="flex items-center gap-2 pl-2.5">
-            <Sparkles className={busy ? "size-4 shrink-0 animate-pulse text-now" : "size-4 shrink-0 text-now"} aria-hidden />
-            <input
-              autoFocus
-              value={instruction}
-              disabled={busy}
-              onChange={(e) => setInstruction(e.target.value)}
-              onKeyDown={(e) => {
-                e.stopPropagation();
-                if (e.key === "Escape") setAi(null);
-              }}
-              onPaste={(e) => {
-                if ([...e.clipboardData.files].some((f) => f.type.startsWith("image/"))) {
-                  e.preventDefault();
-                  void attach(e.clipboardData.files);
-                }
-              }}
-              placeholder={busy ? "L'assistant écrit…" : ai.rewrite ? "Que faire de ce passage ?" : "Que doit écrire l'assistant ? ex. un plan pour le pitch Station F"}
-              aria-label="Consigne pour l'assistant"
-              className="h-9 min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-faint"
-            />
-            <label title="Joindre une image (ou colle-la, ou glisse-la ici)" className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground">
-              <ImagePlus className="size-4" aria-hidden />
+          {busy ? (
+            <div className="flex h-9 items-center gap-2 pl-2.5">
+              <Sparkles className="size-4 shrink-0 animate-pulse text-now" aria-hidden />
+              <span role="status" className="flex-1 text-[14px] text-muted-foreground">L&apos;assistant écrit dans la page…</span>
+              <button type="button" onClick={() => abort.current?.abort()} className="h-8 rounded-full border border-line px-3 text-[12.5px] font-medium hover:border-line-strong">
+                Arrêter
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 pl-2.5">
+              <Sparkles className="size-4 shrink-0 text-now" aria-hidden />
               <input
-                type="file"
-                accept="image/*"
-                multiple
-                aria-label="Joindre une image à la consigne"
-                className="sr-only"
-                onChange={(e) => {
-                  void attach(e.target.files ?? []);
-                  e.target.value = "";
+                autoFocus
+                value={instruction}
+                onChange={(e) => setInstruction(e.target.value)}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                  if (e.key === "Escape") setAi(null);
                 }}
+                onPaste={(e) => {
+                  if (e.clipboardData.files.length) {
+                    e.preventDefault();
+                    void attach(e.clipboardData.files);
+                  }
+                }}
+                placeholder={ai.rewrite ? "Que faire de ce passage ?" : "Que doit écrire l'assistant ? ex. un plan pour le pitch Station F"}
+                aria-label="Consigne pour l'assistant"
+                className="h-9 min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-faint"
               />
-            </label>
-            <button type="button" onClick={() => setAi(null)} aria-label="Fermer" className="grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground">
-              <X className="size-4" aria-hidden />
-            </button>
-            <button type="submit" disabled={busy || (!instruction.trim() && !pictures.length)} aria-label="Envoyer" className="grid size-8 shrink-0 place-items-center rounded-full bg-foreground text-background transition-opacity duration-100 disabled:opacity-30">
-              <ArrowUp className="size-4" aria-hidden />
-            </button>
-          </div>
+              <AttachButton label="Joindre un fichier à la consigne" onFiles={(files) => void attach(files)} />
+              <button type="button" onClick={() => setAi(null)} aria-label="Fermer" className="grid size-8 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground">
+                <X className="size-4" aria-hidden />
+              </button>
+              <button type="submit" disabled={!instruction.trim() && !pictures.length} aria-label="Envoyer" className="grid size-8 shrink-0 place-items-center rounded-full bg-foreground text-background transition-opacity duration-100 disabled:opacity-30">
+                <ArrowUp className="size-4" aria-hidden />
+              </button>
+            </div>
+          )}
         </form>
       )}
     </div>

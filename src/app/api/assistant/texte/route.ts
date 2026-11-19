@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { buildContext } from "@/lib/assistant/context";
-import { callGemini, cleanImages, geminiError, type Part } from "@/lib/assistant/gemini";
+import { attachmentParts, callGemini, geminiError, type Part } from "@/lib/assistant/gemini";
 import { assistantSession, openPage, whoWeAre, WRITING_FORMAT } from "@/lib/assistant/session";
 import { containsSecret, SECRET_MESSAGE } from "@/lib/secrets";
 
@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   if ("error" in session) return session.error;
   const { db, me, apiKey } = session;
 
-  const body = (await request.json().catch(() => null)) as { instruction?: unknown; selection?: unknown; page_id?: unknown; images?: unknown } | null;
+  const body = (await request.json().catch(() => null)) as { instruction?: unknown; selection?: unknown; page_id?: unknown; files?: unknown } | null;
   const instruction = typeof body?.instruction === "string" ? body.instruction.trim().slice(0, 4000) : "";
   const selection = typeof body?.selection === "string" ? body.selection.slice(0, 30000) : "";
   if (!instruction) return NextResponse.json({ error: "Consigne vide." }, { status: 400 });
@@ -25,7 +25,7 @@ Tu écris directement dans une page du QG. Ta réponse est insérée telle quell
 
 ${selection ? "On te donne un passage de la page et une consigne. Renvoie le passage réécrit selon la consigne, et rien d'autre. Garde sa langue, son sens et sa mise en forme, sauf si la consigne demande autre chose." : "On te donne une consigne. Écris le passage demandé, prêt à être lu : concret, sans remplissage."}
 
-Si une image est jointe (une capture de consignes, un mail, un document), lis-la attentivement et appuie-toi sur ce qu'elle contient : reprends ses contraintes importantes (dates limites, formats, critères).
+Si un fichier est joint (une capture de consignes, un PDF, un document, un tableur, un enregistrement), lis-le attentivement et appuie-toi sur ce qu'il contient : reprends ses contraintes importantes (dates limites, formats, critères).
 
 Pour les chiffres, dates et faits sur la société, appuie-toi uniquement sur les données du QG ci-dessous ; s'il manque une information, laisse un emplacement clair « [à compléter : …] » plutôt que d'inventer.
 
@@ -38,16 +38,37 @@ ${page ? `Page : « ${page.title} ». Son contenu actuel :\n${page.text || "(vid
 Données du QG (JSON) :
 ${await buildContext(db, me)}`;
 
-  const res = await callGemini(apiKey, "generateContent", {
+  const res = await callGemini(apiKey, "streamGenerateContent", {
     systemInstruction: { parts: [{ text: system }] },
-    contents: [{ role: "user", parts: [...cleanImages(body?.images).map((inlineData) => ({ inlineData })), { text: selection ? `Consigne : ${instruction}\n\nPassage :\n${selection}` : instruction }] }],
+    contents: [{ role: "user", parts: [...attachmentParts(body?.files), { text: selection ? `Consigne : ${instruction}\n\nPassage :\n${selection}` : instruction }] }],
   });
-  const json = (await res.json().catch(() => null)) as { candidates?: { content?: { parts?: Part[] } }[]; error?: { message?: string } } | null;
-  if (!res.ok) {
-    console.error("assistant/texte: Gemini a répondu", res.status, (json?.error?.message ?? "").slice(0, 300));
-    return NextResponse.json({ error: geminiError(res.status, json?.error?.message ?? "") }, { status: 502 });
+  if (!res.ok || !res.body) {
+    const detail = ((await res.json().catch(() => null)) as { error?: { message?: string } } | null)?.error?.message ?? "";
+    console.error("assistant/texte: Gemini a répondu", res.status, detail.slice(0, 300));
+    return NextResponse.json({ error: geminiError(res.status, detail) }, { status: 502 });
   }
-  const text = (json?.candidates?.[0]?.content?.parts ?? []).filter((p) => p.text && !p.thought).map((p) => p.text).join("").trim();
-  if (!text) return NextResponse.json({ error: "L'assistant n'a rien écrit. Reformule la consigne." }, { status: 502 });
-  return NextResponse.json({ markdown: text.replace(/^```(?:markdown|md)?\n([\s\S]*)\n```$/, "$1") });
+
+  // Le texte part vers la page au fur et à mesure qu'il est écrit.
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  const encoder = new TextEncoder();
+  let buffer = "";
+  const stream = new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      const { done, value } = await reader.read();
+      if (done) return controller.close();
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      for (const line of lines) {
+        if (!line.startsWith("data:")) continue;
+        try {
+          const chunk = JSON.parse(line.slice(5)) as { candidates?: { content?: { parts?: Part[] } }[] };
+          for (const part of chunk.candidates?.[0]?.content?.parts ?? []) if (part.text && !part.thought) controller.enqueue(encoder.encode(part.text));
+        } catch {}
+      }
+    },
+    cancel: () => void reader.cancel(),
+  });
+  return new Response(stream, { headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" } });
 }
