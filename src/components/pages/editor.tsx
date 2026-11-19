@@ -94,6 +94,13 @@ function AiButton({ onAsk }: { onAsk: () => void }) {
   return <Components.FormattingToolbar.Button mainTooltip="Réécrire avec l'IA" label="IA" icon={<Sparkles size={16} />} onClick={onAsk} />;
 }
 
+/** Une empreinte du contenu, insensible à l'ordre des clés (la base les range autrement que l'éditeur). */
+function canon(value: unknown): string {
+  return JSON.stringify(value, (_key, v: unknown) =>
+    v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.entries(v as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b))) : v,
+  );
+}
+
 type AiRequest = { blockIds: string[]; source: string; rewrite: boolean };
 const PRESETS = ["Améliore", "Raccourcis", "Corrige les fautes", "Traduis en anglais"];
 
@@ -125,7 +132,8 @@ export default function PageEditor({ page, dark, onNavigate, onComment }: Props)
   const dirty = useRef(false);
   const applyingRemote = useRef(false);
   const timer = useRef<number | null>(null);
-  const lastSaved = useRef(JSON.stringify(page.content));
+  // Les contenus que cet éditeur a lui-même enregistrés : leur retour depuis la base ne doit jamais toucher au texte ni au curseur.
+  const mine = useRef<string[]>([canon(page.content)]);
   const [ai, setAi] = useState<AiRequest | null>(null);
   const [instruction, setInstruction] = useState("");
   const [busy, setBusy] = useState(false);
@@ -143,7 +151,7 @@ export default function PageEditor({ page, dark, onNavigate, onComment }: Props)
     () => () => {
       if (!dirty.current) return;
       dirty.current = false;
-      lastSaved.current = JSON.stringify(editor.document);
+      mine.current = [...mine.current.slice(-30), canon(editor.document)];
       void pagesStore.update(page.id, { content: editor.document as unknown[], updated_by: me.id, updated_at: new Date().toISOString() });
     },
     [editor, page.id, me.id],
@@ -161,9 +169,9 @@ export default function PageEditor({ page, dark, onNavigate, onComment }: Props)
   // La page a changé ailleurs (l'autre personne, ou l'assistant) : on reprend son contenu si on n'est pas en train d'écrire.
   useEffect(() => {
     if (dirty.current) return;
-    const incoming = JSON.stringify(page.content);
-    if (incoming === lastSaved.current || incoming === JSON.stringify(editor.document)) return;
-    lastSaved.current = incoming;
+    const incoming = canon(page.content);
+    if (mine.current.includes(incoming) || incoming === canon(editor.document)) return;
+    mine.current = [...mine.current.slice(-30), incoming];
     applyingRemote.current = true;
     editor.replaceBlocks(editor.document, (page.content.length ? page.content : [{ type: "paragraph" }]) as never);
     applyingRemote.current = false;
