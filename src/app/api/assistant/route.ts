@@ -28,6 +28,9 @@ const TOOLS = [
         pour: { type: "STRING", enum: ["max", "adrien", "both"], description: "Personne assignée. Par défaut : la personne qui parle." },
         priorite: { type: "STRING", enum: ["urgent", "normal", "later"] },
         categorie: { type: "STRING", enum: CATEGORY_KEYS, description: "La catégorie qui correspond, si l'une convient." },
+        heure: { type: "STRING", description: "Heure d'une réunion, au format HH:MM." },
+        lien_meet: { type: "STRING", description: "Lien Google Meet (https) donné par la personne. Ne jamais en inventer." },
+        repetition: { type: "STRING", enum: ["daily", "weekdays", "weekly", "biweekly", "monthly"], description: "Seulement si la tâche ou la réunion se répète." },
         echeance: { type: "STRING", description: "inbox (sans date), life, d:AAAA-MM-JJ (un jour), w:AAAA-Wnn (une semaine ISO), m:AAAA-MM (un mois) ou y:AAAA." },
       },
     },
@@ -63,7 +66,7 @@ Tu réponds à partir des données du QG fournies plus bas, et uniquement d'elle
 
 Pour les conseils (« que devrait-on faire », « où recruter »), appuie-toi sur les chiffres : cite ceux qui fondent ton avis, puis donne une recommandation nette. Pour les pays, le critère principal est l'euro par nouvel utilisateur, à pondérer par le volume ; un pays avec très peu d'utilisateurs n'est pas une preuve.
 
-Les réunions et rendez-vous se trouvent dans les tâches datées et dans la semaine type ; l'agenda Google n'est pas relié.
+Les réunions sont les tâches de catégorie « reunion » (avec leur heure, leur lien Meet et leur répétition), plus la semaine type ; l'agenda Google n'est pas relié. Pour créer une réunion, utilise ajouter_tache avec la catégorie reunion, un jour précis et l'heure. Tu ne peux pas créer de lien Meet : si aucun n'est donné, dis qu'il reste à l'ajouter dans la tâche.
 
 Le QG ne contient aucun mot de passe ni clé API, seulement l'endroit où ils sont rangés : donne cet endroit si on te le demande.
 
@@ -106,7 +109,10 @@ export async function POST(request: Request) {
       if (!BUCKET.test(bucket)) return { result: "Échéance invalide. Formats : inbox, d:AAAA-MM-JJ, w:AAAA-Wnn, m:AAAA-MM, y:AAAA.", error: true };
       const { error } = await db.from("items").insert({
         title, notes: input.description ? String(input.description) : null, bucket,
-        owner: ["max", "adrien", "both"].includes(String(input.pour)) ? input.pour : me, prio: ["urgent", "normal", "later"].includes(String(input.priorite)) ? input.priorite : "normal", category: CATEGORY_KEYS.includes(input.categorie as never) ? input.categorie : null, sort_order: Date.now(), created_by: userId,
+        owner: ["max", "adrien", "both"].includes(String(input.pour)) ? input.pour : me, prio: ["urgent", "normal", "later"].includes(String(input.priorite)) ? input.priorite : "normal", category: CATEGORY_KEYS.includes(input.categorie as never) ? input.categorie : null,
+        at_time: /^\d{2}:\d{2}$/.test(String(input.heure ?? "")) ? input.heure : null,
+        meet_url: /^https:\/\/\S+$/.test(String(input.lien_meet ?? "")) ? input.lien_meet : null,
+        repeat_rule: ["daily", "weekdays", "weekly", "biweekly", "monthly"].includes(String(input.repetition)) ? input.repetition : null, sort_order: Date.now(), created_by: userId,
       });
       if (error) return { result: `Échec : ${error.message}`, error: true };
       return { result: "Tâche créée.", label: `Tâche ajoutée : ${title}` };

@@ -5,7 +5,7 @@ import { useView } from "@/components/app/view-state";
 import { PageIcon } from "@/components/pages/page-icon";
 import { Comments } from "@/components/comments";
 import { AddLine, EditableTitle, Tick } from "@/components/planner/item-card";
-import { BucketPicker, Field, OwnerPicker, CategoryPicker, PrioPicker } from "@/components/planner/task-form";
+import { BucketPicker, Field, MeetingFields, OwnerPicker, CategoryPicker, PrioPicker, RepeatPicker } from "@/components/planner/task-form";
 import { useMe } from "@/components/session-provider";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { itemsStore, pagesStore, profilesStore } from "@/lib/data";
@@ -82,6 +82,11 @@ export function ItemSheet() {
               )}
             </Field>
             <Field title="Catégorie"><CategoryPicker value={item.category} onChange={(category) => void itemsStore.update(item.id, { category })} /></Field>
+            {item.category === "reunion" && (
+              <Field title="Réunion">
+                <MeetingFields time={item.at_time} url={item.meet_url} onTime={(at_time) => void itemsStore.update(item.id, { at_time })} onUrl={(meet_url) => void itemsStore.update(item.id, { meet_url })} />
+              </Field>
+            )}
             <Field title="Urgence"><PrioPicker value={item.prio} onChange={(prio) => void itemsStore.update(item.id, { prio })} /></Field>
             <Field title="Assignée à"><OwnerPicker value={item.owner} onChange={(owner) => void itemsStore.update(item.id, { owner })} /></Field>
             <Field title="Échéance">
@@ -93,6 +98,8 @@ export function ItemSheet() {
                 }}
               />
             </Field>
+
+            <Field title="Répéter"><RepeatPicker value={item.repeat_rule} onChange={(repeat_rule) => void itemsStore.update(item.id, { repeat_rule })} /></Field>
 
             <Field title={`Sous-objectifs${kids.length ? ` · ${kids.filter((k) => k.done).length}/${kids.length}` : ""}`}>
               <div className="flex flex-col">

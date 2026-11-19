@@ -3,7 +3,7 @@ import { parseCategory, type Category } from "@/lib/categories";
 import type { Owner } from "@/lib/members";
 import type { Prio } from "@/lib/types";
 
-export type QuickAdd = { title: string; prio?: Prio; owner?: Owner; bucket?: string; category?: Category };
+export type QuickAdd = { title: string; prio?: Prio; owner?: Owner; bucket?: string; category?: Category; at_time?: string };
 
 const strip = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
@@ -24,6 +24,7 @@ const WEEKDAYS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi",
  *   !urgent  !tard             → priorité
  *   @max  @adrien  @tous       → personne
  *   #support  #réunion  #legal → catégorie
+ *   14h  9h30                  → heure (réunion)
  *   aujourd'hui, demain, lundi…dimanche, semaine, semaine prochaine, mois,
  *   mois prochain, année, inbox, vie, S48, 25/11 → horizon
  * Les mots de date ne sont reconnus qu'en fin de ligne, pour ne pas manger le titre.
@@ -48,6 +49,11 @@ export function parseQuickAdd(input: string, today: Date, opts: { dates?: boolea
         out.owner = o;
         return false;
       }
+    }
+    const time = /^(\d{1,2})h(\d{2})?$/i.exec(w);
+    if (time && Number(time[1]) < 24 && Number(time[2] ?? 0) < 60) {
+      out.at_time = `${time[1].padStart(2, "0")}:${time[2] ?? "00"}`;
+      return false;
     }
     if (w.startsWith("#") && w.length > 1) {
       const c = parseCategory(w.slice(1));

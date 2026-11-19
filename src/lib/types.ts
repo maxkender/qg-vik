@@ -2,6 +2,7 @@ import type { Category } from "@/lib/categories";
 import type { Owner } from "@/lib/members";
 
 export type Prio = "urgent" | "normal" | "later";
+export type RepeatRule = "daily" | "weekdays" | "weekly" | "biweekly" | "monthly";
 
 export type Item = {
   id: string;
@@ -12,6 +13,10 @@ export type Item = {
   prio: Prio;
   category: Category | null;
   page_id: string | null;
+  /** Heure d'une réunion, « 14:30 ». */
+  at_time: string | null;
+  meet_url: string | null;
+  repeat_rule: RepeatRule | null;
   parent_id: string | null;
   done: boolean;
   done_at: string | null;

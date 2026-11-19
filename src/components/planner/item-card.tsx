@@ -2,7 +2,7 @@
 
 import { memo, useRef, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
-import { Check, ChevronDown, Ellipsis, FileText, Maximize2, MessageSquare, Plus, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Ellipsis, FileText, Repeat, Video, Maximize2, MessageSquare, Plus, Trash2 } from "lucide-react";
 import { PersonAvatar } from "@/components/person-avatar";
 import { useMe } from "@/components/session-provider";
 import { useView } from "@/components/app/view-state";
@@ -15,7 +15,7 @@ import { pageHref, pageTitle } from "@/lib/pages";
 import { useRows } from "@/lib/store";
 import { addDays, addMonths, bucketLabel, dayKey, isLate, monday, monthKey, weekKey, yearKey } from "@/lib/dates";
 import { categoryOf, CATEGORIES } from "@/lib/categories";
-import { byOrder, createItem, nextOwner, OWNER_LABEL, OWNER_NAME, PRIO_LABEL, toggleDone } from "@/lib/items";
+import { byOrder, createItem, nextOwner, OWNER_LABEL, OWNER_NAME, PRIO_LABEL, REPEAT_LABEL, toggleDone } from "@/lib/items";
 import type { Owner } from "@/lib/members";
 import type { Item, Prio } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -279,6 +279,13 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
             {late && "en retard · "}
             {bucketLabel(item.bucket, today)}
           </span>
+        )}
+        {item.at_time && <span className="num text-foreground">{item.at_time.replace(":", "h")}</span>}
+        {item.repeat_rule && <Repeat className="size-3" aria-label={REPEAT_LABEL[item.repeat_rule]} />}
+        {item.meet_url && !item.done && (
+          <a href={item.meet_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-md bg-foreground px-1.5 text-[11.5px] leading-[20px] font-semibold text-background">
+            <Video className="size-3" aria-hidden /> Meet
+          </a>
         )}
         {item.page_id && <LinkedPage id={item.page_id} />}
         {kids.length > 0 && (

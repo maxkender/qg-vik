@@ -1,16 +1,18 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { Video } from "lucide-react";
 import { PersonAvatar } from "@/components/person-avatar";
 import { useView } from "@/components/app/view-state";
 import { defaultBucket } from "@/components/planner/quick-add";
 import { useMe } from "@/components/session-provider";
+import { itemsStore } from "@/lib/data";
 import { CATEGORIES, type Category } from "@/lib/categories";
 import { addDays, addMonths, bucketLabel, dayKey, monday, monthKey, parseBucket, weekKey, yearKey } from "@/lib/dates";
-import { createItem, OWNER_LABEL, PRIO_LABEL } from "@/lib/items";
+import { cleanMeetUrl, createItem, OWNER_LABEL, PRIO_LABEL, REPEAT_LABEL } from "@/lib/items";
 import type { Owner } from "@/lib/members";
 import { parseQuickAdd } from "@/lib/quick-add";
-import type { Prio } from "@/lib/types";
+import type { Prio, RepeatRule } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const PRIO_HINT: Record<Prio, string> = { urgent: "aujourd'hui ou demain", normal: "cette semaine", later: "quand on aura le temps" };
@@ -69,6 +71,51 @@ export function CategoryPicker({ value, onChange }: { value: Category | null; on
   );
 }
 
+const field = "h-9 rounded-lg border border-line bg-glass px-2.5 text-[13px] outline-none focus:border-line-strong";
+
+/** Réunion : l'heure et le lien Google Meet. « Créer » ouvre un Meet tout neuf dont on colle l'adresse. */
+export function MeetingFields({ time, url, onTime, onUrl }: { time: string | null; url: string | null; onTime: (t: string | null) => void; onUrl: (u: string | null) => void }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      <input type="time" aria-label="Heure" value={time ?? ""} onChange={(e) => onTime(e.target.value || null)} className={field} />
+      <input
+        key={url ?? ""}
+        type="url"
+        aria-label="Lien Google Meet"
+        placeholder="Lien Google Meet"
+        defaultValue={url ?? ""}
+        onKeyDown={(e) => e.stopPropagation()}
+        onBlur={(e) => {
+          const next = cleanMeetUrl(e.currentTarget.value);
+          if (next !== url) onUrl(next);
+          if (!next) e.currentTarget.value = "";
+        }}
+        className={cn(field, "min-w-0 flex-1")}
+      />
+      {url ? (
+        <a href={url} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-foreground px-3 text-[13px] font-semibold text-background">
+          <Video className="size-4" aria-hidden /> Rejoindre
+        </a>
+      ) : (
+        <a href="https://meet.google.com/new" target="_blank" rel="noreferrer" title="Ouvre un nouveau Meet : copie son adresse et colle-la ici" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-[13px] text-muted-foreground hover:border-line-strong hover:text-foreground">
+          <Video className="size-4" aria-hidden /> Créer
+        </a>
+      )}
+    </div>
+  );
+}
+
+export function RepeatPicker({ value, onChange }: { value: RepeatRule | null; onChange: (r: RepeatRule | null) => void }) {
+  return (
+    <select value={value ?? ""} onChange={(e) => onChange((e.target.value || null) as RepeatRule | null)} aria-label="Répéter" className={cn(field, "w-full")}>
+      <option value="">Ne se répète pas</option>
+      {(Object.keys(REPEAT_LABEL) as RepeatRule[]).map((r) => (
+        <option key={r} value={r}>{REPEAT_LABEL[r]}</option>
+      ))}
+    </select>
+  );
+}
+
 /** Échéance : un horizon (aujourd'hui, cette semaine, ce mois…) ou une date précise. */
 export function BucketPicker({ value, onChange }: { value: string; onChange: (b: string) => void }) {
   const { today } = useView();
@@ -117,13 +164,18 @@ export function NewTaskForm({ onDone }: { onDone: () => void }) {
   const [owner, setOwner] = useState<Owner>(who !== "all" ? who : me.short);
   const [bucket, setBucket] = useState<string | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
+  const [time, setTime] = useState<string | null>(null);
+  // Par défaut, le dernier lien Meet utilisé : la salle habituelle.
+  const [meet, setMeet] = useState<string | null>(() => itemsStore.getSnapshot().filter((i) => i.meet_url).sort((a, b) => b.created_at.localeCompare(a.created_at))[0]?.meet_url ?? null);
+  const [repeat, setRepeat] = useState<RepeatRule | null>(null);
+  const meeting = category === "reunion";
 
   function submit() {
     // Dans le titre, seuls « !urgent » et « @adrien » sont lus : l'échéance a son propre champ.
     const q = parseQuickAdd(title, today, { dates: false });
     if (!q.title) return;
     const p = q.prio ?? prio;
-    createItem({ title: q.title, notes: notes.trim() || null, prio: p, owner: q.owner ?? owner, category: q.category ?? category, bucket: bucket ?? defaultBucket(p, today), created_by: me.id });
+    createItem({ title: q.title, notes: notes.trim() || null, prio: p, owner: q.owner ?? owner, category: q.category ?? category, at_time: meeting ? (q.at_time ?? time) : null, meet_url: meeting ? meet : null, repeat_rule: repeat, bucket: bucket ?? (meeting ? dayKey(today) : defaultBucket(p, today)), created_by: me.id });
     onDone();
   }
 
@@ -157,9 +209,11 @@ export function NewTaskForm({ onDone }: { onDone: () => void }) {
         className="min-h-20 w-full resize-y rounded-xl border border-line bg-glass p-3 text-[13.5px] outline-none placeholder:text-faint focus:border-line-strong [field-sizing:content]"
       />
       <Field title="Catégorie"><CategoryPicker value={category} onChange={setCategory} /></Field>
+      {meeting && <Field title="Réunion"><MeetingFields time={time} url={meet} onTime={setTime} onUrl={setMeet} /></Field>}
       <Field title="Urgence"><PrioPicker value={prio} onChange={setPrio} /></Field>
       <Field title="Assignée à"><OwnerPicker value={owner} onChange={setOwner} /></Field>
-      <Field title="Échéance"><BucketPicker value={bucket ?? defaultBucket(prio, today)} onChange={setBucket} /></Field>
+      <Field title="Échéance"><BucketPicker value={bucket ?? (meeting ? dayKey(today) : defaultBucket(prio, today))} onChange={setBucket} /></Field>
+      <Field title="Répéter"><RepeatPicker value={repeat} onChange={setRepeat} /></Field>
       <div className="flex items-center justify-between gap-3 pt-1">
         <span />
         <div className="flex gap-2">

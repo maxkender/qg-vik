@@ -30,7 +30,8 @@ export function useQuickCreate() {
       title: q.title,
       prio,
       owner,
-      category: q.category,
+      category: q.category ?? (q.at_time ? "reunion" : undefined),
+      at_time: q.at_time,
       bucket: q.bucket ?? defaults.bucket ?? defaultBucket(prio, today),
       created_by: me.id,
     });
