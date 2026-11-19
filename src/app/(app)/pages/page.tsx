@@ -51,7 +51,7 @@ function PagesIndex() {
           <Plus className="size-4" aria-hidden /> Nouvelle page
         </button>
       </ViewHeader>
-      <div className="flex flex-col gap-3 px-4 pb-16 md:px-6">
+      <div className="flex min-w-0 flex-col gap-3 px-4 pb-16 md:px-6 [&>*]:min-w-0">
         {pagesStore.loaded && live.length === 0 && (
           <button type="button" onClick={create} className="rounded-2xl border border-dashed border-line-strong px-6 py-14 text-center transition-colors duration-100 hover:bg-glass">
             <p className="text-[16px] font-semibold">Aucune page pour l&apos;instant</p>

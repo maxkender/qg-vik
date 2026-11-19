@@ -119,7 +119,7 @@ export default function DashboardPage() {
         </select>
       </ViewHeader>
 
-      <div className="flex flex-col gap-3 px-4 pb-16 md:px-6">
+      <div className="flex min-w-0 flex-col gap-3 px-4 pb-16 md:px-6 [&>*]:min-w-0">
         <QuickLinks />
         <SyncBar dash={dash} />
 
@@ -145,7 +145,7 @@ export default function DashboardPage() {
         <PerApp dash={dash} period={period} />
 
         <SectionTitle link={{ href: "/depenses", label: "Règles et détail" }}>Dépenses</SectionTitle>
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-3 lg:grid-cols-2">
           <MonthlyByPoste dash={dash} />
           <TopVendors dash={dash} period={period} app={app} />
         </div>
@@ -153,7 +153,7 @@ export default function DashboardPage() {
         <Transactions dash={dash} period={period} app={app} />
 
         <SectionTitle>Revenus</SectionTitle>
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-3 lg:grid-cols-2">
           <Panel title="Revenus et dépenses" caption={dayCount(period) <= 14 ? "Par jour" : "Par semaine (lundi → dimanche)"} action={<Src s={[S.revenuecat, S.qonto, S.meta]} seedDate={dash.seedDate} />}>
             <Bars label="Revenus et dépenses" data={series} x="label" format={big} series={[{ key: "rev", label: "Revenus", color: "var(--viz-3)" }, { key: "dep", label: "Dépenses", color: "var(--viz-2)" }]} />
           </Panel>
@@ -175,7 +175,7 @@ export default function DashboardPage() {
         <Countries dash={dash} period={period} app={app} />
 
         <SectionTitle>Contenu</SectionTitle>
-        <div className="grid gap-3 lg:grid-cols-3">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-3 lg:grid-cols-3">
           <Panel title="% de posts viraux" caption="Posts à 10 k vues ou plus" action={<Src s={S.os} seedDate={dash.seedDate} />}>
             <Lines label="Pourcentage de posts viraux" data={series} x="label" format={(v) => v.toLocaleString("fr-FR", { maximumFractionDigits: 1 }) + " %"} series={[{ key: "viraux", label: "Posts viraux", color: "var(--viz-1)" }]} />
           </Panel>

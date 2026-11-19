@@ -71,7 +71,7 @@ export default function ProfilesPage() {
     }
     if (uid) {
       for (const p of pages) if (p.updated_by === uid && !p.archived_at) out.push({ at: p.updated_at, icon: FileText, text: `A modifié la page « ${pageTitle(p)} »` });
-      for (const c of comments) if (c.created_by === uid) out.push({ at: c.created_at, icon: MessageSquare, text: `A commenté : ${c.body.slice(0, 90)}` });
+      for (const c of comments) if (c.created_by === uid && !c.resolved_at && (c.item_id ? items.some((i) => i.id === c.item_id) : pages.some((p) => p.id === c.page_id && !p.archived_at))) out.push({ at: c.created_at, icon: MessageSquare, text: `A commenté : ${c.body.slice(0, 90)}` });
       for (const d of decisions) if (d.created_by === uid) out.push({ at: d.created_at, icon: Gavel, text: `A noté la décision « ${d.title} »` });
     }
     return out.sort((a, b) => b.at.localeCompare(a.at)).slice(0, 25);
@@ -117,8 +117,8 @@ export default function ProfilesPage() {
         </div>
       </ViewHeader>
 
-      <div className="grid items-start gap-3 px-4 pb-16 md:px-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)]">
-        <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-3 px-4 pb-16 md:px-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)]">
+        <div className="flex min-w-0 flex-col gap-3">
           <section className="glass flex flex-wrap items-center gap-4 rounded-2xl p-4 sm:p-5">
             {mine ? (
               <label title="Changer ma photo" className="group relative cursor-pointer rounded-2xl outline-none focus-within:ring-2 focus-within:ring-ring">
@@ -143,7 +143,7 @@ export default function ProfilesPage() {
               <h2 className="text-[20px] leading-tight font-semibold">{person.name}</h2>
               <p className="text-[13px] text-muted-foreground">{person.role}</p>
             </div>
-            <dl className="flex gap-5">
+            <dl className="flex gap-5 max-sm:w-full max-sm:justify-between max-sm:border-t max-sm:border-line max-sm:pt-3">
               {([["Ouvertes", stats.open], ["Urgentes", stats.urgent], ["Faites · 7 j", stats.done]] as const).map(([label, value]) => (
                 <div key={label}>
                   <dd className={cn("num text-[22px] leading-none font-medium", label === "Urgentes" && value > 0 && "text-bad")}>{value}</dd>
@@ -153,7 +153,7 @@ export default function ProfilesPage() {
             </dl>
           </section>
 
-          <section className="glass rounded-2xl p-4 sm:p-5">
+          <section className="glass min-w-0 rounded-2xl p-4 sm:p-5">
             <h2 className="font-sans text-[14.5px] font-semibold tracking-normal">Activité</h2>
             {activity.length ? (
               <ul className="mt-2 flex flex-col">
@@ -171,7 +171,7 @@ export default function ProfilesPage() {
           </section>
         </div>
 
-        <section className="glass rounded-2xl p-4 sm:p-5">
+        <section className="glass min-w-0 rounded-2xl p-4 sm:p-5">
           <h2 className="font-sans text-[14.5px] font-semibold tracking-normal">{mine ? "Reçus" : `Retours et liens pour ${person.nick}`}</h2>
           <form
             onSubmit={(e) => {

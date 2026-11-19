@@ -33,7 +33,7 @@ export default function ExpensesPage() {
           <option value="90">90 derniers jours</option>
         </select>
       </ViewHeader>
-      <div className="flex flex-col gap-3 px-4 pb-16 md:px-6">
+      <div className="flex min-w-0 flex-col gap-3 px-4 pb-16 md:px-6 [&>*]:min-w-0">
         <SyncBar dash={dash} />
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <div className="glass flex min-w-0 flex-col gap-1 rounded-2xl p-4">
@@ -49,7 +49,7 @@ export default function ExpensesPage() {
             </div>
           ))}
         </div>
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-3 lg:grid-cols-2">
           <MonthlyByPoste dash={dash} />
           <TopVendors dash={dash} period={period} app="all" />
         </div>

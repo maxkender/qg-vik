@@ -60,7 +60,7 @@ export default function ToReadPage() {
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
       <ViewHeader title="À lire" sub={unread ? `${unread} document${unread > 1 ? "s" : ""} à lire.` : "Tu es à jour."} />
-      <div className="grid items-start gap-3 px-4 pb-16 md:px-6 lg:grid-cols-2">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-3 px-4 pb-16 md:px-6 lg:grid-cols-2">
         <section className="glass rounded-2xl p-4 sm:p-5">
           <h2 className="font-sans text-[14.5px] font-semibold tracking-normal">Pour moi</h2>
           {mine.length ? <ul className="divide-y divide-line">{mine.map((r) => Row(r, true))}</ul> : (

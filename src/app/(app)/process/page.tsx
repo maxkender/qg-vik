@@ -49,11 +49,11 @@ export default function ProcessPage() {
     <MotionConfig reducedMotion="user">
       <div className="min-h-0 flex-1 overflow-y-auto">
         <ViewHeader title="Process" />
-        <div className="flex flex-col gap-3 px-4 pb-16 md:px-6">
+        <div className="flex min-w-0 flex-col gap-3 px-4 pb-16 md:px-6 [&>*]:min-w-0">
           {/* ------------------------------------------------ la semaine type */}
           <h2 className="text-[20px] font-semibold">La semaine type</h2>
           <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
-            <div className="grid min-w-[860px] grid-cols-7 gap-2">
+            <div className="grid min-w-[1080px] grid-cols-7 gap-2 md:min-w-[860px]">
               {DAY_NAMES.map((name, i) => (
                 <div key={name} className={cn("glass flex min-h-[120px] flex-col gap-1.5 rounded-xl p-2.5", i === todayIdx && "border-now/60")}>
                   <p className={cn("text-[13px] font-semibold", i === todayIdx && "text-now")}>{name}</p>

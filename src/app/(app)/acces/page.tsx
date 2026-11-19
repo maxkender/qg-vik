@@ -198,7 +198,7 @@ function AccessContent() {
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
       <ViewHeader title="Légal & accès" />
-      <div className="flex flex-col gap-3 px-4 pb-16 md:px-6">
+      <div className="flex min-w-0 flex-col gap-3 px-4 pb-16 md:px-6 [&>*]:min-w-0">
         <div role="note" className="flex items-start gap-3 rounded-2xl border border-warn/50 bg-warn-soft p-4">
           <ShieldAlert className="mt-0.5 size-5 shrink-0 text-warn" aria-hidden />
           <p className="text-[13.5px]">
