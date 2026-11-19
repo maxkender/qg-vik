@@ -3,7 +3,7 @@
 import type { VendorRule } from "@/lib/postes";
 import { TableStore } from "@/lib/store";
 import type {
-  AccessRow, AppRow, CommentRow, DocLog, DocRow, CountryVerdict, ExpenseFlag, MetaSpend, OsDaily, QontoBalance, QontoTx, RcCountryWeekly, RcDaily, SyncRun, Decision, Expense, ExpenseCheck, ExpenseRule, Item, Legal,
+  AccessRow, AppRow, Asset, CommentRow, DocLog, DocRow, CountryVerdict, ExpenseFlag, MetaSpend, OsDaily, QontoBalance, QontoTx, RcCountryWeekly, RcDaily, SyncRun, Decision, Expense, ExpenseCheck, ExpenseRule, Item, Legal,
   ItemLink, LinkRow, MessageRow, MetricsSnapshot, PageRow, ProcessRow, Profile, ReadRow, Routine, RoutineCheck, TagColor,
 } from "@/lib/types";
 
@@ -26,6 +26,7 @@ export const profilesStore = new TableStore<Profile>("profiles", "id");
 export const messagesStore = new TableStore<MessageRow>("messages", "id");
 export const itemLinksStore = new TableStore<ItemLink>("item_links", "id");
 export const tagColorsStore = new TableStore<TagColor>("tag_colors", "name");
+export const assetsStore = new TableStore<Asset>("assets", "id");
 export const readsStore = new TableStore<ReadRow>("reads", "id");
 
 // Données des vraies sources (écrites par le serveur, lues ici).

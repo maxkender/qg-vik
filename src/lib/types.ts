@@ -293,3 +293,6 @@ export type RoutineCheck = { id: string; routine_id: string; date: string; check
 
 /** La couleur choisie pour un label. */
 export type TagColor = { name: string; color: string; updated_at: string };
+
+/** Un fichier de la page Ressources (logo, icône d'app, visuel…). */
+export type Asset = { id: string; name: string; folder: string; path: string; mime: string | null; size: number | null; added_by: string | null; created_at: string };
