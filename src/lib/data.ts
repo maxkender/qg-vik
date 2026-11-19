@@ -4,7 +4,7 @@ import type { VendorRule } from "@/lib/postes";
 import { TableStore } from "@/lib/store";
 import type {
   AccessRow, AppRow, CommentRow, DocLog, DocRow, CountryVerdict, ExpenseFlag, MetaSpend, OsDaily, QontoBalance, QontoTx, RcCountryWeekly, RcDaily, SyncRun, Decision, Expense, ExpenseCheck, ExpenseRule, Item, Legal,
-  ItemLink, LinkRow, MessageRow, MetricsSnapshot, PageRow, ProcessRow, Profile, ReadRow, Routine,
+  ItemLink, LinkRow, MessageRow, MetricsSnapshot, PageRow, ProcessRow, Profile, ReadRow, Routine, RoutineCheck,
 } from "@/lib/types";
 
 // Une instance par table, partagée par toute l'app.
@@ -17,6 +17,7 @@ export const checksStore = new TableStore<ExpenseCheck>("expense_checks", "anoma
 export const metricsStore = new TableStore<MetricsSnapshot>("metrics_snapshots", "id");
 export const processesStore = new TableStore<ProcessRow>("processes", "id");
 export const routinesStore = new TableStore<Routine>("routines", "id");
+export const routineChecksStore = new TableStore<RoutineCheck>("routine_checks", "id");
 export const pagesStore = new TableStore<PageRow>("pages", "id");
 export const commentsStore = new TableStore<CommentRow>("comments", "id");
 export const expensesStore = new TableStore<Expense>("expenses", "id");

@@ -78,9 +78,16 @@ export function createItem(input: {
     created_by: input.created_by,
     updated_at: now,
   };
-  void itemsStore.insert(item);
+  const saved = itemsStore.insert(item);
+  saving.set(item.id, saved);
+  void saved.finally(() => saving.delete(item.id));
   return item;
 }
+
+// Les enregistrements en cours, pour ce qui doit attendre que la tâche soit en base (un lien, par exemple).
+const saving = new Map<string, Promise<boolean>>();
+/** Se résout quand la tâche qu'on vient de créer est enregistrée. */
+export const itemSaved = (id: string): Promise<boolean> => saving.get(id) ?? Promise.resolve(true);
 
 export function toggleDone(item: Item) {
   const done = !item.done;

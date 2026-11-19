@@ -6,6 +6,7 @@ import { WhoSwitch, ViewHeader } from "@/components/app/shell";
 import { useView } from "@/components/app/view-state";
 import { Board, type ColumnDef } from "@/components/planner/board";
 import { QuickAdd, useQuickCreate } from "@/components/planner/quick-add";
+import { TodayRoutines } from "@/components/planner/routines";
 import { usePlanner } from "@/components/planner/use-planner";
 import { useMe } from "@/components/session-provider";
 import { CATEGORIES, type Category } from "@/lib/categories";
@@ -84,6 +85,7 @@ export default function TodoPage() {
         <WhoSwitch className="w-[220px] max-md:w-full" />
       </ViewHeader>
       <div className="flex shrink-0 flex-col gap-2 px-4 pb-4 md:px-6">
+        <TodayRoutines />
         <QuickAdd />
         <div className="flex flex-wrap items-center gap-2">
           <label className="flex h-9 min-w-0 flex-[1_1_200px] items-center gap-2 rounded-lg border border-line bg-glass px-2.5 focus-within:border-line-strong">

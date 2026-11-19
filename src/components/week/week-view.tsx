@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { itemLinksStore, itemsStore } from "@/lib/data";
 import { weekKey } from "@/lib/dates";
 import { big, eur, int } from "@/lib/format";
-import { createItem } from "@/lib/items";
+import { createItem, itemSaved } from "@/lib/items";
 import { newId, useRows } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { addDaysIso, isoWeekLabel, mondayOfWeekKey, type CountryRow, type Gap, type Metric, type WeekReport } from "@/lib/week/report";
@@ -35,8 +35,8 @@ function Delta({ value, upIsGood = true, label }: { value: number | null; upIsGo
   return (
     <span className={cn("inline-flex items-center gap-0.5 whitespace-nowrap", good === null ? "text-muted-foreground" : good ? "text-good" : "text-bad")}>
       <Icon className="size-3.5" aria-hidden />
-      <span className="num">{value > 0 ? "+" : value < 0 ? "−" : ""}{Math.abs(Math.round(value * 100))} %</span>
-      {label && <span className="text-muted-foreground">{label}</span>}
+      <span className="num">{value > 0 ? "+" : value < 0 ? "−" : ""}{Math.abs(Math.round(value * 100))}&nbsp;%</span>
+      {label && <span className="ml-0.5 text-muted-foreground">{label}</span>}
     </span>
   );
 }
@@ -50,7 +50,7 @@ function Card({ title, metric, format, upIsGood = true, extra }: { title: string
         {extra}
       </p>
       {metric.value === null ? (
-        <p className="mt-2 truncate text-[11.5px] text-faint">{metric.source}</p>
+        <p className="mt-2 truncate text-[11.5px] text-faint">{/RevenueCat|Qonto/.test(metric.source) && !/÷/.test(metric.source) ? "pas de données" : "en attente de l'OS"}</p>
       ) : (
         <p className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-[11.5px]">
           <Delta value={metric.vsPrev} upIsGood={upIsGood} label="vs sem. d'avant" />
@@ -227,13 +227,13 @@ export function WeekView() {
       title: g.title, prio: "urgent", owner: "max", bucket: weekKey(today), category: g.category, created_by: me.id,
       notes: [`${g.reason}`, "", `Semaine ${r.label}. Impact estimé : ${eur(g.impact)} par semaine (${g.how.replace(/\.$/, "")}).`, ...g.sources.map((s) => `${s.label} : ${s.value}`)].join("\n"),
     });
-    void itemLinksStore.insert({ id: newId(), item_id: item.id, page_id: null, url: `${window.location.origin}/semaine?s=${r.week}#${g.anchor}`, title: null, created_by: me.id, created_at: new Date().toISOString() });
+    const url = `${window.location.origin}/semaine?s=${r.week}#${g.anchor}`;
+    void itemSaved(item.id).then((ok) => ok && itemLinksStore.insert({ id: newId(), item_id: item.id, page_id: null, url, title: null, created_by: me.id, created_at: new Date().toISOString() }));
     toast("Ajouté dans À faire", { description: "Urgent, assigné à Max." });
   }
   const copy = () => r && void navigator.clipboard.writeText(r.slack).then(() => toast("Résumé copié"), () => toast.error("Impossible de copier"));
 
   const shown = r ? (allCountries ? r.countries : r.countries.filter((c) => c.users4 >= 200 || (c.actives ?? 0) > 0).slice(0, 40)) : [];
-  const hasOsDetail = r?.content.kind === "os" && r.labels.length > 0;
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
@@ -270,6 +270,10 @@ export function WeekView() {
 
           {/* --------------------------------------------- 2. vues et contenu */}
           <h2 className="mt-5 text-[20px] font-semibold">Vues et contenu</h2>
+          {r.content.kind !== "os" ? (
+            <Waiting>Vues par jour, contenu par app, top des posts et comptes en baisse : ce détail vient de l&apos;OS, qui n&apos;est pas encore branché.</Waiting>
+          ) : (
+            <>
           <Panel title="Vues par jour" caption="Cette semaine, comparée à la semaine d'avant">
             {r.daily ? (
               <Lines data={r.daily} x="day" series={[{ key: "views", label: r.label, color: "var(--viz-1)" }, { key: "prev", label: "Semaine d'avant", color: "var(--viz-other)" }]} format={(v) => big(v)} label="Vues par jour" />
@@ -290,7 +294,6 @@ export function WeekView() {
                 </tbody>
               </table>
             </div>
-            {!hasOsDetail && <p className="mt-2 text-[12.5px] text-muted-foreground">Le détail du contenu par app arrive avec l&apos;accès à l&apos;OS.</p>}
           </Panel>
           <div className="grid grid-cols-[minmax(0,1fr)] gap-3 lg:grid-cols-2">
             <Panel title="Top 10 des posts de la semaine">
@@ -332,6 +335,9 @@ export function WeekView() {
             </Panel>
           </div>
 
+            </>
+          )}
+
           {/* ---------------------------------------------------- 3. RevenueCat */}
           <h2 className="mt-5 text-[20px] font-semibold">RevenueCat</h2>
           <Panel>
@@ -350,7 +356,7 @@ export function WeekView() {
                 </tbody>
               </table>
             </div>
-            <p className="mt-2 text-[12.5px] text-muted-foreground">« € pour 1 000 vues » par app : il faut les vues par app, donc l&apos;accès à l&apos;OS. En attendant, le chiffre global est en haut de page.</p>
+            {r.content.kind !== "os" && <p className="mt-2 text-[12.5px] text-muted-foreground">« € pour 1 000 vues » par app : il faut les vues par app, donc l&apos;OS. Le chiffre global est en haut de page.</p>}
           </Panel>
 
           {/* ------------------------------------------------ 4. trous par pays */}
