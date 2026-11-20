@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useRef, useState, type KeyboardEvent } from "react";
-import { CalendarDays, Check, ChevronDown, Ellipsis, Repeat, Video, Maximize2, MessageSquare, Plus, Trash2 } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, CornerDownRight, Ellipsis, Repeat, Video, Maximize2, MessageSquare, Plus, Trash2 } from "lucide-react";
 import { LinkedSummary } from "@/components/planner/item-links";
 import { tagCardStyle, tagChipStyle, useTagColors } from "@/lib/tags";
 import { PersonAvatar } from "@/components/person-avatar";
@@ -11,7 +11,8 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
   DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { itemsStore } from "@/lib/data";
+import { itemsStore, profilesStore } from "@/lib/data";
+import { useRows } from "@/lib/store";
 import { addDays, addMonths, bucketLabel, dayKey, isLate, monday, monthKey, weekKey, yearKey } from "@/lib/dates";
 import { categoryOf, CATEGORIES } from "@/lib/categories";
 import { byOrder, createItem, nextOwner, OWNER_LABEL, OWNER_NAME, PRIO_LABEL, REPEAT_LABEL, toggleDone } from "@/lib/items";
@@ -136,6 +137,9 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
 
   const category = categoryOf(item.category);
   const colorOf = useTagColors();
+  const creator = useRows(profilesStore).find((p) => p.id === item.created_by);
+  // Créée par l'un pour l'autre (et pas pour soi ni pour les deux).
+  const assigner = creator && item.owner !== "both" && creator.short !== item.owner ? creator : null;
   const tint = !dragging && item.tags?.length ? tagCardStyle(colorOf(item.tags[0]), item.done) : undefined;
   const late = !item.done && isLate(item.bucket, today);
   const doneKids = kids.filter((k) => k.done).length;
@@ -283,6 +287,12 @@ export const ItemCard = memo(function ItemCard({ item, kids, comments = 0, showH
         >
           {OWNER_NAME[item.owner]}
         </button>
+        {/* Une tâche donnée par l'autre : on le voit tout de suite. */}
+        {assigner && (
+          <span className={cn("inline-flex items-center gap-1 rounded-md px-1.5 text-[11.5px] leading-[20px] font-medium", item.done ? "text-faint" : "bg-now-soft text-now")} title={`Ajoutée par ${assigner.name}`}>
+            <CornerDownRight className="size-3" aria-hidden /> par {assigner.name}
+          </span>
+        )}
         {category && (
           <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">
             <span className="size-1.5 rounded-full" style={{ background: category.color }} aria-hidden />
