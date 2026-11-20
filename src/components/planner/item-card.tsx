@@ -389,9 +389,15 @@ export function AddLine({
   small?: boolean;
   id?: string;
 }) {
+  // Ce qu'on tape devient une tâche dès qu'on valide ou qu'on clique ailleurs : rien ne reste « à moitié écrit ».
+  const commit = (el: HTMLInputElement) => {
+    const v = el.value.trim();
+    el.value = "";
+    if (v) onAdd(v);
+  };
   return (
-    <div className={cn("flex items-center gap-2", small ? "py-[3px]" : "px-2 py-[7px]")}>
-      <span className={cn("shrink-0 rounded-[6px] border-[1.5px] border-dashed border-line-strong", small ? "size-[15px]" : "size-[17px]")} aria-hidden />
+    <div className={cn("flex items-center gap-2 text-faint focus-within:text-foreground", small ? "py-[3px]" : "px-2 py-[7px]")}>
+      <Plus className={cn("shrink-0", small ? "size-[15px]" : "size-[17px]")} aria-hidden />
       <input
         ref={inputRef}
         id={id}
@@ -401,16 +407,15 @@ export function AddLine({
         autoComplete="off"
         onKeyDown={(e) => {
           e.stopPropagation();
-          if (e.key === "Enter") {
-            const v = e.currentTarget.value.trim();
-            if (v) {
-              onAdd(v);
-              e.currentTarget.value = "";
-            }
+          if (e.key === "Enter") commit(e.currentTarget);
+          if (e.key === "Escape") {
+            // Échap annule ce qui était tapé.
+            e.currentTarget.value = "";
+            e.currentTarget.blur();
           }
-          if (e.key === "Escape") e.currentTarget.blur();
         }}
-        className={cn("min-w-0 flex-1 bg-transparent outline-none placeholder:text-faint", small && "text-[13px]")}
+        onBlur={(e) => commit(e.currentTarget)}
+        className={cn("min-w-0 flex-1 bg-transparent text-foreground outline-none placeholder:text-faint", small && "text-[13px]")}
       />
     </div>
   );
