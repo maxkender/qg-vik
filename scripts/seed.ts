@@ -135,7 +135,7 @@ const metrics: Table = {
 
 // ---------------------------------------------------- processes + routines
 type SeedProcesses = {
-  routines: { id: string; day: number | null; title: string; sub: string; who: string }[];
+  routines: { id: string; day: number | null; title: string; sub: string; who: string; url?: string }[];
   processes: { id: string; title: string; meta: string; steps: unknown[]; rules: unknown[] }[];
 };
 const proc = read<SeedProcesses>("processes.json");
@@ -150,9 +150,9 @@ const processes: Table = {
 const routines: Table = {
   name: "routines",
   conflict: "id",
-  columns: { id: "text", day: "smallint", title: "text", sub: "text", who: "text", sort_order: "double precision" },
+  columns: { id: "text", day: "smallint", title: "text", sub: "text", who: "text", sort_order: "double precision", url: "text" },
   rows: proc.routines.map((r, i) => ({
-    id: r.id, day: r.day, title: r.title, sub: blank(r.sub), who: r.who, sort_order: i + 1,
+    id: r.id, day: r.day, title: r.title, sub: blank(r.sub), who: r.who, sort_order: i + 1, url: r.url ?? null,
   })),
 };
 

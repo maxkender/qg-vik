@@ -9,6 +9,7 @@ import { ProcessFlow, ProcessList } from "@/components/process/flow";
 import { processesStore, routinesStore } from "@/lib/data";
 import { useRows } from "@/lib/store";
 import type { Routine } from "@/lib/types";
+import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const DAY_NAMES = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
@@ -28,7 +29,13 @@ const LEGEND: [string, string][] = [
 function Chip({ r }: { r: Routine }) {
   return (
     <div className={cn("rounded-lg border-l-[3px] bg-muted px-2.5 py-1.5 text-[12.5px] leading-snug", WHO_BAR[r.who])}>
-      {r.title}
+      {r.url ? (
+        <a href={r.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline decoration-line-strong underline-offset-2 hover:decoration-foreground">
+          {r.title} <ArrowUpRight className="size-3 shrink-0" aria-hidden />
+        </a>
+      ) : (
+        r.title
+      )}
       {r.sub && <span className="mt-0.5 block text-[11px] text-muted-foreground">{r.sub}</span>}
     </div>
   );

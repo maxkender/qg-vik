@@ -170,6 +170,8 @@ export type Routine = {
   sub: string | null;
   who: "max" | "adrien" | "both" | "os";
   sort_order: number;
+  /** Lien direct vers l'endroit où ça se fait (une page de l'OS, par exemple). */
+  url?: string | null;
 };
 
 export type PageRow = {

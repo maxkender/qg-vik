@@ -1,14 +1,14 @@
 {
   "_source": "Extrait tel quel de reference/maquette-qg.html (constantes FLOWS, WEEK, DAILY). day : 1 = lundi … 7 = dimanche, null = tous les jours.",
   "routines": [
-    { "id": "rt-w01", "day": 1, "title": "Paie du lundi", "sub": "Upwork + lot Ruul · avant 12h", "who": "max" },
+    { "id": "rt-w01", "day": 1, "title": "Paie du lundi", "sub": "Upwork + lot Ruul · avant 12h", "who": "max", "url": "https://sophia-marketing-orga.vercel.app/" },
     { "id": "rt-w02", "day": 1, "title": "Démarrage de la cohorte", "sub": "auto · matin", "who": "os" },
     { "id": "rt-w03", "day": 1, "title": "Réunion Max & Adrien", "sub": "30 min · QG", "who": "both" },
     { "id": "rt-w04", "day": 1, "title": "Revue vision + pays", "sub": "1er lundi du mois · 1h", "who": "both" },
-    { "id": "rt-w05", "day": 4, "title": "Check cohorte + doublement", "sub": "matin · max 40 propositions", "who": "max" },
+    { "id": "rt-w05", "day": 4, "title": "Check cohorte + doublement", "sub": "matin · max 40 propositions", "who": "max", "url": "https://sophia-marketing-orga.vercel.app/admin/auto/decisions" },
     { "id": "rt-w06", "day": 4, "title": "Objectifs de recrutement aux HMs", "sub": "après le check · Slack", "who": "max" },
-    { "id": "rt-w07", "day": 5, "title": "Test à blanc des kills", "sub": "fin de journée", "who": "max" },
-    { "id": "rt-w08", "day": 6, "title": "Kills + rapport de contrôle", "sub": "soir", "who": "max" },
+    { "id": "rt-w07", "day": 5, "title": "Test à blanc des kills", "sub": "fin de journée", "who": "max", "url": "https://sophia-marketing-orga.vercel.app/admin/auto/decisions" },
+    { "id": "rt-w08", "day": 6, "title": "Kills + rapport de contrôle", "sub": "soir", "who": "max", "url": "https://sophia-marketing-orga.vercel.app/admin/auto/decisions" },
     { "id": "rt-w09", "day": 6, "title": "Fin des offres HM", "sub": "cible avant minuit (Paris)", "who": "os" },
     { "id": "rt-d01", "day": null, "title": "Rapport du jour", "sub": "9h15 · Upwork Watch, alertes OS", "who": "max" },
     { "id": "rt-d02", "day": null, "title": "Tickets et escalades support", "sub": "matin et soir", "who": "adrien" },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Plus, Repeat, X } from "lucide-react";
+import { ArrowUpRight, ChevronDown, Link2, Plus, Repeat, X } from "lucide-react";
 import { useView } from "@/components/app/view-state";
 import { Tick } from "@/components/planner/item-card";
 import { useMe } from "@/components/session-provider";
@@ -62,6 +62,16 @@ export function TodayRoutines() {
     if (check) void routineChecksStore.remove(check.id);
     else void routineChecksStore.insert({ id: newId(), routine_id: id, date, checked_by: me.id, created_at: new Date().toISOString() });
   }
+  /** Le lien direct d'une habitude : la page où elle se fait. Vide = on l'enlève. */
+  function setLink(id: string, name: string, current?: string | null) {
+    const typed = window.prompt(`Lien direct pour « ${name} » (laisse vide pour l'enlever)`, current ?? "https://");
+    if (typed === null) return;
+    const value = typed.trim();
+    if (!value || value === "https://") return void routinesStore.update(id, { url: null });
+    const url = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+    if (containsSecret(url)) return void toast.error(SECRET_MESSAGE);
+    void routinesStore.update(id, { url });
+  }
   function add() {
     const t = title.trim();
     if (!t) return;
@@ -98,13 +108,23 @@ export function TodayRoutines() {
             <li key={r.id} className="group flex items-start gap-2">
               <Tick checked={done} onChange={() => toggle(r.id)} label={done ? `${r.title} : marquer comme pas fait` : `${r.title} : marquer comme fait`} />
               <span className="min-w-0 flex-1">
-                <span className={cn("block text-[13.5px] leading-[21px]", done && "text-faint line-through")}>{r.title}</span>
+                <span className="flex items-center gap-1.5">
+                  <span className={cn("text-[13.5px] leading-[21px]", done && "text-faint line-through")}>{r.title}</span>
+                  {r.url && (
+                    <a href={r.url} target="_blank" rel="noreferrer" title={r.url} className="inline-flex h-5 shrink-0 items-center gap-0.5 rounded-md bg-foreground px-1.5 text-[11px] font-semibold text-background">
+                      Ouvrir <ArrowUpRight className="size-3" aria-hidden />
+                    </a>
+                  )}
+                </span>
                 <span className="flex flex-wrap items-center gap-x-2 text-[11.5px] text-faint">
                   <span className={cn("rounded-md px-1.5 text-[11px] leading-[17px] font-semibold", TONE[r.who as Owner], done && "opacity-50")}>{OWNER_NAME[r.who as Owner]}</span>
                   {r.sub}
                   {r.day === null && <span>tous les jours</span>}
                 </span>
               </span>
+              <button type="button" onClick={() => setLink(r.id, r.title, r.url)} aria-label={`Lien direct de l'habitude ${r.title}`} title={r.url ? "Changer le lien direct" : "Ajouter un lien direct"} className="grid size-6 shrink-0 place-items-center rounded-md text-faint opacity-0 group-hover:opacity-100 hover:bg-accent hover:text-foreground focus-visible:opacity-100 max-md:opacity-100">
+                <Link2 className="size-3.5" aria-hidden />
+              </button>
               <button
                 type="button"
                 onClick={() => window.confirm(`Retirer « ${r.title} » des habitudes ? Elle disparaîtra aussi de la semaine type.`) && void routinesStore.remove(r.id)}
