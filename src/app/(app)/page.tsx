@@ -2,12 +2,11 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Archive, Search, X } from "lucide-react";
+import { Archive, Plus, Search, X } from "lucide-react";
 import { WhoSwitch, ViewHeader } from "@/components/app/shell";
 import { useView } from "@/components/app/view-state";
 import { Board, type ColumnDef } from "@/components/planner/board";
-import { QuickAdd, useQuickCreate } from "@/components/planner/quick-add";
-import { TodayRoutines } from "@/components/planner/routines";
+import { useQuickCreate } from "@/components/planner/quick-add";
 import { usePlanner } from "@/components/planner/use-planner";
 import { useMe } from "@/components/session-provider";
 import { CATEGORIES, type Category } from "@/lib/categories";
@@ -30,7 +29,7 @@ const select = "h-9 min-w-0 rounded-lg border border-line bg-glass px-2.5 text-[
 // Écran d'accueil : Urgent, En train de faire, À faire, et ce qui a été fait aujourd'hui.
 export default function TodoPage() {
   const me = useMe();
-  const { today, setOpenItem } = useView();
+  const { today, setOpenItem, setQuickAddOpen } = useView();
   const { all, roots, kidsOf, commentsOf } = usePlanner();
   const create = useQuickCreate();
 
@@ -99,11 +98,12 @@ export default function TodoPage() {
         <Link href="/archives" className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line px-2.5 text-[12.5px] text-muted-foreground transition-colors duration-100 hover:border-line-strong hover:text-foreground">
           <Archive className="size-3.5" aria-hidden /> Archives
         </Link>
-        <WhoSwitch className="w-[220px] max-md:w-full" />
+        <WhoSwitch className="w-[220px] max-md:flex-1" />
+        <button type="button" onClick={() => setQuickAddOpen(true)} aria-label="Nouvelle tâche" title="Nouvelle tâche (N)" className="grid size-8 shrink-0 place-items-center rounded-full bg-foreground text-background transition-opacity duration-100 hover:opacity-85">
+          <Plus className="size-4" aria-hidden />
+        </button>
       </ViewHeader>
       <div className="flex shrink-0 flex-col gap-2 px-4 pb-4 md:px-6">
-        <TodayRoutines />
-        <QuickAdd />
         <div className="flex flex-wrap items-center gap-2">
           <label className="flex h-9 min-w-0 flex-[1_1_160px] items-center gap-2 rounded-lg border border-line bg-glass px-2.5 focus-within:border-line-strong">
             <Search className="size-3.5 shrink-0 text-faint" aria-hidden />
