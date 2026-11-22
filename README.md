@@ -128,3 +128,7 @@ Variables Vercel (une source sans sa clé reste « non branchée », le reste co
 - Modèle : `FAL_API_KEY`, `FAL_LLM_MODEL` (par défaut `google/gemini-2.5-flash`), et au besoin `FAL_LLM_ENDPOINT` (par défaut `fal-ai/any-llm`).
 
 Tri : un mail de posteur (posts, TikTok, dashboard, Ruul, Upwork, paie, warm-up, ou expéditeur déjà vu comme posteur) est marqué `ignore_posteur`, sans classement, sans réponse, sans contenu gardé. Rien n'est envoyé sans un clic (« Envoyer », « Publier ») ; chaque envoi est dans `reply_log`.
+
+## Control
+
+Page `/control` (Recrutement, Paie, Autres problèmes). Le cron horaire (`/api/cron/agent`) lit les routes `/api/qg/control/*` de l'OS en lecture seule et range chaque réponse dans `control_snapshots`. Variables Vercel : `OS_QG_TOKEN` et `OS_QG_BASE_URL` (l'adresse de l'OS ; à défaut, le domaine de `OS_QG_URL`). Format attendu : `docs/control-os.md`.

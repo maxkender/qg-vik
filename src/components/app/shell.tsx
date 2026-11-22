@@ -12,6 +12,8 @@ import { logout, useMe } from "@/components/session-provider";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { itemsStore, messagesStore, appTodosStore } from "@/lib/data";
 import { DAYS_SHORT, MONTHS_SHORT, isoWeek } from "@/lib/dates";
+import { useControl } from "@/components/control/use-control";
+import { attention } from "@/lib/control/read";
 import { NAV_ALL, NAV_EQUIPE, NAV_PILOTAGE, NAV_PLANNING, type NavItem } from "@/lib/nav";
 import { useRows, useSync } from "@/lib/store";
 import { Logo } from "@/components/logo";
@@ -86,6 +88,9 @@ function Rail({ pathname, pagesNav }: { pathname: string; pagesNav?: ReactNode }
   const me = useMe();
   const unread = useRows(messagesStore).filter((m) => m.to_who === me.short && !m.read_at).length;
   const urgent = items.filter((i) => !i.parent_id && !i.done && i.prio === "urgent" && sees(i.owner)).length;
+  const control = useControl().data;
+  const [mountedAt] = useState(() => Date.now());
+  const controlCount = control ? attention(control, mountedAt).count : 0;
   const supportUrgent = useRows(appTodosStore).filter((t) => t.type === "urgent" && (t.statut === "a_faire" || t.statut === "en_cours")).length;
 
   return (
@@ -123,7 +128,7 @@ function Rail({ pathname, pagesNav }: { pathname: string; pagesNav?: ReactNode }
 
       <nav aria-label="Sections" className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2.5 pb-2">
         <NavGroup label="Planning" items={NAV_PLANNING} pathname={pathname} badge={{ "/": urgent }} />
-        <NavGroup label="Pilotage" items={NAV_PILOTAGE} pathname={pathname} badge={{ "/apps": supportUrgent }} />
+        <NavGroup label="Pilotage" items={NAV_PILOTAGE} pathname={pathname} badge={{ "/apps": supportUrgent, "/control": controlCount }} />
         <NavGroup label="Équipe" items={NAV_EQUIPE} pathname={pathname} badge={{ "/profils": unread }} />
         {pagesNav}
       </nav>
