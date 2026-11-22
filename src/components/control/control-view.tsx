@@ -64,7 +64,7 @@ function Recruitment({ r }: { r: RecruitmentView }) {
           {(Object.keys(CHANNEL_NAME) as Channel[]).map((k) => <button key={k} type="button" aria-pressed={channel === k} onClick={() => setChannel(k)} className={cn("h-[26px] rounded-[7px] px-3 text-[12.5px] font-medium transition-colors duration-100", channel === k ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground")}>{CHANNEL_NAME[k]}{r.channels[k].total !== null && <span className="num ml-1.5 opacity-70">{r.channels[k].total}</span>}</button>)}
         </div>
       </div>
-      <Panel title="Entonnoir" caption={compared ? `Barre pleine : cette cohorte. Trait fin : celle du ${day(r.previousCohort!)}.` : "Pas de cohorte précédente à comparer."}>
+      <Panel title="Entonnoir" caption={compared ? `Barre pleine : cette cohorte. Trait fin : celle du ${day(r.previousCohort!)}.` : `Pas de cohorte ${CHANNEL_NAME[channel]} la semaine d'avant.`}>
         {c.funnel.length ? (
           <ul className="space-y-2.5">
             {c.funnel.map((s) => (

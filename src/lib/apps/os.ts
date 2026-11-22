@@ -23,18 +23,16 @@ const text = (...values: unknown[]) => {
   return "";
 };
 const list = (v: unknown): Raw[] => (Array.isArray(v) ? (v.filter((x) => x && typeof x === "object") as Raw[]) : []);
-// Un pourcentage peut arriver en 0,07 ou en 7 : on le ramène entre 0 et 1.
-const share = (v: number | null) => (v === null ? null : v > 1 ? v / 100 : v);
 
 export type OsApp = { id: string; slug: string; name: string; snapshot: OsSnapshot };
 
 type Day = { jour: string | null; app: string; key: string; posts: number; views: number | null; median: number | null; viral: number | null; accounts: number | null; cost: number | null };
-const dayOf = (r: Raw, key: string): Day => ({ jour: text(r.jour) || null, app: text(r.application_id), key: text(r[key]), posts: num(r.posts) ?? 0, views: num(r.vues_total), median: num(r.vues_mediane), viral: share(num(r.pct_10k)), accounts: num(r.comptes_actifs), cost: num(r.cout_posteurs_usd) });
+const dayOf = (r: Raw, key: string): Day => ({ jour: text(r.jour) || null, app: text(r.application_id), key: text(r[key]), posts: num(r.posts) ?? 0, views: num(r.vues_total), median: num(r.vues_mediane), viral: num(r.pct_10k) === null ? null : num(r.pct_10k)! / 100, accounts: num(r.comptes_actifs), cost: num(r.cout_posteurs_usd) });
 const total = (rows: Day[], pick: (d: Day) => number | null) => { const v = rows.map(pick).filter((x): x is number => x !== null); return v.length ? v.reduce((a, x) => a + x, 0) : null; };
 // Médiane et % à 10 k d'une période : moyenne des jours, pondérée par le nombre de posts.
 const weighted = (rows: Day[], pick: (d: Day) => number | null) => { const v = rows.filter((d) => pick(d) !== null && d.posts > 0); const posts = v.reduce((a, d) => a + d.posts, 0); return posts ? v.reduce((a, d) => a + pick(d)! * d.posts, 0) / posts : null; };
-// Comptes actifs : ceux du dernier jour de la période.
-const lastAccounts = (rows: Day[]) => { const last = rows.map((d) => d.jour ?? "").sort().at(-1); return total(rows.filter((d) => d.jour === last), (d) => d.accounts); };
+// Comptes actifs : le jour le plus haut de la période (le dernier jour est souvent incomplet).
+const lastAccounts = (rows: Day[]) => { const perDay = [...new Set(rows.map((d) => d.jour))].map((j) => total(rows.filter((d) => d.jour === j), (d) => d.accounts)).filter((v): v is number => v !== null); return perDay.length ? Math.max(...perDay) : null; };
 
 /**
  * La réponse de l'OS (« jours », « par_pays », « par_label », une ligne par jour) résumée par app sur la période demandée :
