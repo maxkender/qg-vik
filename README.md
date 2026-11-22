@@ -115,3 +115,16 @@ Variables Vercel :
 Ce que le QG lit dans la réponse de l'OS, par app (`src/lib/apps/os.ts`) : `application_id` ou `slug`, `accounts`, `cost_usd` (par semaine), `views_7d`, `posts_7d`, `median_views`, `viral_pct`, `countries` (`country`, `accounts`, `cost_usd`) et `labels` (`label`, `accounts`, `median_views`, `viral_pct`). Sans coût fourni, il est calculé : comptes × tarif de la zone du pays.
 
 Une source qui ne répond pas s'affiche « données indisponibles », jamais zéro.
+
+## Agent « Support & avis » et « Ma boîte »
+
+Un cron Vercel toutes les heures (`/api/cron/agent`) lit les nouveaux mails et avis, les trie, les classe et prépare des brouillons. Code dans `src/lib/agent/`. `sync_state` garde le dernier élément lu par source.
+
+Variables Vercel (une source sans sa clé reste « non branchée », le reste continue) :
+
+- Gmail : `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, puis `GMAIL_REFRESH_TOKEN_MAX` et `GMAIL_REFRESH_TOKEN_SUPPORT`. Les deux dernières s'obtiennent depuis la page « Santé de l'agent » (lien « obtenir l'autorisation », connecté à la bonne boîte). Dans la console Google, activer l'API Gmail et ajouter l'adresse de retour `https://qg-vik.vercel.app/api/gmail/callback`. Droits demandés : lecture et brouillons/envoi (`gmail.readonly`, `gmail.compose`).
+- App Store : `ASC_ISSUER_ID`, `ASC_KEY_ID`, `ASC_PRIVATE_KEY`. Les apps sont reconnues par leur bundle id.
+- Google Play : `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`. L'identifiant Android d'une app est `apps.play_package` (à défaut, son bundle id).
+- Modèle : `FAL_API_KEY`, `FAL_LLM_MODEL` (par défaut `google/gemini-2.5-flash`), et au besoin `FAL_LLM_ENDPOINT` (par défaut `fal-ai/any-llm`).
+
+Tri : un mail de posteur (posts, TikTok, dashboard, Ruul, Upwork, paie, warm-up, ou expéditeur déjà vu comme posteur) est marqué `ignore_posteur`, sans classement, sans réponse, sans contenu gardé. Rien n'est envoyé sans un clic (« Envoyer », « Publier ») ; chaque envoi est dans `reply_log`.

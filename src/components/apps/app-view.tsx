@@ -2,16 +2,17 @@
 
 import { useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowDownRight, ArrowUpRight, Check, ChevronLeft, Circle, Code2, ExternalLink, Hash, NotebookText, Pencil, Store, X } from "lucide-react";
 import { useView } from "@/components/app/view-state";
+import { SupportTab } from "@/components/agent/support-tab";
 import { AppForm } from "@/components/apps/app-form";
 import { AppLogo, NA, PHASES, money, phaseOf, useApi } from "@/components/apps/shared";
 import { Bars, Panel } from "@/components/dashboard/charts";
 import { PersonAvatar } from "@/components/person-avatar";
 import { useMe } from "@/components/session-provider";
 import type { AppDetail, Checkpoint } from "@/lib/apps/report";
-import { appsStore, decisionsStore, itemsStore } from "@/lib/data";
+import { appTodosStore, appsStore, decisionsStore, itemsStore } from "@/lib/data";
 import { isoDate } from "@/lib/dates";
 import { big, int, shortDate } from "@/lib/format";
 import { createItem, toggleDone } from "@/lib/items";
@@ -69,6 +70,9 @@ export function AppView() {
   const decisions = useRows(decisionsStore).filter((d) => d.app_slug === slug).sort((a, b) => b.date.localeCompare(a.date) || b.created_at.localeCompare(a.created_at));
   const { data: r, error } = useApi<AppDetail>(`/api/apps/${slug}`, app?.launch_date);
   const [editing, setEditing] = useState(false);
+  const router = useRouter();
+  const support = useSearchParams().get("onglet") === "support";
+  const urgents = useRows(appTodosStore).filter((t) => t.app_slug === slug && t.type === "urgent" && (t.statut === "a_faire" || t.statut === "en_cours")).length;
   const [allCountries, setAllCountries] = useState(false);
 
   if (!app) return <p className="px-6 pt-8 text-[14px] text-muted-foreground">{appsStore.loaded ? "Cette app n'existe pas." : "Chargement…"}</p>;
@@ -126,8 +130,17 @@ export function AppView() {
         </div>
       </div>
 
-      {error && <p className="px-6 text-[14px] text-bad">{error}</p>}
-      <div className={cn("flex min-w-0 flex-col gap-3 px-4 pb-24 md:px-6 [&>*]:min-w-0", !r && !error && "animate-pulse")}>
+      <div className="mb-3 flex gap-1 px-4 md:px-6" role="tablist">
+        {[{ key: false, label: "Chiffres" }, { key: true, label: "Support & avis" }].map((t) => (
+          <button key={t.label} type="button" role="tab" aria-selected={support === t.key} onClick={() => router.replace(`/apps/${slug}${t.key ? "?onglet=support" : ""}`)} className={cn("inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[13px] font-medium transition-colors duration-100", support === t.key ? "bg-foreground text-background" : "text-muted-foreground hover:bg-accent hover:text-foreground")}>
+            {t.label}
+            {t.key && urgents > 0 && <span className="num rounded-md bg-bad px-1.5 text-[11px] text-white">{urgents}</span>}
+          </button>
+        ))}
+      </div>
+      {support && <SupportTab app={app} />}
+      {!support && error && <p className="px-6 text-[14px] text-bad">{error}</p>}
+      <div className={cn("flex min-w-0 flex-col gap-3 px-4 pb-24 md:px-6 [&>*]:min-w-0", support && "hidden", !r && !error && "animate-pulse")}>
         {/* ---------------------------------------------------------- KPI */}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
           <Kpi title="Revenu 7 jours" value={money(r?.rev7.value ?? null)} vs={r?.rev7.vs} />

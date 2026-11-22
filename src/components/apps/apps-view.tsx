@@ -7,7 +7,7 @@ import { ViewHeader } from "@/components/app/shell";
 import { AppForm } from "@/components/apps/app-form";
 import { AppLogo, NA, PhaseBadge, money, useApi } from "@/components/apps/shared";
 import type { AppSummary } from "@/lib/apps/report";
-import { appsStore } from "@/lib/data";
+import { appTodosStore, appsStore } from "@/lib/data";
 import { useRows } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +39,8 @@ export function AppsView() {
   const apps = useRows(appsStore);
   const { data, error } = useApi<Record<string, AppSummary>>("/api/apps", apps.length);
   const [creating, setCreating] = useState(false);
+  const todos = useRows(appTodosStore);
+  const urgentOf = (slug: string) => todos.filter((t) => t.app_slug === slug && t.type === "urgent" && (t.statut === "a_faire" || t.statut === "en_cours")).length;
 
   // Par marge, de la meilleure à la pire ; celles dont on ne connaît pas la marge ensuite, par revenu.
   const sorted = useMemo(() => {
@@ -62,6 +64,7 @@ export function AppsView() {
               <div className="flex items-center gap-3">
                 <AppLogo app={app} />
                 <p className="min-w-0 flex-1 truncate text-[17px] font-semibold tracking-[-0.01em]">{app.name}</p>
+                {urgentOf(app.slug) > 0 && <span className="num inline-flex h-[22px] items-center rounded-md bg-bad-soft px-2 text-[11.5px] font-semibold text-bad" title="Urgents du support">{urgentOf(app.slug)} urgent{urgentOf(app.slug) > 1 ? "s" : ""}</span>}
                 <PhaseBadge phase={app.phase} />
               </div>
               <div className="mt-4 grid grid-cols-3 gap-3">

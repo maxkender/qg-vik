@@ -19,7 +19,7 @@ Le QG doit être **beau, rapide et agréable**. Il faut que ça donne envie de l
 1. **Ne jamais toucher au projet Supabase de l'OS** (`mbikecieskoobeizixig`), ni en lecture ni en écriture. Le QG a son propre projet.
 2. **Aucun mot de passe ni aucune clé API stockés dans la base, ni dans le code.** Les clés vont dans les variables d'environnement Vercel. La page « Légal & accès » indique seulement *où* se trouve chaque secret (1Password, Bitwarden…), jamais le secret lui-même. Affiche un avertissement en haut de cette page.
 3. **Seuls Max et Adrien peuvent se connecter.** Liste blanche de 2 emails, définie dans les variables d'environnement `ALLOWED_EMAILS`. Row Level Security activée sur toutes les tables.
-4. **Aucune action qui envoie, paie ou modifie quelque chose ailleurs.** Les intégrations (RevenueCat, Qonto) sont en lecture seule.
+4. **Aucune action qui envoie, paie ou modifie quelque chose ailleurs.** Les intégrations (RevenueCat, Qonto) sont en lecture seule. Deux exceptions demandées par Max, toujours sur un clic d'un membre : créer un lien Google Meet, et l'agent Support (bouton « Envoyer » un mail, bouton « Publier » une réponse à un avis). L'agent pose aussi des brouillons Gmail. L'envoi automatique existe mais reste désactivé.
 5. Avant chaque étape, montre ton plan. À la fin de chaque étape, lance l'app en local et vérifie qu'elle fonctionne avant de passer à la suite.
 
 ## Connexion

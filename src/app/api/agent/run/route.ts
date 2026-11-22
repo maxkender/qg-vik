@@ -1,0 +1,20 @@
+import { NextResponse } from "next/server";
+import { agentStatus, runAgent } from "@/lib/agent/run";
+import { FAL_MODEL } from "@/lib/agent/fal";
+import { adminDb } from "@/lib/sync/admin";
+import { requireMember } from "@/lib/sync/guard";
+
+export const maxDuration = 300;
+
+// GET : ce qui est branché (jamais une clé). POST : un membre lance un passage maintenant.
+export async function GET() {
+  const denied = await requireMember();
+  if (denied) return denied;
+  return NextResponse.json({ sources: agentStatus(), modele: FAL_MODEL(), base: Boolean(process.env.SUPABASE_SECRET_KEY) });
+}
+export async function POST() {
+  const denied = await requireMember();
+  if (denied) return denied;
+  if (!process.env.SUPABASE_SECRET_KEY) return NextResponse.json({ error: "SUPABASE_SECRET_KEY manquante dans Vercel." }, { status: 503 });
+  return NextResponse.json(await runAgent(adminDb()));
+}

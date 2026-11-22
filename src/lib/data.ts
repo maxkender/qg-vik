@@ -1,5 +1,6 @@
 "use client";
 
+import type { AppFaq, AppTodo, FeedbackItem, FeedbackTopic, MailDigestItem, MailPref, ReplyDraft, SyncStateRow } from "@/lib/agent/types";
 import type { VendorRule } from "@/lib/postes";
 import { TableStore } from "@/lib/store";
 import type {
@@ -44,3 +45,13 @@ export const osStore = new TableStore<OsDaily>("os_daily", "date", (r) => `${r.d
 
 export const documentsStore = new TableStore<DocRow>("documents", "id");
 export const documentLogStore = new TableStore<DocLog>("document_log", "id");
+
+// L'agent « Support & avis » et le récap de la boîte de Max.
+export const feedbackStore = new TableStore<FeedbackItem>("feedback_items", "id");
+export const topicsStore = new TableStore<FeedbackTopic>("feedback_topics", "id");
+export const appTodosStore = new TableStore<AppTodo>("app_todos", "id");
+export const draftsStore = new TableStore<ReplyDraft>("reply_drafts", "id");
+export const mailDigestStore = new TableStore<MailDigestItem>("mail_digest_items", "id");
+export const mailPrefsStore = new TableStore<MailPref>("mail_prefs", "id");
+export const faqStore = new TableStore<AppFaq>("app_faq", "id");
+export const syncStateStore = new TableStore<SyncStateRow>("sync_state", "source");
