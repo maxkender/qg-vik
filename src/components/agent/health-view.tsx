@@ -12,12 +12,12 @@ import { useRows } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }).replace(" ", " à ") : "jamais");
-const ENV: Record<string, string> = { "gmail:max": "GMAIL_REFRESH_TOKEN_MAX", "gmail:support": "GMAIL_REFRESH_TOKEN_SUPPORT", app_store: "ASC_ISSUER_ID, ASC_KEY_ID, ASC_PRIVATE_KEY", play: "GOOGLE_PLAY_SERVICE_ACCOUNT_JSON", fal: "FAL_API_KEY ou GEMINI_API_KEY" };
+const ENV: Record<string, string> = { "gmail:max": "GMAIL_REFRESH_TOKEN_MAX", "gmail:support": "GMAIL_REFRESH_TOKEN_SUPPORT", app_store: "ASC_ISSUER_ID, ASC_KEY_ID, ASC_PRIVATE_KEY", play: "GOOGLE_PLAY_SERVICE_ACCOUNT_JSON", fal: "FAL_API_KEY ou GEMINI_API_KEY", os: "OS_API_URL, OS_QG_TOKEN" };
 
 export function HealthView() {
   const [tick, setTick] = useState(0);
   const [busy, setBusy] = useState(false);
-  const { data } = useApi<{ sources: Record<string, boolean>; modele: string }>("/api/agent/run", tick);
+  const { data } = useApi<{ sources: Record<string, boolean>; modele: string; os: { domaine: string | null; token_longueur: number; token_espaces_en_trop: boolean; token_guillemets: boolean } }>("/api/agent/run", tick);
   const states = useRows(syncStateStore);
   const items = useRows(feedbackStore);
   const mails = useRows(mailDigestStore);
@@ -45,13 +45,14 @@ export function HealthView() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] border-collapse text-[13px]">
               <tbody>
-                {Object.keys(SOURCE_NAME).map((s) => {
-                  const st = states.find((x) => x.source === s);
+                {[...Object.keys(SOURCE_NAME), "os"].map((s) => {
+                  // L'OS : trois relevés (recrutement, paie, problèmes), montrés en une ligne.
+                  const st = s === "os" ? (states.find((x) => x.source.startsWith("control:") && x.error) ?? states.find((x) => x.source.startsWith("control:"))) : states.find((x) => x.source === s);
                   const ready = data?.sources[s];
                   const state = ready === undefined ? null : !ready ? "off" : st?.error ? "ko" : st?.last_ok_at ? "ok" : "wait";
                   return (
                     <tr key={s} className="border-b border-line last:border-0">
-                      <td className="py-2.5 pr-3 font-medium whitespace-nowrap">{SOURCE_NAME[s]}{s === "fal" && data && <span className="num ml-2 font-normal text-muted-foreground">{data.modele}</span>}</td>
+                      <td className="py-2.5 pr-3 font-medium whitespace-nowrap">{s === "os" ? "OS · Control et Apps" : SOURCE_NAME[s]}{s === "fal" && data && <span className="num ml-2 font-normal text-muted-foreground">{data.modele}</span>}</td>
                       <td className="py-2.5 pr-3 whitespace-nowrap">
                         {state === "off" && <span className="rounded-md bg-muted px-2 py-0.5 text-[11.5px] font-semibold text-muted-foreground">Non branchée</span>}
                         {state === "ko" && <span className="rounded-md bg-bad-soft px-2 py-0.5 text-[11.5px] font-semibold text-bad">Indisponible depuis {since(st!.error_since ?? st!.last_run_at!)}</span>}
@@ -59,9 +60,9 @@ export function HealthView() {
                         {state === "wait" && <span className="rounded-md bg-muted px-2 py-0.5 text-[11.5px] font-semibold text-muted-foreground">Branchée, pas encore passée</span>}
                       </td>
                       <td className="py-2.5 pr-3 text-muted-foreground">
-                        {state === "off" ? <>Variable Vercel : <span className="num">{ENV[s]}</span>{s.startsWith("gmail:") && <> · <a href={`/api/gmail/connect?box=${s.slice(6)}`} className="underline underline-offset-4 hover:text-foreground">obtenir l&apos;autorisation</a></>}</> : st?.error ? st.error : <>dernière synchro le <span className="num">{when(st?.last_ok_at ?? null)}</span></>}
+                        {state === "off" ? <>Variable Vercel : <span className="num">{ENV[s]}</span>{s.startsWith("gmail:") && <> · <a href={`/api/gmail/connect?box=${s.slice(6)}`} className="underline underline-offset-4 hover:text-foreground">obtenir l&apos;autorisation</a></>}</> : st?.error ? <>{st.error}{s === "os" && data && <span className="block">Appelé : <span className="num">{data.os.domaine}</span> · token de <span className="num">{data.os.token_longueur}</span> caractères{data.os.token_espaces_en_trop && " · espace en trop"}{data.os.token_guillemets && " · guillemets en trop"}</span>}</> : <>dernière synchro le <span className="num">{when(st?.last_ok_at ?? null)}</span></>}
                       </td>
-                      <td className="num py-2.5 text-right whitespace-nowrap text-muted-foreground">{st ? (s === "fal" ? `${st.stats.classes ?? 0} classés · ${st.stats.erreurs ?? 0} erreurs` : `${st.stats.lus ?? 0} lus`) : ""}</td>
+                      <td className="num py-2.5 text-right whitespace-nowrap text-muted-foreground">{!st || s === "os" ? "" : (s === "fal" ? `${st.stats.classes ?? 0} classés · ${st.stats.erreurs ?? 0} erreurs` : `${st.stats.lus ?? 0} lus`)}</td>
                     </tr>
                   );
                 })}

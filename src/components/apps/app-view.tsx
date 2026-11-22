@@ -75,6 +75,7 @@ export function AppView() {
   const urgents = useRows(appTodosStore).filter((t) => t.app_slug === slug && t.type === "urgent" && (t.statut === "a_faire" || t.statut === "en_cours")).length;
   const [allCountries, setAllCountries] = useState(false);
 
+  if (app && !app.active) return <p className="px-6 pt-8 text-[14px] text-muted-foreground">Cette app est archivée. <button type="button" onClick={() => void appsStore.update(app.slug, { active: true })} className="underline underline-offset-4 hover:text-foreground">La remettre</button></p>;
   if (!app) return <p className="px-6 pt-8 text-[14px] text-muted-foreground">{appsStore.loaded ? "Cette app n'existe pas." : "Chargement…"}</p>;
 
   const todo = items.filter((i) => !i.done).sort((a, b) => a.sort_order - b.sort_order);
@@ -145,14 +146,14 @@ export function AppView() {
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
           <Kpi title="Revenu 7 jours" value={money(r?.rev7.value ?? null)} vs={r?.rev7.vs} />
           <Kpi title="Revenu 30 jours" value={money(r?.rev30.value ?? null)} vs={r?.rev30.vs} />
-          <Kpi title="Coût posteurs · semaine" value={money(r?.cost ?? null)} />
-          <Kpi title="Marge · semaine" value={money(r?.margin ?? null)} tone={signed(r?.margin ?? null)} />
-          <Kpi title="€ par compte et par semaine" value={money(r?.perAccount ?? null, 2)} />
+          <Kpi title="Coût posteurs" value={money(r?.cost ?? null)} />
+          <Kpi title="Marge" value={money(r?.margin ?? null)} tone={signed(r?.margin ?? null)} />
+          <Kpi title="€ par compte · semaine" value={money(r?.perAccount ?? null, 2)} />
           <Kpi title="€ pour 1 000 vues" value={money(r?.per1000 ?? null, 2)} />
           <Kpi title="Abonnés actifs" value={count(r?.subs ?? null)} />
           <Kpi title="Essais · 7 jours" value={count(r?.trials ?? null)} />
           <Kpi title="Vues médianes" value={count(r?.median ?? null)} />
-          <Kpi title="Posts à 10 k vues ou plus" value={share(r?.viralPct ?? null)} />
+          <Kpi title="Posts à 10 k+" value={share(r?.viralPct ?? null)} />
         </div>
 
         {/* --------------------------------------------------- graphiques */}

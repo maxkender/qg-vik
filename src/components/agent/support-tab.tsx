@@ -45,7 +45,7 @@ function Rating({ store, items, now }: { store: "app_store" | "play"; items: Fee
       {m30 === null ? (
         <p className="text-[13px] text-faint">aucun avis sur 30 jours</p>
       ) : (
-        <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
           <div>
             <p className="text-[12px] text-muted-foreground">7 jours</p>
             <p className="num mt-1 flex items-center gap-1.5 text-[24px] leading-none font-medium">{m7 === null ? <span className="text-[13px] text-faint">aucun avis</span> : <>{one(m7)} <Star className="size-4 fill-current" aria-hidden /></>}</p>

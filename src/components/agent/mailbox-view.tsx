@@ -112,7 +112,7 @@ export function MailboxView() {
         </div>
       </ViewHeader>
       <div className="flex min-w-0 flex-col gap-3 px-4 pb-24 md:px-6 [&>*]:min-w-0">
-        <SourceNotice sources={["gmail:max", "fal"]} />
+        <SourceNotice sources={["gmail:support", "fal"]} />
         {tab ? <Prefs prefs={prefs} /> : (
           <>
             {([["a_lire", "À lire"], ["a_traiter", "À traiter"]] as const).map(([key, title]) => (

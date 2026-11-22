@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { agentStatus, runAgent } from "@/lib/agent/run";
 import { FAL_MODEL } from "@/lib/agent/fal";
-import { syncControl } from "@/lib/control/sync";
+import { controlReady, osHint, syncControl } from "@/lib/control/sync";
 import { adminDb } from "@/lib/sync/admin";
 import { requireMember } from "@/lib/sync/guard";
 
@@ -11,7 +11,7 @@ export const maxDuration = 300;
 export async function GET() {
   const denied = await requireMember();
   if (denied) return denied;
-  return NextResponse.json({ sources: agentStatus(), modele: FAL_MODEL(), base: Boolean(process.env.SUPABASE_SECRET_KEY) });
+  return NextResponse.json({ sources: { ...agentStatus(), os: controlReady() }, modele: FAL_MODEL(), base: Boolean(process.env.SUPABASE_SECRET_KEY), os: osHint() });
 }
 export async function POST() {
   const denied = await requireMember();

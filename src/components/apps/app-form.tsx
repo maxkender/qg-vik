@@ -132,7 +132,10 @@ export function AppForm({ app, onClose }: { app?: AppRow; onClose: () => void })
             </div>
           </div>
           {taken && <p className="col-span-2 text-[12.5px] text-bad">Ce slug existe déjà.</p>}
-          <div className="col-span-2 mt-1 flex justify-end gap-2">
+          <div className="col-span-2 mt-1 flex items-center justify-end gap-2">
+            {app && (
+              <button type="button" onClick={() => { if (!window.confirm(`Archiver ${app.name} ? Elle disparaît de la grille, ses données restent.`)) return; void appsStore.update(app.slug, { active: false }); onClose(); router.push("/apps"); }} className="mr-auto h-9 rounded-lg px-2 text-[13px] text-muted-foreground hover:text-bad">Archiver</button>
+            )}
             <button type="button" onClick={onClose} className="h-9 rounded-lg border border-line px-3.5 text-[13.5px] font-medium hover:border-line-strong">Annuler</button>
             <button type="submit" disabled={busy || taken || !name.trim()} className="h-9 rounded-lg bg-foreground px-3.5 text-[13.5px] font-semibold text-background disabled:opacity-40">{busy ? "Enregistrement…" : app ? "Enregistrer" : "Créer la fiche"}</button>
           </div>

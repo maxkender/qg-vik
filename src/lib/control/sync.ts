@@ -20,6 +20,11 @@ export function osBase(): string | null {
 }
 /** Le token, nettoyé (un espace ou un retour à la ligne collé en trop le ferait refuser), dans l'en-tête x-qg-token et en Bearer. */
 export const osHeaders = () => { const t = (process.env.OS_QG_TOKEN ?? "").trim().replace(/^["']|["']$/g, ""); return { "x-qg-token": t, Authorization: `Bearer ${t}`, Accept: "application/json" }; };
+/** Pour comprendre un refus de l'OS sans jamais montrer le token : le domaine appelé et la forme du token. */
+export function osHint() {
+  const raw = process.env.OS_QG_TOKEN ?? "";
+  return { domaine: osBase()?.replace(/^https?:\/\//, "") ?? null, token_longueur: raw.trim().length, token_espaces_en_trop: raw !== raw.trim(), token_guillemets: /^["']|["']$/.test(raw.trim()) };
+}
 export const controlReady = () => Boolean(osBase() && process.env.OS_QG_TOKEN);
 
 async function fetchKind(kind: Kind): Promise<unknown> {
