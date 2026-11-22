@@ -30,7 +30,7 @@ export const assetsStore = new TableStore<Asset>("assets", "id");
 export const readsStore = new TableStore<ReadRow>("reads", "id");
 
 // Données des vraies sources (écrites par le serveur, lues ici).
-export const appsStore = new TableStore<AppRow>("apps", "key");
+export const appsStore = new TableStore<AppRow>("apps", "slug");
 export const syncRunsStore = new TableStore<SyncRun>("sync_runs", "id");
 export const rcDailyStore = new TableStore<RcDaily>("rc_daily", "date", (r) => `${r.date}|${r.app}`);
 export const rcCountryStore = new TableStore<RcCountryWeekly>("rc_country_weekly", "week", (r) => `${r.week}|${r.app}|${r.country}`);

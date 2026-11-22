@@ -92,7 +92,7 @@ export function readChart(data: Chart): { date: string; measure: string; segment
 }
 
 export async function syncRevenueCat(db: SupabaseClient): Promise<number> {
-  const { data: apps, error } = await db.from("apps").select("key, rc_project_id").eq("active", true);
+  const { data: apps, error } = await db.from("apps").select("key:slug, rc_project_id:revenuecat_project_id").eq("active", true);
   if (error) throw new Error(error.message);
   const ready = (apps ?? []).filter((a) => a.rc_project_id && rcKey(a.key));
   if (!ready.length) throw new Error("Aucune clé RevenueCat (REVENUECAT_KEY_<APP>)");

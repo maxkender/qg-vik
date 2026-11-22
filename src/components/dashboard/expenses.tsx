@@ -303,7 +303,7 @@ export function VendorRules({ dash }: { dash: Dash }) {
         <select name="app" aria-label="App" className={field} defaultValue="">
           <option value="">App : aucune</option>
           {dash.apps.map((a) => (
-            <option key={a.key} value={a.key}>{a.name}</option>
+            <option key={a.slug} value={a.slug}>{a.name}</option>
           ))}
         </select>
         <button type="submit" className="h-9 rounded-lg bg-foreground px-3 text-[13px] font-semibold text-background">Ajouter</button>
@@ -320,7 +320,7 @@ export function VendorRules({ dash }: { dash: Dash }) {
             <select value={r.app ?? ""} aria-label={`App pour ${r.pattern}`} onChange={(e) => void vendorRulesStore.update(r.id, { app: e.target.value || null })} className={cellSelect}>
               <option value="">–</option>
               {dash.apps.map((a) => (
-                <option key={a.key} value={a.key}>{a.name}</option>
+                <option key={a.slug} value={a.slug}>{a.name}</option>
               ))}
             </select>
             <button type="button" aria-label={`Supprimer la règle ${r.pattern}`} onClick={() => void vendorRulesStore.remove(r.id)} className="grid size-6 place-items-center rounded-md text-faint hover:text-bad">

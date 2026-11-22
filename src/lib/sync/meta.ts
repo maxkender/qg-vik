@@ -12,7 +12,7 @@ export const metaReady = () => Boolean(process.env.META_ACCESS_TOKEN && process.
 
 export async function syncMeta(db: SupabaseClient): Promise<number> {
   if (!metaReady()) throw new Error("META_ACCESS_TOKEN ou META_AD_ACCOUNT_ID manquante");
-  const { data: apps } = await db.from("apps").select("key, name");
+  const { data: apps } = await db.from("apps").select("key:slug, name");
   const { count } = await db.from("meta_spend_daily").select("date", { count: "exact", head: true });
   const since = count ? daysAgo(10) : HISTORY_START;
   const until = isoDay(new Date());

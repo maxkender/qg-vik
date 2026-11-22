@@ -49,7 +49,7 @@ export default function DashboardPage() {
   }, [dash.rc, dash.tx, dash.meta, dash.os, dash.bal, app, period, prev]);
 
   const weeks = useMemo(() => buckets(period), [period]);
-  const appName = app === "all" ? "Toutes les apps" : (dash.apps.find((a) => a.key === app)?.name ?? app);
+  const appName = app === "all" ? "Toutes les apps" : (dash.apps.find((a) => a.slug === app)?.name ?? app);
 
   // -------------------------------------------------------------- séries
   const series = useMemo(
@@ -60,7 +60,7 @@ export default function DashboardPage() {
         const rc = rcTotals(dash.rc, app, p);
         row.rev = Math.round(rc.revenue);
         row.dep = Math.round(total(debitsIn(dash.tx, p, app)) + spendIn(dash.meta, p, app));
-        dash.apps.forEach((a) => (row[`rev_${a.key}`] = Math.round(rcTotals(dash.rc, a.key, p).revenue)));
+        dash.apps.forEach((a) => (row[`rev_${a.slug}`] = Math.round(rcTotals(dash.rc, a.slug, p).revenue)));
         const os = osTotals(dash.os, app, p);
         row.vues = os.vues;
         row.viraux = os.virauxPct === null ? null : os.virauxPct * 100;
@@ -114,7 +114,7 @@ export default function DashboardPage() {
         <select value={app} onChange={(e) => setApp(e.target.value)} aria-label="App" className={field}>
           <option value="all">Toutes les apps</option>
           {dash.apps.map((a) => (
-            <option key={a.key} value={a.key}>{a.name}</option>
+            <option key={a.slug} value={a.slug}>{a.name}</option>
           ))}
         </select>
       </ViewHeader>
@@ -160,13 +160,13 @@ export default function DashboardPage() {
           <Panel title="Revenus par app" caption="Chaque app a sa propre échelle" action={<Src s={S.revenuecat} seedDate={dash.seedDate} />}>
             <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(dash.apps.length, 4) || 1}, minmax(0, 1fr))` }}>
               {dash.apps.map((a) => (
-                <div key={a.key} className="min-w-0">
+                <div key={a.slug} className="min-w-0">
                   <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
                     <span className="size-2.5 rounded-[3px]" style={{ background: color(a.color) }} aria-hidden />
                     {a.name}
                   </p>
-                  <p className="num mt-0.5 mb-1 text-[15px]">{eur(rcTotals(dash.rc, a.key, period).revenue)}</p>
-                  <Bars label={`Revenus ${a.name}`} data={series} x="label" format={big} height={150} series={[{ key: `rev_${a.key}`, label: a.name, color: color(a.color) }]} />
+                  <p className="num mt-0.5 mb-1 text-[15px]">{eur(rcTotals(dash.rc, a.slug, period).revenue)}</p>
+                  <Bars label={`Revenus ${a.name}`} data={series} x="label" format={big} height={150} series={[{ key: `rev_${a.slug}`, label: a.name, color: color(a.color) }]} />
                 </div>
               ))}
             </div>
@@ -263,18 +263,18 @@ function PerApp({ dash, period }: { dash: Dash; period: Period }) {
     const posteurs = debitsIn(dash.tx, period).filter((t) => t.poste === "Posteurs");
     const unassigned = total(posteurs.filter((t) => !t.app));
     // Les dépenses posteurs sans app sont réparties selon les comptes actifs de chaque app (OS).
-    const actifs = dash.apps.map((a) => osTotals(dash.os.filter((r) => r.app !== "all"), a.key, period).actifs ?? 0);
+    const actifs = dash.apps.map((a) => osTotals(dash.os.filter((r) => r.app !== "all"), a.slug, period).actifs ?? 0);
     const sumActifs = actifs.reduce((x, y) => x + y, 0);
     return dash.apps.map((a, i) => {
-      const rc = rcTotals(dash.rc, a.key, period);
-      const cs = dash.rcCountry.filter((r) => r.app === a.key && r.week >= period.from && r.week <= period.to);
+      const rc = rcTotals(dash.rc, a.slug, period);
+      const cs = dash.rcCountry.filter((r) => r.app === a.slug && r.week >= period.from && r.week <= period.to);
       const users = cs.reduce((x, r) => x + Number(r.new_users ?? 0), 0);
       const revC = cs.reduce((x, r) => x + Number(r.revenue ?? 0), 0);
-      const os = osRows(dash.os.filter((r) => r.app !== "all"), a.key, period);
+      const os = osRows(dash.os.filter((r) => r.app !== "all"), a.slug, period);
       const vues = os.length ? os.reduce((x, r) => x + Number(r.vues_total ?? 0), 0) : null;
-      const own = total(posteurs.filter((t) => t.app === a.key));
+      const own = total(posteurs.filter((t) => t.app === a.slug));
       const share = unassigned === 0 ? 0 : sumActifs > 0 ? (unassigned * actifs[i]) / sumActifs : null;
-      const cost = share === null ? null : own + share + spendIn(dash.meta, period, a.key);
+      const cost = share === null ? null : own + share + spendIn(dash.meta, period, a.slug);
       return {
         a, rc,
         rate: rc.trials && rc.conversions !== null ? rc.conversions / rc.trials : null,
@@ -307,7 +307,7 @@ function PerApp({ dash, period }: { dash: Dash; period: Period }) {
           </thead>
           <tbody>
             {rows.map(({ a, rc, rate, perUser, vues, cac }) => (
-              <tr key={a.key} className="border-b border-line last:border-0 hover:bg-glass">
+              <tr key={a.slug} className="border-b border-line last:border-0 hover:bg-glass">
                 <td className="px-2 py-2 font-medium">
                   <span className="inline-flex items-center gap-2">
                     <span className="size-2.5 rounded-[3px]" style={{ background: color(a.color) }} aria-hidden />

@@ -36,7 +36,7 @@ export async function GET(request: Request) {
 
   try {
     const [apps, rc, rcCountry, tx, posts, accounts, reserve, costs, osDaily, verdicts, snapshot, rates] = await Promise.all([
-      all((a, b) => db.from("apps").select("key,name,sort_order").eq("active", true).order("sort_order").range(a, b)),
+      all((a, b) => db.from("apps").select("key:slug,name,sort_order").eq("active", true).order("sort_order").range(a, b)),
       all((a, b) => db.from("rc_daily").select("date,app,revenue,new_subs,trials,trial_conversions,refunds").gte("date", from).lte("date", to).order("date").range(a, b)),
       all((a, b) => db.from("rc_country_weekly").select("week,app,country,country_name,revenue,new_users,trials").gte("week", from).lte("week", week).order("week").range(a, b)),
       all((a, b) => db.from("qonto_transactions").select("date,amount,side").eq("poste", "Posteurs").gte("date", from).lte("date", to).order("date").range(a, b)),

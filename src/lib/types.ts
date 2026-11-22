@@ -244,7 +244,12 @@ export type ReadRow = {
 };
 
 // ------------------------------------------------ données des vraies sources
-export type AppRow = { key: string; name: string; rc_project_id: string | null; color: string | null; sort_order: number; active: boolean };
+export type AppPhase = "preparation" | "test" | "validation" | "croissance";
+export type AppRow = {
+  slug: string; name: string; revenuecat_project_id: string | null; color: string | null; sort_order: number; active: boolean;
+  logo_url: string | null; bundle_id: string | null; os_application_id: string | null; store_url: string | null; repo_url: string | null; notion_url: string | null;
+  slack_channel: string | null; phase: AppPhase; launch_date: string | null; pays_cibles: string[]; owner: Owner; created_at?: string;
+};
 export type SourceName = "revenuecat" | "qonto" | "meta" | "os";
 export type SyncRun = { id: string; source: SourceName; started_at: string; finished_at: string | null; ok: boolean | null; rows: number; error: string | null; trigger: string };
 export type RcDaily = {
