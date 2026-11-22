@@ -18,14 +18,16 @@ export function osBase(): string | null {
     return null;
   }
 }
+/** Le token, nettoyé (un espace ou un retour à la ligne collé en trop le ferait refuser), dans l'en-tête x-qg-token et en Bearer. */
+export const osHeaders = () => { const t = (process.env.OS_QG_TOKEN ?? "").trim().replace(/^["']|["']$/g, ""); return { "x-qg-token": t, Authorization: `Bearer ${t}`, Accept: "application/json" }; };
 export const controlReady = () => Boolean(osBase() && process.env.OS_QG_TOKEN);
 
 async function fetchKind(kind: Kind): Promise<unknown> {
   let last = "route introuvable";
   for (const name of ROUTES[kind]) {
-    const res = await fetch(`${osBase()}/api/qg/control/${name}`, { headers: { "x-qg-token": process.env.OS_QG_TOKEN!, Accept: "application/json" }, cache: "no-store" });
+    const res = await fetch(`${osBase()}/api/qg/control/${name}`, { headers: osHeaders(), cache: "no-store" });
     if (res.ok) return await res.json();
-    last = `réponse ${res.status}`;
+    last = `réponse ${res.status} sur /${name} (${(await res.text()).slice(0, 80)})`;
     if (res.status !== 404) break;
   }
   throw new Error(`OS /api/qg/control (${kind}) : ${last}`);
