@@ -1,13 +1,16 @@
 import "server-only";
+import { osBase } from "@/lib/control/sync";
 import { getJson } from "@/lib/sync/admin";
 import type { OsSnapshot } from "@/lib/apps/types";
 
 /**
  * OS → l'état de chaque app (comptes, coût des posteurs, vues, labels). LECTURE SEULE :
- * un GET sur /api/qg/apps avec l'en-tête x-qg-token. Variables Vercel : OS_QG_URL et OS_QG_TOKEN.
+ * un GET sur /api/qg/apps avec l'en-tête x-qg-token. Variables Vercel : OS_API_URL et OS_QG_TOKEN.
  * Le QG ne se connecte jamais à la base de l'OS.
  */
-export const osAppsReady = () => Boolean(process.env.OS_QG_URL && process.env.OS_QG_TOKEN);
+// L'adresse complète si elle est donnée (OS_QG_URL), sinon /api/qg/apps sur le domaine de l'OS (OS_API_URL).
+const appsUrl = () => process.env.OS_QG_URL || (osBase() ? `${osBase()}/api/qg/apps` : null);
+export const osAppsReady = () => Boolean(appsUrl() && process.env.OS_QG_TOKEN);
 
 type Raw = Record<string, unknown>;
 const num = (...values: unknown[]) => {
@@ -40,6 +43,6 @@ export function readOsApp(r: Raw): OsApp {
 }
 
 export async function fetchOsApps(): Promise<OsApp[]> {
-  const data = await getJson<Raw[] | { apps?: Raw[]; data?: Raw[] }>(process.env.OS_QG_URL!, { "x-qg-token": process.env.OS_QG_TOKEN! }, "OS /api/qg/apps");
+  const data = await getJson<Raw[] | { apps?: Raw[]; data?: Raw[] }>(appsUrl()!, { "x-qg-token": process.env.OS_QG_TOKEN! }, "OS /api/qg/apps");
   return list(Array.isArray(data) ? data : (data.apps ?? data.data)).map(readOsApp);
 }

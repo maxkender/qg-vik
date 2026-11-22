@@ -110,7 +110,7 @@ La section « Apps » (`/apps`, `/apps/[slug]`) lit la table `app_metrics_daily`
 Variables Vercel :
 
 - `REVENUECAT_KEY_<SLUG>` : une clé secrète en lecture par projet RevenueCat (`REVENUECAT_KEY_SOPHIA`, `REVENUECAT_KEY_ARTURA`, `REVENUECAT_KEY_MICABO`, `REVENUECAT_KEY_UNSWAP`, `REVENUECAT_KEY_ATALA`, `REVENUECAT_KEY_NUTRIA`).
-- `OS_QG_URL` : l'adresse complète de `GET /api/qg/apps` sur l'OS. `OS_QG_TOKEN` : la valeur de l'en-tête `x-qg-token`.
+- `OS_API_URL` : l'adresse de l'OS (le QG appelle `GET /api/qg/apps` dessus). `OS_QG_TOKEN` : la valeur de l'en-tête `x-qg-token`.
 
 Ce que le QG lit dans la réponse de l'OS, par app (`src/lib/apps/os.ts`) : `application_id` ou `slug`, `accounts`, `cost_usd` (par semaine), `views_7d`, `posts_7d`, `median_views`, `viral_pct`, `countries` (`country`, `accounts`, `cost_usd`) et `labels` (`label`, `accounts`, `median_views`, `viral_pct`). Sans coût fourni, il est calculé : comptes × tarif de la zone du pays.
 
@@ -131,4 +131,4 @@ Tri : un mail de posteur (posts, TikTok, dashboard, Ruul, Upwork, paie, warm-up,
 
 ## Control
 
-Page `/control` (Recrutement, Paie, Autres problèmes). Le cron horaire (`/api/cron/agent`) lit les routes `/api/qg/control/*` de l'OS en lecture seule et range chaque réponse dans `control_snapshots`. Variables Vercel : `OS_QG_TOKEN` et `OS_QG_BASE_URL` (l'adresse de l'OS ; à défaut, le domaine de `OS_QG_URL`). Format attendu : `docs/control-os.md`.
+Page `/control` (Recrutement, Paie, Autres problèmes). Le cron horaire (`/api/cron/agent`) lit les routes `/api/qg/control/*` de l'OS en lecture seule et range chaque réponse dans `control_snapshots`. Variables Vercel : `OS_QG_TOKEN` et `OS_API_URL` (l'adresse de l'OS). Format attendu : `docs/control-os.md`.

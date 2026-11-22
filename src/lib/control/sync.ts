@@ -5,25 +5,25 @@ import type { Kind } from "@/lib/control/read";
 
 /**
  * OS → control_snapshots. LECTURE SEULE : des GET sur /api/qg/control/* avec l'en-tête x-qg-token.
- * Variables Vercel : OS_QG_TOKEN, et OS_QG_BASE_URL (l'adresse de l'OS) ou, à défaut, OS_QG_URL dont on garde le domaine.
+ * Variables Vercel : OS_QG_TOKEN et OS_API_URL (l'adresse de l'OS : on n'en garde que le domaine).
  */
 const ROUTES: Record<Kind, string[]> = { recrutement: ["recruitment", "recrutement"], paie: ["payroll", "paie"], problemes: ["issues", "problems", "problemes"] };
 export const KINDS = Object.keys(ROUTES) as Kind[];
 
-function base(): string | null {
-  const raw = process.env.OS_QG_BASE_URL || process.env.OS_QG_URL;
+export function osBase(): string | null {
+  const raw = process.env.OS_QG_BASE_URL || process.env.OS_API_URL || process.env.OS_QG_URL;
   try {
     return raw ? new URL(raw).origin : null;
   } catch {
     return null;
   }
 }
-export const controlReady = () => Boolean(base() && process.env.OS_QG_TOKEN);
+export const controlReady = () => Boolean(osBase() && process.env.OS_QG_TOKEN);
 
 async function fetchKind(kind: Kind): Promise<unknown> {
   let last = "route introuvable";
   for (const name of ROUTES[kind]) {
-    const res = await fetch(`${base()}/api/qg/control/${name}`, { headers: { "x-qg-token": process.env.OS_QG_TOKEN!, Accept: "application/json" }, cache: "no-store" });
+    const res = await fetch(`${osBase()}/api/qg/control/${name}`, { headers: { "x-qg-token": process.env.OS_QG_TOKEN!, Accept: "application/json" }, cache: "no-store" });
     if (res.ok) return await res.json();
     last = `réponse ${res.status}`;
     if (res.status !== 404) break;
