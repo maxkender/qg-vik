@@ -102,3 +102,16 @@ pnpm build      # build de production
 pnpm typecheck  # TypeScript strict
 pnpm lint       # ESLint
 ```
+
+## Apps
+
+La section « Apps » (`/apps`, `/apps/[slug]`) lit la table `app_metrics_daily`, remplie chaque jour à 6 h par le cron (`/api/cron/sync`, étape `apps`). Tout est en lecture seule.
+
+Variables Vercel :
+
+- `REVENUECAT_KEY_<SLUG>` : une clé secrète en lecture par projet RevenueCat (`REVENUECAT_KEY_SOPHIA`, `REVENUECAT_KEY_ARTURA`, `REVENUECAT_KEY_MICABO`, `REVENUECAT_KEY_UNSWAP`, `REVENUECAT_KEY_ATALA`, `REVENUECAT_KEY_NUTRIA`).
+- `OS_QG_URL` : l'adresse complète de `GET /api/qg/apps` sur l'OS. `OS_QG_TOKEN` : la valeur de l'en-tête `x-qg-token`.
+
+Ce que le QG lit dans la réponse de l'OS, par app (`src/lib/apps/os.ts`) : `application_id` ou `slug`, `accounts`, `cost_usd` (par semaine), `views_7d`, `posts_7d`, `median_views`, `viral_pct`, `countries` (`country`, `accounts`, `cost_usd`) et `labels` (`label`, `accounts`, `median_views`, `viral_pct`). Sans coût fourni, il est calculé : comptes × tarif de la zone du pays.
+
+Une source qui ne répond pas s'affiche « données indisponibles », jamais zéro.
