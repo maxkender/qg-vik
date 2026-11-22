@@ -12,7 +12,7 @@ import { useRows } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }).replace(" ", " à ") : "jamais");
-const ENV: Record<string, string> = { "gmail:max": "GMAIL_REFRESH_TOKEN_MAX", "gmail:support": "GMAIL_REFRESH_TOKEN_SUPPORT", app_store: "ASC_ISSUER_ID, ASC_KEY_ID, ASC_PRIVATE_KEY", play: "GOOGLE_PLAY_SERVICE_ACCOUNT_JSON", fal: "FAL_API_KEY" };
+const ENV: Record<string, string> = { "gmail:max": "GMAIL_REFRESH_TOKEN_MAX", "gmail:support": "GMAIL_REFRESH_TOKEN_SUPPORT", app_store: "ASC_ISSUER_ID, ASC_KEY_ID, ASC_PRIVATE_KEY", play: "GOOGLE_PLAY_SERVICE_ACCOUNT_JSON", fal: "FAL_API_KEY ou GEMINI_API_KEY" };
 
 export function HealthView() {
   const [tick, setTick] = useState(0);

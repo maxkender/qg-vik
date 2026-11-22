@@ -15,7 +15,7 @@ export type MailPref = { id: string; liste: "interessant" | "pas_interessant"; g
 export type AppFaq = { id: string; app_slug: string | null; question: string; reponse: string; langue: string; sort_order: number };
 export type SyncStateRow = { source: string; last_run_at: string | null; last_ok_at: string | null; error: string | null; error_since: string | null; stats: Record<string, number> };
 
-export const SOURCE_NAME: Record<string, string> = { "gmail:max": "Gmail · maximilien@", "gmail:support": "Gmail · support@", app_store: "App Store", play: "Google Play", fal: "Modèle (FAL)" };
+export const SOURCE_NAME: Record<string, string> = { "gmail:max": "Gmail · maximilien@", "gmail:support": "Gmail · support@", app_store: "App Store", play: "Google Play", fal: "Modèle" };
 export const CATEGORY_NAME: Record<string, string> = { probleme: "Problème", feature: "Demande", abonnement_remboursement: "Abonnement", question: "Question", eloge: "Éloge", autre: "Autre" };
 export const FEED_SOURCE_NAME: Record<string, string> = { mail: "Mail", app_store: "App Store", play: "Play" };
 export const MAIL_CATEGORY_NAME: Record<string, string> = { partenariat: "Partenariats", investisseur: "Investisseurs", presse: "Presse", apple_google: "Apple et Google", banque_facture: "Banque et factures", juridique: "Juridique", newsletter: "Newsletters", notification: "Notifications", autre: "Autres" };
