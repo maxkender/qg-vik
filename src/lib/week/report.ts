@@ -6,11 +6,12 @@
 
 // ------------------------------------------------------------------ entrées
 export type RcDay = { date: string; app: string; revenue: number | null; new_subs: number | null; trials: number | null; trial_conversions: number | null; refunds: number | null };
-export type RcCountry = { week: string; app: string; country: string; country_name: string | null; revenue: number | null; new_users: number | null };
+export type RcCountry = { week: string; app: string; country: string; country_name: string | null; revenue: number | null; new_users: number | null; trials: number | null };
 export type OsPost = {
   date: string; account: string; app: string; label: string; country: string; lang: string | null;
   posts_published: number; posts_planned: number; views: number; post_views: number[];
   best_post_views: number | null; best_post_url: string | null; best_post_thumb: string | null;
+  followers_gained: number | null;
 };
 export type OsAccounts = { date: string; app: string; label: string; country: string; active_accounts: number };
 export type OsReserve = { date: string; label: string; lang: string; ready: number };
@@ -23,6 +24,10 @@ export type Verdict = { code: string; zone: string | null; verdict: string | nul
 export type WeekInput = {
   /** Lundi de la semaine demandée, AAAA-MM-JJ. */
   week: string;
+  /** Une seule app (sa clé), ou rien pour toutes. */
+  app?: string | null;
+  /** Tarif posteur par zone : dollars par compte et par semaine. */
+  zoneRates: Record<string, number>;
   apps: { key: string; name: string }[];
   rc: RcDay[];
   rcCountry: RcCountry[];
@@ -65,6 +70,7 @@ export type AppRow = {
   key: string; name: string;
   revenue: Metric; newSubs: number | null; trials: number | null; conversion: number | null; refunds: number | null; perUser: number | null;
   views: number | null; median: number | null; viralPct: number | null; postsDone: number | null; postsPlanned: number | null; actives: number | null; per1000: number | null;
+  installs: number | null; followers: number | null; costUsd: number | null; perAccount: number | null; perPost: number | null;
 };
 export type CountryRow = {
   code: string; name: string; zone: string | null; verdict: string | null;
@@ -75,6 +81,11 @@ export type CountryRow = {
   actives: number | null; postsDone: number | null; postsPlanned: number | null; median: number | null; viralPct: number | null;
   views: number | null; viewsVsPrev: number | null; viewsVsAvg: number | null;
   costUsd: number | null; ratio: number | null; revenueVsPrev: number | null;
+  trials: number | null;
+  /** Revenu moyen par semaine sur 4 semaines glissantes, et ce qu'il reste une fois les posteurs payés. */
+  revenue4: number | null; net: number | null;
+  /** Les deux chiffres qui décident : € pour 1 000 vues, € par compte et par semaine. */
+  per1000: number | null; perAccount: number | null; perPost: number | null;
 };
 export type LabelRow = {
   label: string; app: string; actives: number | null; posts: number; median: number | null; viralPct: number | null;
@@ -82,11 +93,15 @@ export type LabelRow = {
 };
 export type WeekReport = {
   week: string; label: string; from: string; to: string; complete: boolean;
+  /** L'app affichée (rien = toutes) et les apps qu'on peut choisir. */
+  app: string | null; appChoices: { key: string; name: string }[];
+  zoneRates: Record<string, number>;
   /** D'où viennent les chiffres de contenu : l'OS synchronisé, le relevé manuel, ou rien. */
   content: { kind: "os" | "releve" | "aucun"; note: string };
   countrySource: "os" | "releve" | "aucun";
   summary: {
     revenue: Metric; newSubs: Metric; views: Metric; median: Metric; viralPct: Metric; postsDone: Metric; postsPlanned: number | null; actives: Metric; posterCost: Metric; per1000: Metric;
+    installs: Metric; trials: Metric; followers: Metric; perAccount: Metric; perPost: Metric;
   };
   sentence: string;
   daily: { day: string; views: number | null; prev: number | null }[] | null;
@@ -157,6 +172,7 @@ const countryName = (code: string, fallback?: string | null) => {
 };
 const eur = (v: number) => `${Math.round(v).toLocaleString("fr-FR")} €`;
 const int = (v: number) => Math.round(v).toLocaleString("fr-FR");
+const eur2 = (v: number) => `${v.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
 const pct = (v: number) => `${v >= 0 ? "+" : "−"}${Math.abs(Math.round(v * 100))} %`;
 const share = (v: number) => `${(v * 100).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} %`;
 const slug = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -165,6 +181,7 @@ const slug = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,
 type WeekStats = {
   revenue: number | null; newSubs: number | null; views: number | null; median: number | null; viralPct: number | null;
   postsDone: number | null; postsPlanned: number | null; actives: number | null; posterCost: number | null; per1000: number | null;
+  installs: number | null; trials: number | null; followers: number | null; perAccount: number | null; perPost: number | null;
 };
 
 function contentOf(input: WeekInput, from: string, to: string) {
@@ -176,6 +193,7 @@ function contentOf(input: WeekInput, from: string, to: string) {
       kind: "os" as const,
       views: sum(posts, (p) => p.views), median: median(all), viralPct: all.length ? all.filter((v) => v >= VIRAL).length / all.length : null,
       postsDone: sum(posts, (p) => p.posts_published), postsPlanned: sum(posts, (p) => p.posts_planned),
+      followers: posts.some((p) => p.followers_gained !== null && p.followers_gained !== undefined) ? sum(posts, (p) => p.followers_gained) : null,
       actives: lastDay ? sum(input.accounts.filter((a) => a.date === lastDay), (a) => a.active_accounts) : new Set(posts.map((p) => p.account)).size,
     };
   }
@@ -187,12 +205,12 @@ function contentOf(input: WeekInput, from: string, to: string) {
     return {
       kind: "os" as const,
       views: sum(total, (d) => d.vues_total), median: mean(total.map((d) => d.vues_mediane)), viralPct: done > 0 ? sum(total, (d) => d.posts_viraux) / done : null,
-      postsDone: done || null, postsPlanned: sum(total, (d) => d.posts_prevus) || null, actives: sum(total.filter((d) => d.date === lastDay), (d) => d.comptes_actifs) || null,
+      postsDone: done || null, postsPlanned: sum(total, (d) => d.posts_prevus) || null, followers: null, actives: sum(total.filter((d) => d.date === lastDay), (d) => d.comptes_actifs) || null,
     };
   }
   const seed = input.seed?.weeks.find((w) => w.lundi === from && !w.partial);
-  if (seed) return { kind: "releve" as const, views: seed.vues, median: null, viralPct: seed.viraux, postsDone: null, postsPlanned: null, actives: seed.actifs };
-  return { kind: "aucun" as const, views: null, median: null, viralPct: null, postsDone: null, postsPlanned: null, actives: null };
+  if (seed) return { kind: "releve" as const, views: seed.vues, median: null, viralPct: seed.viraux, postsDone: null, postsPlanned: null, followers: null, actives: seed.actifs };
+  return { kind: "aucun" as const, views: null, median: null, viralPct: null, postsDone: null, postsPlanned: null, followers: null, actives: null };
 }
 
 function statsOf(input: WeekInput, from: string): WeekStats & { kind: "os" | "releve" | "aucun" } {
@@ -207,11 +225,32 @@ function statsOf(input: WeekInput, from: string): WeekStats & { kind: "os" | "re
     newSubs: rc.some((r) => r.new_subs !== null) ? sum(rc, (r) => r.new_subs) : null,
     posterCost: cost.length ? round2(sum(cost, (c) => c.amount)) : null,
     per1000: revenue !== null && content.views ? (revenue / content.views) * 1000 : null,
+    installs: input.rcCountry.some((r) => r.week === from) ? sum(input.rcCountry.filter((r) => r.week === from), (r) => r.new_users) : null,
+    trials: rc.some((r) => r.trials !== null) ? sum(rc, (r) => r.trials) : null,
+    perAccount: revenue !== null && content.actives ? revenue / content.actives : null,
+    perPost: revenue !== null && content.postsDone ? revenue / content.postsDone : null,
+  };
+}
+
+/** Une seule app : on ne garde que ses lignes. Ce qui n'existe pas par app (Qonto, relevé manuel) est retiré. */
+function scoped(input: WeekInput): WeekInput {
+  const app = input.app;
+  if (!app) return input;
+  const posts = input.posts.filter((p) => p.app === app);
+  const accounts = input.accounts.filter((a) => a.app === app);
+  const labels = new Set([...posts.map((p) => p.label), ...accounts.map((a) => a.label)]);
+  return {
+    ...input, posts, accounts,
+    apps: input.apps.filter((a) => a.key === app), rc: input.rc.filter((r) => r.app === app), rcCountry: input.rcCountry.filter((r) => r.app === app),
+    reserve: input.reserve.filter((r) => labels.has(r.label)), osDaily: input.osDaily.filter((d) => d.app === app),
+    costs: [], posterCosts: [], seed: null,
   };
 }
 
 // --------------------------------------------------------------- le rapport
-export function buildWeekReport(input: WeekInput): WeekReport {
+export function buildWeekReport(full: WeekInput): WeekReport {
+  const input = scoped(full);
+  const one = input.app ? (input.apps[0] ?? null) : null;
   const from = input.week;
   const to = addDaysIso(from, 6);
   const wk = isoWeekLabel(from);
@@ -228,7 +267,9 @@ export function buildWeekReport(input: WeekInput): WeekReport {
     revenue: metric((s) => s.revenue, srcRc), newSubs: metric((s) => s.newSubs, srcRc),
     views: metric((s) => s.views, srcContent), median: metric((s) => s.median, srcContent), viralPct: metric((s) => s.viralPct, srcContent),
     postsDone: metric((s) => s.postsDone, srcContent), postsPlanned: now.postsPlanned, actives: metric((s) => s.actives, srcContent),
-    posterCost: metric((s) => s.posterCost, "Qonto, poste « Posteurs »"), per1000: metric((s) => s.per1000, `${srcRc} ÷ ${srcContent}`),
+    posterCost: metric((s) => s.posterCost, one ? "comptes × tarif de la zone (OS)" : "Qonto, poste « Posteurs »"), per1000: metric((s) => s.per1000, `${srcRc} ÷ ${srcContent}`),
+    installs: metric((s) => s.installs, srcRc), trials: metric((s) => s.trials, srcRc), followers: metric((s) => s.followers, "OS"),
+    perAccount: metric((s) => s.perAccount, `${srcRc} ÷ ${srcContent}`), perPost: metric((s) => s.perPost, `${srcRc} ÷ ${srcContent}`),
   };
 
   const inWeek = (d: string, start = from) => d >= start && d <= addDaysIso(start, 6);
@@ -257,6 +298,19 @@ export function buildWeekReport(input: WeekInput): WeekReport {
   const dailyRows = dayNames.map((day, i) => ({ day, views: viewsOn(addDaysIso(from, i)), prev: viewsOn(addDaysIso(prevFrom, i)) }));
   const daily = dailyRows.some((d) => d.views !== null) ? dailyRows : null;
 
+  // ---- coût des posteurs : comptes actifs × tarif de la zone du pays
+  const verdictOf = new Map(input.verdicts.map((v) => [v.code, v]));
+  const seedCountries = !hasPosts && input.seed && input.seed.weeks.filter((w) => !w.partial).at(-1)?.lundi === from ? input.seed.countries : [];
+  const seedOf = new Map(seedCountries.map((c) => [c.code, c]));
+  const rateOf = (code: string) => {
+    const zone = verdictOf.get(code)?.zone ?? seedOf.get(code)?.zone;
+    return zone && input.zoneRates[zone] !== undefined ? input.zoneRates[zone] : null;
+  };
+  const costOfAccounts = (list: OsAccounts[]) => {
+    const priced = list.filter((a) => a.active_accounts > 0 && rateOf(a.country) !== null);
+    return priced.length ? sum(priced, (a) => a.active_accounts * rateOf(a.country)!) : null;
+  };
+
   // ---- par app
   const apps: AppRow[] = input.apps.map((app) => {
     const rcOf = (start: string) => input.rc.filter((r) => r.app === app.key && inWeek(r.date, start));
@@ -269,6 +323,8 @@ export function buildWeekReport(input: WeekInput): WeekReport {
     const all = mine.flatMap((p) => p.post_views);
     const osDays = input.osDaily.filter((d) => d.app === app.key && inWeek(d.date));
     const views = mine.length ? sum(mine, (p) => p.views) : osDays.length ? sum(osDays, (d) => d.vues_total) : null;
+    const actives = activesBy((a) => a.app, app.key, mine);
+    const published = mine.length ? sum(mine, (p) => p.posts_published) : null;
     return {
       key: app.key, name: app.name,
       revenue: { value: revenue, vsPrev: change(revenue, revOf(prevFrom)), vsAvg: change(revenue, mean(back.map(revOf))), source: srcRc },
@@ -278,7 +334,11 @@ export function buildWeekReport(input: WeekInput): WeekReport {
       perUser: revenue !== null && users > 0 ? revenue / users : null,
       views, median: median(all), viralPct: viralOf(mine),
       postsDone: mine.length ? sum(mine, (p) => p.posts_published) : null, postsPlanned: mine.length ? sum(mine, (p) => p.posts_planned) : null,
-      actives: activesBy((a) => a.app, app.key, mine), per1000: revenue !== null && views ? (revenue / views) * 1000 : null,
+      actives, per1000: revenue !== null && views ? (revenue / views) * 1000 : null,
+      installs: input.rcCountry.some((r) => r.app === app.key && r.week === from) ? users : null,
+      followers: mine.some((p) => p.followers_gained !== null && p.followers_gained !== undefined) ? sum(mine, (p) => p.followers_gained) : null,
+      costUsd: costOfAccounts(accounts.filter((a) => a.app === app.key)),
+      perAccount: revenue !== null && actives ? revenue / actives : null, perPost: revenue !== null && published ? revenue / published : null,
     };
   });
 
@@ -302,9 +362,6 @@ export function buildWeekReport(input: WeekInput): WeekReport {
     .slice(0, 10);
 
   // ---- par pays
-  const verdictOf = new Map(input.verdicts.map((v) => [v.code, v]));
-  const seedCountries = !hasPosts && input.seed && input.seed.weeks.filter((w) => !w.partial).at(-1)?.lundi === from ? input.seed.countries : [];
-  const seedOf = new Map(seedCountries.map((c) => [c.code, c]));
   const countrySource: WeekReport["countrySource"] = hasPosts ? "os" : seedCountries.length ? "releve" : "aucun";
   const costOf = new Map(input.costs.filter((c) => c.week === from).map((c) => [c.country, n(c.cost_usd)]));
   const codes = new Set<string>([
@@ -327,15 +384,24 @@ export function buildWeekReport(input: WeekInput): WeekReport {
     const seed = seedOf.get(code);
     const viewsOf = (list: OsPost[]) => (list.some((p) => p.country === code) ? sum(list.filter((p) => p.country === code), (p) => p.views) : null);
     const views = hasPosts ? (viewsOf(posts) ?? 0) : null;
-    const costUsd = costOf.get(code) ?? seed?.cout_semaine_usd ?? null;
+    const actives = hasPosts ? activesBy((a) => a.country, code, mine) : (seed?.comptes_actifs ?? null);
+    const rate = rateOf(code);
+    // Comptes × tarif de la zone ; à défaut, le coût donné par l'OS ou par le relevé.
+    const costUsd = (actives && rate !== null ? actives * rate : null) ?? costOf.get(code) ?? seed?.cout_semaine_usd ?? null;
+    const weeks4 = new Set(rc4.map((r) => r.week)).size;
+    const revenue4 = weeks4 ? sum(rc4, (r) => r.revenue) / weeks4 : null;
+    const published = mine.length ? sum(mine, (p) => p.posts_published) : null;
     return {
       code, name: countryName(code, rc[0]?.country_name ?? seed?.pays), zone: verdictOf.get(code)?.zone ?? seed?.zone ?? null, verdict: verdictOf.get(code)?.verdict ?? seed?.verdict ?? null,
       revenue, revenuePrev, users, perUser: users4 > 0 ? sum(rc4, (r) => r.revenue) / users4 : null, perUserWeek: users > 0 ? revenue / users : null, users4,
-      actives: hasPosts ? activesBy((a) => a.country, code, mine) : (seed?.comptes_actifs ?? null),
-      postsDone: mine.length ? sum(mine, (p) => p.posts_published) : null, postsPlanned: mine.length ? sum(mine, (p) => p.posts_planned) : null,
+      actives,
+      postsDone: published, postsPlanned: mine.length ? sum(mine, (p) => p.posts_planned) : null,
       median: hasPosts ? median(all) : (seed?.vues_mediane ?? null), viralPct: viralOf(mine),
       views, viewsVsPrev: change(views, viewsOf(postsPrev)), viewsVsAvg: change(views, mean(postsBack.map(viewsOf))),
       costUsd, ratio: costUsd ? revenue / (costUsd * input.usdToEur) : null, revenueVsPrev: change(revenue, revenuePrev),
+      trials: rc.some((r) => r.trials !== null) ? sum(rc, (r) => r.trials) : null,
+      revenue4, net: costUsd !== null && revenue4 !== null ? revenue4 - costUsd * input.usdToEur : null,
+      per1000: views ? (revenue / views) * 1000 : null, perAccount: actives ? revenue / actives : null, perPost: published ? revenue / published : null,
     };
   });
   // Les pays avec du volume d'abord (un pays à 3 utilisateurs ne prouve rien), puis par € par utilisateur.
@@ -345,6 +411,12 @@ export function buildWeekReport(input: WeekInput): WeekReport {
   const perUserLowQuarter = quantile(countries.filter(solid).map((c) => c.perUser!), 0.25);
   const medianViewsMedian = median(countries.map((c) => c.median).filter((v): v is number => v !== null));
   const viewsHigh = quantile(countries.map((c) => c.views).filter((v): v is number => v !== null && v > 0), 0.6);
+
+  // Une seule app : le coût des posteurs est calculé (Qonto ne sait pas à quelle app va un paiement).
+  if (one) {
+    const usd = costOfAccounts(accounts);
+    summary.posterCost = { ...summary.posterCost, value: usd === null ? null : round2(usd * input.usdToEur), vsPrev: null, vsAvg: null };
+  }
 
   // ---- par label
   const labelKeys = new Set<string>([...posts.map((p) => p.label), ...accounts.map((a) => a.label), ...input.reserve.map((r) => r.label)].filter(Boolean));
@@ -430,6 +502,15 @@ export function buildWeekReport(input: WeekInput): WeekReport {
         sources: [...base, { label: "Vues", value: int(c.views) }, ...(c.costUsd ? [{ label: "Coût posteurs", value: `${int(c.costUsd)} $` }] : [])],
       });
     }
+    if (c.net !== null && c.net < 0 && c.actives) {
+      const cost = c.costUsd! * input.usdToEur;
+      gaps.push({
+        id: `perte-${c.code}`, scope: "pays", anchor, category: "finance", title: `${c.name} : coûte plus qu'il ne rapporte`,
+        reason: `${eur(cost)} de posteurs par semaine (${c.actives} compte${c.actives > 1 ? "s" : ""}) pour ${eur(c.revenue4!)} de revenus en moyenne sur 4 semaines.`,
+        impact: -c.net, how: "Coût des posteurs − revenu moyen par semaine sur 4 semaines.",
+        sources: [...base, { label: "Coût posteurs", value: `${int(c.costUsd!)} $ ≈ ${eur(cost)}` }, { label: "Revenu moyen (4 semaines)", value: eur(c.revenue4!) }, ...(c.perAccount !== null ? [{ label: "€ par compte et par semaine", value: `${c.perAccount.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} €` }] : [])],
+      });
+    }
     if (c.verdict === "Recruter" && c.actives !== null && c.actives === 0) {
       gaps.push({
         id: `vide-${c.code}`, scope: "pays", anchor, category: "recrutement", title: `${c.name} : ouvert au recrutement, aucun compte actif`,
@@ -500,10 +581,11 @@ export function buildWeekReport(input: WeekInput): WeekReport {
   const sentence = `${parts.length ? `${parts.join(", ")}.` : "Pas encore de comparaison possible."} ${holes.length ? `Gros trou : ${holes.join(" et ")}.` : "Aucun trou détecté."}`;
   const line = (name: string, m: Metric, fmt: (v: number) => string) => (m.value === null ? null : `• ${name} : ${fmt(m.value)}${m.vsPrev !== null ? ` (${pct(m.vsPrev)} vs sem. d'avant)` : ""}`);
   const slack = [
-    `*Semaine ${wk.label}* (${from.slice(8)}/${from.slice(5, 7)} → ${to.slice(8)}/${to.slice(5, 7)})`,
+    `*Semaine ${wk.label}${one ? ` · ${one.name}` : ""}* (${from.slice(8)}/${from.slice(5, 7)} → ${to.slice(8)}/${to.slice(5, 7)})`,
     sentence,
     line("Revenus", summary.revenue, eur), line("Nouveaux abonnés", summary.newSubs, int), line("Vues", summary.views, int),
     line("Posts viraux", summary.viralPct, share), line("Comptes actifs", summary.actives, int), line("Coût posteurs", summary.posterCost, eur),
+    line("€ pour 1 000 vues", summary.per1000, eur2), line("€ par compte et par semaine", summary.perAccount, eur2),
     gaps.length ? "*À faire cette semaine*" : null,
     ...gaps.slice(0, 6).map((g, i) => `${i + 1}. ${g.title} (≈ ${eur(g.impact)})`),
   ].filter(Boolean).join("\n");
@@ -511,6 +593,7 @@ export function buildWeekReport(input: WeekInput): WeekReport {
   const note = now.kind === "os" ? "Chiffres de contenu : OS, synchronisé." : now.kind === "releve" ? `Chiffres de contenu : relevé manuel du ${input.seed?.asOf}. Le détail par label, par post et par jour arrivera avec l'accès à l'OS.` : "Pas de chiffres de contenu pour cette semaine : l'OS n'est pas encore branché.";
   return {
     week: wk.key, label: wk.label, from, to, complete: true,
+    app: one?.key ?? null, appChoices: full.apps, zoneRates: input.zoneRates,
     content: { kind: now.kind, note }, countrySource,
     summary, sentence, daily, apps, topPosts, drops, countries, perUserMedian, medianViewsMedian, labels, heatmap, gaps, slack,
   };

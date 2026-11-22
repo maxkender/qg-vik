@@ -43,7 +43,8 @@ Une ligne par **jour × compte**. C'est la liste la plus importante : elle donne
 ```json
 { "date": "2026-11-17", "account": "@sophia.study.no", "app": "sophia", "label": "study_notes", "country": "NO", "lang": "no",
   "posts_published": 2, "posts_planned": 3, "views": 18420, "post_views": [15200, 3220],
-  "best_post_views": 15200, "best_post_url": "https://www.tiktok.com/@…/video/…", "best_post_thumb": "https://…/miniature.jpg" }
+  "best_post_views": 15200, "best_post_url": "https://www.tiktok.com/@…/video/…", "best_post_thumb": "https://…/miniature.jpg",
+  "followers_gained": 41 }
 ```
 
 | Champ | Ce que c'est |
@@ -54,6 +55,7 @@ Une ligne par **jour × compte**. C'est la liste la plus importante : elle donne
 | `views` | vues gagnées ce jour-là par le compte |
 | `post_views` | les vues de **chaque post publié ce jour-là** (sert à la médiane ; un post à 10 000 ou plus compte comme viral) |
 | `best_post_*` | le meilleur post du jour : ses vues, son lien, sa miniature |
+| `followers_gained` | abonnés gagnés ce jour-là par le compte (vide si l'OS ne le suit pas) |
 
 ## 3. `accounts` : les comptes actifs
 

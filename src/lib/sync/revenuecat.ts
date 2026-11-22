@@ -124,19 +124,20 @@ export async function syncRevenueCat(db: SupabaseClient): Promise<number> {
       // au dimanche. (RevenueCat découpe les semaines selon le réglage de chaque projet, parfois le dimanche.)
       const from = mondayOf(HISTORY_START);
       const seg = { start_date: from, end_date: today, resolution: "0", segment: "country", limit_num_segments: "250" };
-      const weekly = new Map<string, { week: string; app: string; country: string; country_name: string; revenue: number; new_users: number }>();
-      const put = (r: ReturnType<typeof readChart>[number], col: "revenue" | "new_users") => {
+      const weekly = new Map<string, { week: string; app: string; country: string; country_name: string; revenue: number; new_users: number; trials: number }>();
+      const put = (r: ReturnType<typeof readChart>[number], col: "revenue" | "new_users" | "trials") => {
         if (!r.segment || r.isTotal) return;
         const code = countryCode(r.segment);
         const week = mondayOf(r.date);
         const k = `${week}|${code}`;
-        const row = weekly.get(k) ?? { week, app: app.key, country: code, country_name: r.segment, revenue: 0, new_users: 0 };
+        const row = weekly.get(k) ?? { week, app: app.key, country: code, country_name: r.segment, revenue: 0, new_users: 0, trials: 0 };
         row[col] += r.value;
         weekly.set(k, row);
       };
       readChart(await chart(app, key, "revenue", seg)).filter((r) => r.measure === "Revenue").forEach((r) => put(r, "revenue"));
       readChart(await chart(app, key, "customers_new", seg)).filter((r) => r.measure === "New Customers").forEach((r) => put(r, "new_users"));
-      const weeklyRows = [...weekly.values()].map((r) => ({ ...r, revenue: Math.round(r.revenue * 100) / 100, new_users: Math.round(r.new_users), updated_at: new Date().toISOString() }));
+      readChart(await chart(app, key, "trials_new", seg)).filter((r) => r.measure === "New Trials").forEach((r) => put(r, "trials"));
+      const weeklyRows = [...weekly.values()].map((r) => ({ ...r, revenue: Math.round(r.revenue * 100) / 100, new_users: Math.round(r.new_users), trials: Math.round(r.trials), updated_at: new Date().toISOString() }));
       // On remplace tout l'historique par pays de l'app : pas de vieille ligne qui traîne.
       if (weeklyRows.length) {
         const { error: delError } = await db.from("rc_country_weekly").delete().eq("app", app.key);

@@ -16,7 +16,8 @@ export async function GET(request: Request) {
 
   const today = todayParis().toISOString().slice(0, 10);
   const lastFull = addDaysIso(mondayOf(today), -7);
-  const asked = new URL(request.url).searchParams.get("s");
+  const params = new URL(request.url).searchParams;
+  const asked = params.get("s");
   const week = (asked && mondayOfWeekKey(asked)) || lastFull;
   const from = addDaysIso(week, -28);
   const to = addDaysIso(week, 6);
@@ -34,23 +35,26 @@ export async function GET(request: Request) {
   }
 
   try {
-    const [apps, rc, rcCountry, tx, posts, accounts, reserve, costs, osDaily, verdicts, snapshot] = await Promise.all([
+    const [apps, rc, rcCountry, tx, posts, accounts, reserve, costs, osDaily, verdicts, snapshot, rates] = await Promise.all([
       all((a, b) => db.from("apps").select("key,name,sort_order").eq("active", true).order("sort_order").range(a, b)),
       all((a, b) => db.from("rc_daily").select("date,app,revenue,new_subs,trials,trial_conversions,refunds").gte("date", from).lte("date", to).order("date").range(a, b)),
-      all((a, b) => db.from("rc_country_weekly").select("week,app,country,country_name,revenue,new_users").gte("week", from).lte("week", week).order("week").range(a, b)),
+      all((a, b) => db.from("rc_country_weekly").select("week,app,country,country_name,revenue,new_users,trials").gte("week", from).lte("week", week).order("week").range(a, b)),
       all((a, b) => db.from("qonto_transactions").select("date,amount,side").eq("poste", "Posteurs").gte("date", from).lte("date", to).order("date").range(a, b)),
-      all((a, b) => db.from("os_posts_daily").select("date,account,app,label,country,lang,posts_published,posts_planned,views,post_views,best_post_views,best_post_url,best_post_thumb").gte("date", from).lte("date", to).order("date").order("account").range(a, b)),
+      all((a, b) => db.from("os_posts_daily").select("date,account,app,label,country,lang,posts_published,posts_planned,views,post_views,best_post_views,best_post_url,best_post_thumb,followers_gained").gte("date", from).lte("date", to).order("date").order("account").range(a, b)),
       all((a, b) => db.from("os_accounts_daily").select("date,app,label,country,active_accounts").gte("date", week).lte("date", to).order("date").range(a, b)),
       all((a, b) => db.from("os_reserve_daily").select("date,label,lang,ready").gte("date", addDaysIso(to, -7)).lte("date", to).order("date").range(a, b)),
       all((a, b) => db.from("os_cost_weekly").select("week,country,cost_usd").gte("week", from).lte("week", week).range(a, b)),
       all((a, b) => db.from("os_daily").select("date,app,comptes_actifs,posts_faits,posts_prevus,posts_viraux,vues_total,vues_mediane").gte("date", from).lte("date", to).order("date").range(a, b)),
       all((a, b) => db.from("country_verdicts").select("code,zone,verdict").range(a, b)),
       all((a, b) => db.from("metrics_snapshots").select("payload").order("as_of", { ascending: false }).limit(1).range(a, Math.min(b, a))),
+      all((a, b) => db.from("zone_rates").select("zone,usd_per_account_week").range(a, b)),
     ]);
 
     const payload = snapshot[0]?.payload as { asOf?: string; weeks?: unknown[]; countries?: unknown[] } | undefined;
     const input: WeekInput = {
       week,
+      app: apps.some((a) => a.key === params.get("app")) ? params.get("app") : null,
+      zoneRates: Object.fromEntries(rates.map((r) => [String(r.zone), Number(r.usd_per_account_week)])),
       apps: apps as WeekInput["apps"],
       rc: rc as WeekInput["rc"],
       rcCountry: rcCountry as WeekInput["rcCountry"],

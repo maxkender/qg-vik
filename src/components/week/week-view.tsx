@@ -15,6 +15,7 @@ import { weekKey } from "@/lib/dates";
 import { big, eur, int } from "@/lib/format";
 import { createItem, itemSaved } from "@/lib/items";
 import { newId, useRows } from "@/lib/store";
+import { supabaseBrowser } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { addDaysIso, isoWeekLabel, mondayOfWeekKey, type CountryRow, type Gap, type Metric, type WeekReport } from "@/lib/week/report";
 
@@ -23,6 +24,7 @@ type Report = WeekReport & { lastFull: string; usdToEur: number };
 const dash = "–";
 const share = (v: number | null) => (v === null ? dash : `${(v * 100).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} %`);
 const money2 = (v: number | null) => (v === null ? dash : `${v.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`);
+const usd = (v: number | null) => (v === null ? dash : `${int(Math.round(v))} $`);
 const ratio = (done: number | null, planned: number | null) => (done === null ? dash : `${int(done)} / ${planned ? int(planned) : dash}`);
 const slug = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
@@ -41,11 +43,11 @@ function Delta({ value, upIsGood = true, label }: { value: number | null; upIsGo
   );
 }
 
-function Card({ title, metric, format, upIsGood = true, extra }: { title: string; metric: Metric; format: (v: number) => string; upIsGood?: boolean; extra?: ReactNode }) {
+function Card({ title, metric, format, upIsGood = true, extra, big: large }: { title: string; metric: Metric; format: (v: number) => string; upIsGood?: boolean; extra?: ReactNode; big?: boolean }) {
   return (
-    <div className="glass min-w-0 rounded-2xl p-4" title={`Source : ${metric.source}`}>
+    <div className={cn("min-w-0 rounded-2xl p-4", large ? "glass-strong" : "glass")} title={`Source : ${metric.source}`}>
       <p className="truncate text-[12.5px] text-muted-foreground">{title}</p>
-      <p className={cn("num mt-1.5 truncate text-[24px] leading-none font-medium tracking-[-0.02em]", metric.value === null && "text-faint")}>
+      <p className={cn("num mt-1.5 truncate leading-none", large ? "text-[34px]" : "text-[24px]", " font-medium tracking-[-0.02em]", metric.value === null && "text-faint")}>
         {metric.value === null ? dash : format(metric.value)}
         {extra}
       </p>
@@ -185,26 +187,58 @@ function Heatmap({ map, names }: { map: NonNullable<WeekReport["heatmap"]>; name
   );
 }
 
+/** Le tarif d'un posteur par zone, modifiable sur place : il sert à calculer le coût de chaque pays. */
+function ZoneRates({ rates, onSaved }: { rates: Record<string, number>; onSaved: () => void }) {
+  async function save(zone: string, raw: string) {
+    const value = Number(raw.replace(",", "."));
+    if (!Number.isFinite(value) || value < 0 || value === rates[zone]) return;
+    const { error } = await supabaseBrowser().from("zone_rates").update({ usd_per_account_week: value, updated_at: new Date().toISOString() }).eq("zone", zone);
+    if (error) return void toast.error("Tarif non enregistré");
+    toast("Tarif enregistré");
+    onSaved();
+  }
+  return (
+    <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px] text-muted-foreground">
+      <span>Tarif par compte et par semaine</span>
+      {Object.keys(rates).sort().map((zone) => (
+        <label key={zone} className="inline-flex items-center gap-1.5">
+          Zone {zone}
+          <input
+            key={rates[zone]} defaultValue={rates[zone]} inputMode="decimal" aria-label={`Tarif de la zone ${zone} en dollars`}
+            onBlur={(e) => void save(zone, e.target.value)} onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+            className="num h-7 w-14 rounded-md border border-line bg-transparent px-1.5 text-right text-foreground outline-none focus:border-line-strong"
+          />
+          $
+        </label>
+      ))}
+    </div>
+  );
+}
+
 export function WeekView() {
   const me = useMe();
   const { today } = useView();
   const router = useRouter();
-  const asked = useSearchParams().get("s");
+  const params = useSearchParams();
+  const asked = params.get("s");
+  const app = params.get("app");
+  const query = [asked && `s=${asked}`, app && `app=${app}`].filter(Boolean).join("&");
   const [state, setState] = useState<{ key: string | null; report?: Report; error?: string }>({ key: null });
   const [allCountries, setAllCountries] = useState(false);
+  const [tick, setTick] = useState(0);
   const items = useRows(itemsStore);
 
   useEffect(() => {
     let alive = true;
-    void fetch(`/api/semaine${asked ? `?s=${asked}` : ""}`)
+    void fetch(`/api/semaine${query ? `?${query}` : ""}`)
       .then(async (r) => ({ ok: r.ok, body: (await r.json()) as Report & { error?: string } }))
-      .then(({ ok, body }) => alive && setState(ok ? { key: asked, report: body } : { key: asked, error: body.error ?? "Impossible de charger la semaine." }))
-      .catch(() => alive && setState({ key: asked, error: "Impossible de charger la semaine." }));
+      .then(({ ok, body }) => alive && setState(ok ? { key: query, report: body } : { key: query, error: body.error ?? "Impossible de charger la semaine." }))
+      .catch(() => alive && setState({ key: query, error: "Impossible de charger la semaine." }));
     return () => {
       alive = false;
     };
-  }, [asked]);
-  const loading = state.key !== asked;
+  }, [query, tick]);
+  const loading = state.key !== query;
   const r = state.report;
 
   // Arrivée par un lien « …#pays-NO » : on amène la ligne à l'écran.
@@ -217,7 +251,8 @@ export function WeekView() {
   }, [r]);
 
   const names = useMemo(() => new Map((r?.countries ?? []).map((c) => [c.code, c.name])), [r]);
-  const go = (monday: string) => router.replace(`/semaine?s=${isoWeekLabel(monday).key}`);
+  const href = (week: string | null, forApp: string | null) => `/semaine${week || forApp ? "?" : ""}${[week && `s=${week}`, forApp && `app=${forApp}`].filter(Boolean).join("&")}`;
+  const go = (monday: string) => router.replace(href(isoWeekLabel(monday).key, app));
   const monday = r ? r.from : ((asked && mondayOfWeekKey(asked)) ?? null);
 
   const added = (g: Gap) => items.some((i) => !i.done && i.title === g.title);
@@ -227,7 +262,7 @@ export function WeekView() {
       title: g.title, prio: "urgent", owner: "max", bucket: weekKey(today), category: g.category, created_by: me.id,
       notes: [`${g.reason}`, "", `Semaine ${r.label}. Impact estimé : ${eur(g.impact)} par semaine (${g.how.replace(/\.$/, "")}).`, ...g.sources.map((s) => `${s.label} : ${s.value}`)].join("\n"),
     });
-    const url = `${window.location.origin}/semaine?s=${r.week}#${g.anchor}`;
+    const url = `${window.location.origin}${href(r.week, r.app)}#${g.anchor}`;
     void itemSaved(item.id).then((ok) => ok && itemLinksStore.insert({ id: newId(), item_id: item.id, page_id: null, url, title: null, created_by: me.id, created_at: new Date().toISOString() }));
     toast("Ajouté dans À faire", { description: "Urgent, assigné à Max." });
   }
@@ -238,9 +273,18 @@ export function WeekView() {
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
       <ViewHeader title="Semaine" eyebrow={r ? <>{r.label} · du <span className="num">{r.from.slice(8)}/{r.from.slice(5, 7)}</span> au <span className="num">{r.to.slice(8)}/{r.to.slice(5, 7)}</span>{!r.complete && " · semaine en cours"}</> : undefined}>
+        {r && (
+          <div className="flex items-center rounded-[10px] border border-line bg-glass p-[3px]" role="group" aria-label="App">
+            {[{ key: null as string | null, name: "Toutes" }, ...r.appChoices].map((a) => (
+              <button key={a.key ?? "toutes"} type="button" aria-pressed={r.app === a.key} onClick={() => router.replace(href(asked, a.key))} className={cn("h-[26px] rounded-[7px] px-2.5 text-[12.5px] font-medium transition-colors duration-100", r.app === a.key ? "bg-foreground text-background" : "text-muted-foreground hover:bg-accent hover:text-foreground")}>
+                {a.name}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="flex items-center rounded-[10px] border border-line bg-glass p-[3px]">
           <button type="button" disabled={!monday} onClick={() => monday && go(addDaysIso(monday, -7))} aria-label="Semaine d'avant" className="grid size-[26px] place-items-center rounded-[7px] text-muted-foreground hover:bg-accent hover:text-foreground"><ChevronLeft className="size-4" aria-hidden /></button>
-          <button type="button" onClick={() => router.replace("/semaine")} className="num h-[26px] rounded-[7px] px-2.5 text-[12.5px] font-medium hover:bg-accent" title="Revenir à la dernière semaine pleine">{r?.label ?? "…"}</button>
+          <button type="button" onClick={() => router.replace(href(null, app))} className="num h-[26px] rounded-[7px] px-2.5 text-[12.5px] font-medium hover:bg-accent" title="Revenir à la dernière semaine pleine">{r?.label ?? "…"}</button>
           <button type="button" disabled={!r || !monday || monday >= addDaysIso(r.lastFull, 7)} onClick={() => monday && go(addDaysIso(monday, 7))} aria-label="Semaine d'après" className="grid size-[26px] place-items-center rounded-[7px] text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-30"><ChevronRight className="size-4" aria-hidden /></button>
         </div>
         <button type="button" onClick={copy} disabled={!r} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-foreground px-3.5 text-[13.5px] font-semibold text-background disabled:opacity-40">
@@ -255,16 +299,23 @@ export function WeekView() {
         <div className={cn("flex min-w-0 flex-col gap-3 px-4 pb-24 transition-opacity duration-100 md:px-6 [&>*]:min-w-0", loading && "opacity-50")}>
           {/* ------------------------------------------------------ 1. résumé */}
           <p className="text-[17px] leading-snug font-medium tracking-[-0.01em]">{r.sentence}</p>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Card title="€ pour 1 000 vues" metric={r.summary.per1000} format={money2} big />
+            <Card title="€ par compte et par semaine" metric={r.summary.perAccount} format={money2} big />
+          </div>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
             <Card title="Revenus" metric={r.summary.revenue} format={(v) => eur(v)} />
             <Card title="Nouveaux abonnés" metric={r.summary.newSubs} format={int} />
+            <Card title="Essais" metric={r.summary.trials} format={int} />
+            <Card title="Installations" metric={r.summary.installs} format={int} />
+            <Card title={r.app ? "Coût posteurs · calculé" : "Coût posteurs"} metric={r.summary.posterCost} format={(v) => eur(v)} upIsGood={false} />
+            <Card title="Comptes actifs" metric={r.summary.actives} format={int} />
             <Card title="Vues totales" metric={r.summary.views} format={(v) => big(v)} />
             <Card title="Vues médianes par post" metric={r.summary.median} format={int} />
-            <Card title="Posts viraux · 10 k vues ou plus" metric={r.summary.viralPct} format={share} />
+            <Card title="Posts à 10 k vues ou plus" metric={r.summary.viralPct} format={share} />
             <Card title="Posts faits / prévus" metric={r.summary.postsDone} format={int} extra={r.summary.postsPlanned ? <span className="text-[14px] text-muted-foreground"> / {int(r.summary.postsPlanned)}</span> : null} />
-            <Card title="Comptes actifs" metric={r.summary.actives} format={int} />
-            <Card title="Coût posteurs" metric={r.summary.posterCost} format={(v) => eur(v)} upIsGood={false} />
-            <Card title="€ pour 1 000 vues" metric={r.summary.per1000} format={money2} />
+            <Card title="Abonnés gagnés" metric={r.summary.followers} format={int} />
+            <Card title="€ par post" metric={r.summary.perPost} format={money2} />
           </div>
           <p className="text-[12.5px] text-muted-foreground">{r.content.note}</p>
 
@@ -283,12 +334,12 @@ export function WeekView() {
           </Panel>
           <Panel title="Par app">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] border-collapse text-[13px]">
-                <thead><tr className="border-b border-line"><th className={th}>App</th><th className={thNum}>Vues</th><th className={thNum}>Médiane</th><th className={thNum}>% viraux</th><th className={thNum}>Posts faits / prévus</th><th className={thNum}>Comptes actifs</th></tr></thead>
+              <table className="w-full min-w-[980px] border-collapse text-[13px]">
+                <thead><tr className="border-b border-line"><th className={th}>App</th><th className={thNum}>Vues</th><th className={thNum}>Médiane</th><th className={thNum}>% viraux</th><th className={thNum}>Posts faits / prévus</th><th className={thNum}>Abonnés gagnés</th><th className={thNum}>Comptes actifs</th><th className={thNum}>Coût posteurs</th><th className={thNum}>€ par compte</th><th className={thNum}>€ par post</th></tr></thead>
                 <tbody>
                   {r.apps.map((a) => (
                     <tr key={a.key} id={`app-${a.key}`} className="border-b border-line last:border-0">
-                      <td className={cn(td, "font-medium")}>{a.name}</td><td className={tdNum}>{a.views === null ? dash : big(a.views)}</td><td className={tdNum}>{int(a.median)}</td><td className={tdNum}>{share(a.viralPct)}</td><td className={tdNum}>{ratio(a.postsDone, a.postsPlanned)}</td><td className={tdNum}>{int(a.actives)}</td>
+                      <td className={cn(td, "font-medium")}>{a.name}</td><td className={tdNum}>{a.views === null ? dash : big(a.views)}</td><td className={tdNum}>{int(a.median)}</td><td className={tdNum}>{share(a.viralPct)}</td><td className={tdNum}>{ratio(a.postsDone, a.postsPlanned)}</td><td className={tdNum}>{int(a.followers)}</td><td className={tdNum}>{int(a.actives)}</td><td className={tdNum}>{usd(a.costUsd)}</td><td className={tdNum}>{money2(a.perAccount)}</td><td className={tdNum}>{money2(a.perPost)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -342,15 +393,15 @@ export function WeekView() {
           <h2 className="mt-5 text-[20px] font-semibold">RevenueCat</h2>
           <Panel>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[820px] border-collapse text-[13px]">
-                <thead><tr className="border-b border-line"><th className={th}>App</th><th className={thNum}>Revenus</th><th className={thNum}>vs sem. d&apos;avant</th><th className={thNum}>Nouveaux abonnés</th><th className={thNum}>Essais</th><th className={thNum}>Essai → payant</th><th className={thNum}>Remboursements</th><th className={thNum}>€ par nouvel utilisateur</th><th className={thNum}>€ pour 1 000 vues</th></tr></thead>
+              <table className="w-full min-w-[900px] border-collapse text-[13px]">
+                <thead><tr className="border-b border-line"><th className={th}>App</th><th className={thNum}>Revenus</th><th className={thNum}>vs sem. d&apos;avant</th><th className={thNum}>Installations</th><th className={thNum}>Essais</th><th className={thNum}>Essai → payant</th><th className={thNum}>Nouveaux abonnés</th><th className={thNum}>Remboursements</th><th className={thNum}>€ par nouvel utilisateur</th><th className={thNum}>€ pour 1 000 vues</th></tr></thead>
                 <tbody>
                   {r.apps.map((a) => (
                     <tr key={a.key} className="border-b border-line last:border-0">
                       <td className={cn(td, "font-medium")}>{a.name}</td>
                       <td className={tdNum}>{a.revenue.value === null ? <span className="text-faint">pas branchée</span> : eur(a.revenue.value)}</td>
                       <td className={tdNum}><Delta value={a.revenue.vsPrev} /></td>
-                      <td className={tdNum}>{int(a.newSubs)}</td><td className={tdNum}>{int(a.trials)}</td><td className={tdNum}>{share(a.conversion)}</td><td className={tdNum}>{a.refunds === null ? dash : eur(a.refunds)}</td><td className={tdNum}>{money2(a.perUser)}</td><td className={tdNum}>{money2(a.per1000)}</td>
+                      <td className={tdNum}>{int(a.installs)}</td><td className={tdNum}>{int(a.trials)}</td><td className={tdNum}>{share(a.conversion)}</td><td className={tdNum}>{int(a.newSubs)}</td><td className={tdNum}>{a.refunds === null ? dash : eur(a.refunds)}</td><td className={tdNum}>{money2(a.perUser)}</td><td className={tdNum}>{money2(a.per1000)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -364,14 +415,15 @@ export function WeekView() {
           <Panel title="Trous détectés"><GapList gaps={r.gaps.filter((g) => g.scope === "pays")} onAdd={addTodo} added={added} /></Panel>
           <Panel
             title="Par pays"
-            caption={`€ par utilisateur calculé sur 4 semaines glissantes. ${r.countrySource === "releve" ? "Comptes, vues médianes et coût : relevé manuel du 18/11." : r.countrySource === "aucun" ? "Comptes, vues et coût : en attente de l'OS." : "Comptes, vues et coût : OS."}`}
+            caption={`€ par utilisateur calculé sur 4 semaines glissantes. ${r.countrySource === "releve" ? "Comptes, vues médianes et coût : relevé manuel du 18/11." : r.countrySource === "aucun" ? "Comptes, vues et coût : en attente de l'OS." : "Comptes, vues et coût : OS."} Coût = comptes × tarif de la zone.`}
             action={<button type="button" onClick={() => setAllCountries((v) => !v)} className="shrink-0 text-[12.5px] text-muted-foreground underline underline-offset-4 hover:text-foreground">{allCountries ? "Les principaux" : `Tous les pays (${r.countries.length})`}</button>}
           >
+            <ZoneRates rates={r.zoneRates} onSaved={() => setTick((t) => t + 1)} />
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1180px] border-collapse text-[13px]">
+              <table className="w-full min-w-[1420px] border-collapse text-[13px]">
                 <thead>
                   <tr className="border-b border-line">
-                    <th className={th}>Pays</th><th className={thNum}>€ par utilisateur</th><th className={thNum}>Revenus</th><th className={thNum}>vs sem. d&apos;avant</th><th className={thNum}>Nouveaux utilisateurs</th><th className={thNum}>Comptes actifs</th><th className={thNum}>Posts faits / prévus</th><th className={thNum}>Vues médianes</th><th className={thNum}>% viraux</th><th className={thNum}>Coût posteurs</th><th className={thNum} title={`Revenus ÷ coût, avec 1 $ ≈ ${r.usdToEur.toLocaleString("fr-FR")} €`}>Revenu ÷ coût</th>
+                    <th className={th}>Pays</th><th className={thNum}>Revenus</th><th className={thNum}>vs sem. d&apos;avant</th><th className={thNum} title="Comptes actifs × tarif de la zone">Coût posteurs</th><th className={thNum} title={`Revenus ÷ coût, avec 1 $ ≈ ${r.usdToEur.toLocaleString("fr-FR")} €`}>Revenu ÷ coût</th><th className={thNum}>€ par compte</th><th className={thNum}>€ pour 1 000 vues</th><th className={thNum}>Comptes actifs</th><th className={thNum}>Installations</th><th className={thNum}>Essais</th><th className={thNum}>€ par utilisateur</th><th className={thNum}>Posts faits / prévus</th><th className={thNum}>Vues médianes</th><th className={thNum}>% à 10 k</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -381,10 +433,12 @@ export function WeekView() {
                         {c.name}
                         {c.verdict && <span className={cn("ml-2 rounded-md px-1.5 py-0.5 text-[10.5px] font-semibold", VERDICT[c.verdict] ?? "bg-muted text-muted-foreground")}>{c.verdict}</span>}
                       </td>
+                      <td className={tdNum}>{eur(c.revenue)}</td><td className={tdNum}><Delta value={c.revenueVsPrev} /></td>
+                      <td className={tdNum}>{usd(c.costUsd)}</td><td className={cn(tdNum, c.net !== null && c.net < 0 && "text-bad")}>{c.ratio === null ? dash : `× ${c.ratio.toLocaleString("fr-FR", { maximumFractionDigits: 1 })}`}</td>
+                      <td className={tdNum}>{money2(c.perAccount)}</td><td className={tdNum}>{money2(c.per1000)}</td><td className={tdNum}>{int(c.actives)}</td>
+                      <td className={tdNum}>{int(c.users)}</td><td className={tdNum}>{int(c.trials)}</td>
                       <td className={tdNum} title={c.perUserWeek !== null ? `Sur la seule semaine : ${money2(c.perUserWeek)}` : undefined}>{money2(c.perUser)}</td>
-                      <td className={tdNum}>{eur(c.revenue)}</td><td className={tdNum}><Delta value={c.revenueVsPrev} /></td><td className={tdNum}>{int(c.users)}</td>
-                      <td className={tdNum}>{int(c.actives)}</td><td className={tdNum}>{ratio(c.postsDone, c.postsPlanned)}</td><td className={tdNum}>{int(c.median)}</td><td className={tdNum}>{share(c.viralPct)}</td>
-                      <td className={tdNum}>{c.costUsd === null ? dash : `${int(Math.round(c.costUsd))} $`}</td><td className={tdNum}>{c.ratio === null ? dash : `× ${c.ratio.toLocaleString("fr-FR", { maximumFractionDigits: 1 })}`}</td>
+                      <td className={tdNum}>{ratio(c.postsDone, c.postsPlanned)}</td><td className={tdNum}>{int(c.median)}</td><td className={tdNum}>{share(c.viralPct)}</td>
                     </tr>
                   ))}
                 </tbody>

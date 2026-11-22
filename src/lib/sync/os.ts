@@ -48,7 +48,7 @@ export async function syncOs(db: SupabaseClient): Promise<number> {
       return {
         date: day(r.date), account: text(r.account, false), app: text(r.app), label: text(r.label), country: country(r.country), lang: text(r.lang) || null,
         posts_published: num(r.posts_published) ?? views.length, posts_planned: num(r.posts_planned) ?? 0, views: num(r.views) ?? views.reduce((a, v) => a + v, 0), post_views: views,
-        best_post_views: num(r.best_post_views) ?? (views.length ? Math.max(...views) : null), best_post_url: link(r.best_post_url), best_post_thumb: link(r.best_post_thumb), updated_at: now,
+        best_post_views: num(r.best_post_views) ?? (views.length ? Math.max(...views) : null), best_post_url: link(r.best_post_url), best_post_thumb: link(r.best_post_thumb), followers_gained: num(r.followers_gained), updated_at: now,
       };
     });
   await upsertChunks(db, "os_posts_daily", posts, "date,account");
