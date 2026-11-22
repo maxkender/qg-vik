@@ -38,8 +38,9 @@ const DAILY: { chart: string; map: Record<string, string> }[] = [
   { chart: "refunds", map: { "Refunded Revenue": "refunds", "Refunded Transactions": "refund_count" } },
   { chart: "actives", map: { Actives: "actives" } },
   { chart: "mrr", map: { MRR: "mrr" } },
+  { chart: "customers_new", map: { "New Customers": "new_customers" } },
 ];
-const INTEGER = new Set(["new_subs", "trial_conversions", "trials", "refund_count", "actives"]);
+const INTEGER = new Set(["new_customers", "new_subs", "trial_conversions", "trials", "refund_count", "actives"]);
 
 async function chart(app: App, key: string, name: string, params: Record<string, string>): Promise<Chart> {
   const qs = new URLSearchParams({ currency: "EUR", ...params });
@@ -105,7 +106,9 @@ export async function syncRevenueCat(db: SupabaseClient): Promise<number> {
       const key = rcKey(app.key)!;
       const { count } = await db.from("rc_daily").select("date", { count: "exact", head: true }).eq("app", app.key);
       // Première fois : tout depuis le 1er septembre. Ensuite : les 10 derniers jours.
-      const start = count ? daysAgo(10) : HISTORY_START;
+      // (Et une fois tout l'historique pour une colonne ajoutée après coup : les nouveaux clients.)
+      const { count: withCustomers } = await db.from("rc_daily").select("date", { count: "exact", head: true }).eq("app", app.key).not("new_customers", "is", null);
+      const start = count && withCustomers ? daysAgo(10) : HISTORY_START;
 
       const daily = new Map<string, Record<string, unknown>>();
       for (const { chart: name, map } of DAILY) {

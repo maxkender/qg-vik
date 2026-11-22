@@ -37,7 +37,7 @@ export function seedRc(m: MetricsPayload | undefined): RcDaily[] {
   if (!m) return [];
   return m.weeks.flatMap((w) =>
     (["sophia", "micabo", "unswipe"] as const).map((app) => ({
-      date: w.lundi, app, revenue: w[app], new_subs: null, trials: null, trial_conversions: null, refunds: null, refund_count: null, actives: null, mrr: null,
+      date: w.lundi, app: app === "unswipe" ? "unswap" : app, revenue: w[app], new_subs: null, trials: null, trial_conversions: null, refunds: null, refund_count: null, actives: null, mrr: null,
     })),
   );
 }

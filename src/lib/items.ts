@@ -58,6 +58,7 @@ export function createItem(input: {
   meet_url?: string | null;
   repeat_rule?: RepeatRule | null;
   parent_id?: string | null;
+  app_slug?: string | null;
   created_by: string;
   sort_order?: number;
 }): Item {
@@ -72,6 +73,7 @@ export function createItem(input: {
     category: input.category ?? null,
     tags: input.tags ?? [],
     page_id: null,
+    app_slug: input.app_slug ?? null,
     at_time: input.at_time ?? null,
     meet_url: input.meet_url ?? null,
     repeat_rule: input.repeat_rule ?? null,

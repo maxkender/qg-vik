@@ -15,6 +15,8 @@ export type Item = {
   /** Labels libres : Sophia, Micabo, Atala… */
   tags: string[];
   page_id: string | null;
+  /** L'app concernée (sa fiche liste ses tâches). */
+  app_slug?: string | null;
   /** Heure d'une réunion, « 14:30 ». */
   at_time: string | null;
   meet_url: string | null;
@@ -34,6 +36,7 @@ export type Decision = {
   title: string;
   why: string | null;
   domain: string | null;
+  app_slug?: string | null;
   created_at: string;
   created_by: string | null;
 };
@@ -254,7 +257,7 @@ export type SourceName = "revenuecat" | "qonto" | "meta" | "os";
 export type SyncRun = { id: string; source: SourceName; started_at: string; finished_at: string | null; ok: boolean | null; rows: number; error: string | null; trigger: string };
 export type RcDaily = {
   date: string; app: string; revenue: number | null; new_subs: number | null; trials: number | null; trial_conversions: number | null;
-  refunds: number | null; refund_count: number | null; actives: number | null; mrr: number | null;
+  refunds: number | null; refund_count: number | null; actives: number | null; mrr: number | null; new_customers?: number | null;
 };
 export type RcCountryWeekly = { week: string; app: string; country: string; country_name: string | null; revenue: number | null; new_users: number | null };
 export type CountryVerdict = { code: string; zone: string | null; verdict: string | null };

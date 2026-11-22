@@ -17,6 +17,8 @@ export async function GET(request: NextRequest) {
   if (hour !== 6 && request.nextUrl.searchParams.get("force") !== "1") {
     return NextResponse.json({ skipped: true, reason: `Il est ${hour}h à Paris, la synchro tourne à 6h.` });
   }
-  const results = await Promise.all(SOURCES.map((s) => runSync(s, "cron")));
+  // Les sources d'abord, puis la table des apps, qui se construit à partir d'elles.
+  const results = await Promise.all(SOURCES.filter((s) => s !== "apps").map((s) => runSync(s, "cron")));
+  results.push(await runSync("apps", "cron"));
   return NextResponse.json({ results });
 }

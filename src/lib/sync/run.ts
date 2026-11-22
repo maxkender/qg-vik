@@ -1,21 +1,22 @@
 import "server-only";
 import { adminDb } from "@/lib/sync/admin";
+import { syncApps } from "@/lib/sync/apps";
 import { metaReady, syncMeta } from "@/lib/sync/meta";
 import { osReady, syncOs } from "@/lib/sync/os";
 import { qontoHint, qontoReady, syncQonto } from "@/lib/sync/qonto";
 import { PartialSync, rcHint, rcKey, syncRevenueCat } from "@/lib/sync/revenuecat";
 
-export const SOURCES = ["revenuecat", "qonto", "meta", "os"] as const;
+export const SOURCES = ["revenuecat", "qonto", "meta", "os", "apps"] as const;
 export type Source = (typeof SOURCES)[number];
 export const isSource = (v: unknown): v is Source => SOURCES.includes(v as Source);
 
-const RUNNERS = { revenuecat: syncRevenueCat, qonto: syncQonto, meta: syncMeta, os: syncOs };
+const RUNNERS = { revenuecat: syncRevenueCat, qonto: syncQonto, meta: syncMeta, os: syncOs, apps: syncApps };
 
 /** Ce qui est configuré, sans jamais renvoyer une clé. */
 export function syncStatus() {
   const base = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SECRET_KEY);
-  const rc = ["sophia", "micabo", "unswipe", "runvik"].filter((a) => rcKey(a));
-  return { base, revenuecat: rc.length > 0, revenuecat_apps: rc, revenuecat_forme: Object.fromEntries(["sophia", "micabo", "unswipe"].map((a) => [a, rcHint(a)])), qonto: qontoReady(), qonto_forme: qontoHint(), meta: metaReady(), os: osReady() };
+  const rc = ["sophia", "artura", "micabo", "unswap", "atala", "nutria"].filter((a) => rcKey(a));
+  return { base, revenuecat: rc.length > 0, revenuecat_apps: rc, revenuecat_forme: Object.fromEntries(["sophia", "artura", "micabo", "unswap", "atala", "nutria"].map((a) => [a, rcHint(a)])), qonto: qontoReady(), qonto_forme: qontoHint(), meta: metaReady(), os: osReady(), apps: base };
 }
 
 export type RunResult = { source: Source; ok: boolean; rows: number; error: string | null; skipped?: boolean };
