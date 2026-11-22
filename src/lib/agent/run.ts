@@ -115,15 +115,23 @@ async function classify(db: SupabaseClient, apps: App[]) {
   const { data: items } = await db.from("feedback_items").select("*").is("classe_le", null).is("erreur", null).order("recu_le").limit(40);
   const { data: topicRows } = await db.from("feedback_topics").select("*");
   const topics = (topicRows ?? []) as { id: string; app_slug: string; titre: string; cle: string; gravite: string; touche: string | null; nombre: number; premier_vu: string | null; dernier_vu: string | null; exemples: { citation: string; id: string }[] }[];
-  for (const item of (items ?? []) as Item[]) {
+  const queue = (items ?? []) as Item[];
+  const titles = (item: Item) => topics.filter((t) => !item.app_slug || t.app_slug === item.app_slug).sort((a, b) => b.nombre - a.nombre).slice(0, 40).map((t) => t.titre);
+  for (let at = 0; at < queue.length; at += 5) {
+   // Le modèle lit 5 retours à la fois ; les sujets sont ensuite mis à jour un par un, dans l'ordre.
+   const batch = queue.slice(at, at + 5);
+   const answers = await Promise.allSettled(batch.map((item) => (item.texte?.trim() ? classifyFeedback({ source: item.source, app: item.app_slug, titre: item.titre, texte: item.texte, note: item.note }, apps, titles(item)) : Promise.resolve(null))));
+   for (const [index, item] of batch.entries()) {
     const now = new Date().toISOString();
     try {
-      if (!item.texte?.trim()) {
+      const answer = answers[index];
+      if (answer.status === "rejected") throw answer.reason;
+      if (!answer.value) {
         // Une note sans texte : rien à faire lire au modèle.
         await db.from("feedback_items").update({ categorie: (item.note ?? 0) >= 4 ? "eloge" : "autre", gravite: "faible", classe_le: now }).eq("id", item.id);
         continue;
       }
-      const c = await classifyFeedback({ source: item.source, app: item.app_slug, titre: item.titre, texte: item.texte, note: item.note }, apps, topics.filter((t) => !item.app_slug || t.app_slug === item.app_slug).sort((a, b) => b.nombre - a.nombre).slice(0, 40).map((t) => t.titre));
+      const c = answer.value;
       done++;
       if (item.source === "mail" && !c.est_utilisateur) {
         // Pas un utilisateur : le mail repart dans le récap de la boîte.
@@ -157,6 +165,7 @@ async function classify(db: SupabaseClient, apps: App[]) {
       last = message(e);
       await db.from("feedback_items").update({ erreur: last.slice(0, 300) }).eq("id", item.id);
     }
+   }
   }
   await writeState(db, state, { error: errors > 0 && done === 0 ? last : null, add: { classes: done, erreurs: errors } });
   return { classes: done, erreurs: errors };
@@ -175,7 +184,7 @@ async function drafts(db: SupabaseClient, apps: App[]) {
   // Tous les mails d'utilisateurs ; pour les avis, ceux qui appellent une réponse.
   const todo = ((items ?? []) as Item[]).filter((i) => !has.has(i.id) && i.texte?.trim() && (i.source === "mail" || ["probleme", "abonnement_remboursement", "question", "feature"].includes(i.categorie ?? ""))).slice(0, 20);
   let written = 0, sent = 0;
-  for (const item of todo) {
+  const one = async (item: Item) => {
     try {
       const canal = item.source === "mail" ? "gmail" : (item.source as "app_store" | "play");
       const app = apps.find((a) => a.slug === item.app_slug)!;
@@ -197,7 +206,8 @@ async function drafts(db: SupabaseClient, apps: App[]) {
     } catch (e) {
       console.error("agent brouillon:", message(e));
     }
-  }
+  };
+  for (let at = 0; at < todo.length; at += 4) await Promise.all(todo.slice(at, at + 4).map(one));
   return { brouillons: written, envois_auto: sent };
 }
 
