@@ -12,10 +12,10 @@ export const FAL_MODEL = () => (falKey() ? process.env.FAL_LLM_MODEL || "google/
 
 const geminiKey = () => (process.env.GEMINI_API_KEY ?? "").trim();
 /** Sans clé FAL, le classement passe par la clé Gemini du QG (celle de l'assistant). */
-const useGemini = () => !falKey() && Boolean(geminiKey());
+const viaGemini = () => !falKey() && Boolean(geminiKey());
 
 async function ask(system: string, prompt: string): Promise<string> {
-  if (useGemini()) {
+  if (viaGemini()) {
     const res = await callGemini(geminiKey(), "generateContent", { systemInstruction: { parts: [{ text: system }] }, contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json", temperature: 0.2 } });
     if (!res.ok) throw new Error(`Gemini : réponse ${res.status} (${(await res.text()).slice(0, 160)})`);
     const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
