@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { fetchOsApps, osAppsReady, type OsApp } from "@/lib/apps/os";
+import { fetchOsApps, lastWeek, osAppsReady, type OsApp } from "@/lib/apps/os";
 import type { DayMetrics, RcDay } from "@/lib/apps/types";
 import { daysAgo, parisDay, selectAll, upsertChunks } from "@/lib/sync/admin";
 import { PartialSync, rcKey } from "@/lib/sync/revenuecat";
@@ -21,7 +21,8 @@ export async function syncApps(db: SupabaseClient): Promise<number> {
   let osError: string | null = null;
   if (osAppsReady()) {
     try {
-      os = await fetchOsApps();
+      const w = lastWeek();
+      os = await fetchOsApps(w.from, w.to);
     } catch (e) {
       osError = (e as Error).message;
     }
@@ -48,6 +49,26 @@ export async function syncApps(db: SupabaseClient): Promise<number> {
       sources: { revenuecat: Boolean(rcKey(app.slug)) && mine.some((r) => r.date >= daysAgo(3)), os: Boolean(snapshot) },
     };
     rows.push({ app: app.slug, date: today, metrics, updated_at: now });
+  }
+  // L'OS garde l'historique : on remplit une fois le dimanche de chacune des 8 dernières semaines pleines
+  // (vues, comptes, coût de la semaine), pour que les graphiques par semaine ne partent pas de zéro.
+  if (os) {
+    const day = new Date(`${today}T00:00:00Z`);
+    const monday = new Date(day.getTime() - ((day.getUTCDay() + 6) % 7) * 864e5);
+    for (let i = 1; i <= 8; i++) {
+      const from = new Date(monday.getTime() - 7 * i * 864e5).toISOString().slice(0, 10);
+      const to = new Date(monday.getTime() - (7 * i - 6) * 864e5).toISOString().slice(0, 10);
+      if ((apps ?? []).every((a) => before.get(`${a.slug}|${to}`)?.os)) continue;
+      const week = await fetchOsApps(from, to).catch(() => null);
+      if (!week) break;
+      for (const app of apps ?? []) {
+        const snapshot = week.find((o) => (app.os_application_id && o.id === app.os_application_id) || o.slug === app.slug || o.name === app.name.toLowerCase())?.snapshot;
+        if (!snapshot || snapshot.posts === null) continue;
+        const row = rows.find((r) => r.app === app.slug && r.date === to);
+        if (row) (row.metrics as DayMetrics).os = snapshot;
+        else rows.push({ app: app.slug, date: to, metrics: { ...before.get(`${app.slug}|${to}`), os: snapshot }, updated_at: now });
+      }
+    }
   }
   await upsertChunks(db, "app_metrics_daily", rows, "app,date");
   if (osError) throw new PartialSync(rows.length, osError);
