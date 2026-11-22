@@ -42,7 +42,18 @@ export function readOsApp(r: Raw): OsApp {
   };
 }
 
+/** La forme d'une réponse, sans ses valeurs : pour ajuster la lecture sans exposer de données. */
+function shape(v: unknown, depth = 0): unknown {
+  if (Array.isArray(v)) return v.length ? [shape(v[0], depth + 1), `× ${v.length}`] : [];
+  if (v && typeof v === "object") return depth > 3 ? "{…}" : Object.fromEntries(Object.entries(v as Raw).slice(0, 40).map(([k, x]) => [k, shape(x, depth + 1)]));
+  return v === null ? "null" : typeof v;
+}
+const week = () => { const to = new Date(Date.now() - 864e5), from = new Date(to.getTime() - 6 * 864e5); return `from=${from.toISOString().slice(0, 10)}&to=${to.toISOString().slice(0, 10)}`; };
+export async function osAppsShape(): Promise<unknown> {
+  return shape(await getJson<unknown>(`${appsUrl()}${appsUrl()!.includes("?") ? "&" : "?"}${week()}`, osHeaders(), "OS /api/qg/apps"));
+}
+
 export async function fetchOsApps(): Promise<OsApp[]> {
-  const data = await getJson<Raw[] | { apps?: Raw[]; data?: Raw[] }>(appsUrl()!, osHeaders(), "OS /api/qg/apps");
+  const data = await getJson<Raw[] | { apps?: Raw[]; data?: Raw[] }>(`${appsUrl()}${appsUrl()!.includes("?") ? "&" : "?"}${week()}`, osHeaders(), "OS /api/qg/apps");
   return list(Array.isArray(data) ? data : (data.apps ?? data.data)).map(readOsApp);
 }

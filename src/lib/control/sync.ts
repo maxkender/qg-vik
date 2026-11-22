@@ -27,10 +27,10 @@ export function osHint() {
 }
 export const controlReady = () => Boolean(osBase() && process.env.OS_QG_TOKEN);
 
-async function fetchKind(kind: Kind): Promise<unknown> {
+async function fetchKind(kind: Kind, query = ""): Promise<unknown> {
   let last = "route introuvable";
   for (const name of ROUTES[kind]) {
-    const res = await fetch(`${osBase()}/api/qg/control/${name}`, { headers: osHeaders(), cache: "no-store" });
+    const res = await fetch(`${osBase()}/api/qg/control/${name}${query}`, { headers: osHeaders(), cache: "no-store" });
     if (res.ok) return await res.json();
     last = `réponse ${res.status} sur /${name} (${(await res.text()).slice(0, 80)})`;
     if (res.status !== 404) break;
@@ -45,9 +45,18 @@ export async function syncControl(db: SupabaseClient) {
   await Promise.all(KINDS.map(async (kind) => {
     const state = await readState(db, `control:${kind}`);
     try {
-      const payload = await fetchKind(kind);
+      const payload = (await fetchKind(kind)) as Record<string, unknown>;
+      // Recrutement : on joint l'entonnoir de la cohorte d'avant (7 jours plus tôt), pour la comparaison.
+      const cohort = kind === "recrutement" && typeof payload.cohorte === "string" ? payload.cohorte : null;
+      if (cohort) {
+        const before = new Date(new Date(`${cohort}T00:00:00Z`).getTime() - 7 * 864e5).toISOString().slice(0, 10);
+        const prev = (await fetchKind(kind, `?cohort=${before}`).catch(() => null)) as Record<string, unknown> | null;
+        if (prev && prev.cohorte === before) payload.precedente = { cohorte: before, entonnoir: prev.entonnoir, totaux: prev.totaux };
+      }
       const { error } = await db.from("control_snapshots").insert({ kind, payload });
       if (error) throw new Error(error.message);
+      // Les relevés sont gros et nominatifs : on ne garde que 48 heures.
+      await db.from("control_snapshots").delete().eq("kind", kind).lt("fetched_at", new Date(Date.now() - 48 * 3600e3).toISOString());
       await writeState(db, state, { add: { lus: 1 } });
       out[kind] = "ok";
     } catch (e) {
