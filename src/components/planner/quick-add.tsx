@@ -43,6 +43,7 @@ const PRIO_TONE: Record<Prio, string> = {
   urgent: "bg-bad-soft text-bad",
   normal: "bg-info-soft text-info",
   doing: "bg-now-soft text-now",
+  later: "bg-muted text-muted-foreground",
 };
 
 /** Ajout rapide en une ligne, avec aperçu de ce qui a été compris. */

@@ -1,7 +1,7 @@
 import type { Category } from "@/lib/categories";
 import type { Owner } from "@/lib/members";
 
-export type Prio = "urgent" | "doing" | "normal";
+export type Prio = "urgent" | "doing" | "normal" | "later";
 export type RepeatRule = "daily" | "weekdays" | "weekly" | "biweekly" | "monthly";
 
 export type Item = {

@@ -7,7 +7,7 @@ import { newId } from "@/lib/store";
 import { addDays, addMonths, dayKey, monthKey, parseBucket, weekKey } from "@/lib/dates";
 import type { Item, Prio, RepeatRule } from "@/lib/types";
 
-export const PRIO_LABEL: Record<Prio, string> = { urgent: "Urgent", doing: "En train de faire", normal: "À faire" };
+export const PRIO_LABEL: Record<Prio, string> = { urgent: "Urgent", doing: "En train de faire", normal: "À faire", later: "Plus tard" };
 /** Les labels proposés d'office ; ceux qu'on ajoute sur une tâche s'y joignent. */
 export const TAG_PRESETS = ["Sophia", "Micabo", "Unswipe", "Runvik", "Atala"];
 export const allTags = (items: Pick<Item, "tags">[]) => [...new Set([...TAG_PRESETS, ...items.flatMap((i) => i.tags ?? [])])];

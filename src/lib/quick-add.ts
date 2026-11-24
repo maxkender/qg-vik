@@ -10,6 +10,7 @@ const strip = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerC
 const PRIO: Record<string, Prio> = {
   urgent: "urgent", u: "urgent", "!": "urgent",
   normal: "normal", afaire: "normal", n: "normal",
+  plustard: "later", "plus-tard": "later", later: "later", tard: "later",
   encours: "doing", "en-cours": "doing", doing: "doing", e: "doing",
 };
 const OWNER: Record<string, Owner> = {

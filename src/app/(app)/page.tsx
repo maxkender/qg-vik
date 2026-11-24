@@ -64,24 +64,35 @@ export default function TodoPage() {
   const mine = useMemo(() => all.filter((i) => !i.parent_id && !i.done && (i.owner === me.short || i.owner === "both")), [all, me.short]);
   const myUrgent = mine.filter((i) => i.prio === "urgent").length;
 
+  const todo = open.filter((i) => i.prio !== "urgent" && i.prio !== "doing" && i.prio !== "later");
+  const later = open.filter((i) => i.prio === "later");
+
   const columns: ColumnDef[] = [
     ...COLUMNS.map((c) => ({
       id: c.prio as string,
       title: c.title,
       dot: c.dot,
       showCount: true,
-      // « À faire » recueille aussi toute tâche dont la priorité ne correspond à aucune colonne.
-      items: open.filter((i) => (c.prio === "normal" ? i.prio !== "urgent" && i.prio !== "doing" : i.prio === c.prio)),
+      // « À faire » recueille aussi toute tâche dont la priorité ne correspond à aucune colonne,
+      // puis, sous la ligne « Plus tard », celles qu'on a repoussées.
+      items: c.prio === "normal" ? [...todo, ...later] : open.filter((i) => i.prio === c.prio),
+      ...(c.prio === "normal" ? { divider: { label: "Plus tard", index: todo.length } } : {}),
       onAdd: (text: string) => void create(text, { prio: c.prio }),
       addId: `add-${c.prio}`,
     })),
     { id: DONE, title: "Fait aujourd'hui", dot: "bg-good", items: done },
   ];
 
-  function onDrop(item: Item, columnId: string, sortOrder: number) {
+  // La ligne « Plus tard » a été déplacée : ce qui est passé dessous devient « plus tard », ce qui est repassé dessus redevient « à faire ».
+  function onDivide(_columnId: string, above: Item[], below: Item[]) {
+    above.filter((i) => i.prio === "later").forEach((i) => void itemsStore.update(i.id, { prio: "normal" }));
+    below.filter((i) => i.prio !== "later").forEach((i) => void itemsStore.update(i.id, { prio: "later" }));
+  }
+
+  function onDrop(item: Item, columnId: string, sortOrder: number, below?: boolean) {
     // Déposer dans « Fait aujourd'hui » coche la tâche ; l'en sortir la rouvre.
     if (columnId === DONE) return void (!item.done && itemsStore.update(item.id, { done: true, done_at: new Date().toISOString() }));
-    void itemsStore.update(item.id, { prio: columnId as Prio, sort_order: sortOrder, ...(item.done ? { done: false, done_at: null } : {}) });
+    void itemsStore.update(item.id, { prio: below ? "later" : (columnId as Prio), sort_order: sortOrder, ...(item.done ? { done: false, done_at: null } : {}) });
   }
 
   return (
@@ -129,7 +140,7 @@ export default function TodoPage() {
       </div>
       {/* Sur un écran bas, le tableau garde une hauteur utile et c'est la page qui défile. */}
       <div className="flex flex-col md:min-h-[440px] md:flex-1">
-        <Board columns={columns} kidsOf={kidsOf} commentsOf={commentsOf} showHorizon fit onDrop={onDrop} onOpen={(i) => setOpenItem(i.id)} />
+        <Board columns={columns} kidsOf={kidsOf} commentsOf={commentsOf} showHorizon fit onDrop={onDrop} onDivide={onDivide} onOpen={(i) => setOpenItem(i.id)} />
       </div>
     </div>
   );

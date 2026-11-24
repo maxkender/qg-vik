@@ -18,11 +18,12 @@ import { parseQuickAdd } from "@/lib/quick-add";
 import type { Prio, RepeatRule } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-const PRIO_HINT: Record<Prio, string> = { urgent: "aujourd'hui ou demain", doing: "commencé, pas fini", normal: "cette semaine" };
+const PRIO_HINT: Record<Prio, string> = { urgent: "aujourd'hui ou demain", doing: "commencé, pas fini", normal: "cette semaine", later: "pas maintenant" };
 const PRIO_ON: Record<Prio, string> = {
   urgent: "border-bad/60 bg-bad-soft text-bad",
   normal: "border-info/60 bg-info-soft text-info",
   doing: "border-now/60 bg-now-soft text-now",
+  later: "border-line-strong bg-muted text-foreground",
 };
 const pill = "flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border px-2 text-[13px] font-medium transition-colors duration-100";
 const off = "border-line text-muted-foreground hover:text-foreground";
