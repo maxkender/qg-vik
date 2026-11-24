@@ -109,7 +109,13 @@ export function Board({ columns, kidsOf, commentsOf, showHorizon, fit, onDrop, o
     if (!src || !colId || !e.over) return;
     const target = columns.find((c) => c.id === colId);
     if (!target) return;
-    if (target.divider) return void dropAroundDivider(src, target, String(e.over.id));
+    if (target.divider) {
+      // Lâchée dans le vide de la colonne : on regarde si c'est plus bas que la ligne de séparation.
+      const line = document.querySelector(`[data-divider="${target.id}"]`)?.getBoundingClientRect();
+      const card = e.active.rect.current.translated;
+      const under = Boolean(line && card && card.top + card.height / 2 > line.top);
+      return void dropAroundDivider(src, target, String(e.over.id), under);
+    }
 
     // Les tâches faites restent en bas : on range parmi les tâches pas faites.
     const open = target.items.filter((i) => !i.done && i.id !== src.item.id);
@@ -131,7 +137,7 @@ export function Board({ columns, kidsOf, commentsOf, showHorizon, fit, onDrop, o
   }
 
   // Colonne coupée en deux par une ligne : la tâche prend la zone (au-dessus ou en dessous) de l'endroit où on la lâche.
-  function dropAroundDivider(src: { item: Item; col: string }, target: ColumnDef, overId: string) {
+  function dropAroundDivider(src: { item: Item; col: string }, target: ColumnDef, overId: string, underLine: boolean) {
     const cut = target.divider!.index;
     const without = (list: Item[]) => list.filter((i) => i.id !== src.item.id);
     const above = without(target.items.slice(0, cut)), under = without(target.items.slice(cut));
@@ -143,7 +149,10 @@ export function Board({ columns, kidsOf, commentsOf, showHorizon, fit, onDrop, o
       below = src.col === target.id && !wasBelow;
       at = below ? 0 : above.length;
     } else if (overId.startsWith(COL)) {
-      if (src.col === target.id) return;
+      // Dans le vide : sous la ligne, la tâche part à la fin de « plus tard » ; sinon à la fin du haut.
+      below = underLine;
+      at = below ? under.length : above.length;
+      if (src.col === target.id && wasBelow === below) return;
     } else {
       const from = target.items.findIndex((i) => i.id === src.item.id);
       const to = target.items.findIndex((i) => i.id === overId);
@@ -249,7 +258,7 @@ function Column({
         <SortableContext items={ids} strategy={verticalListSortingStrategy}>
           {col.items.map((item, i) => (
             <div key={item.id} className="contents">
-              {col.divider && i === col.divider.index && <Divider id={DIV + col.id} label={col.divider.label} count={col.items.length - col.divider.index} />}
+              {col.divider && i === col.divider.index && <Divider id={DIV + col.id} col={col.id} label={col.divider.label} count={col.items.length - col.divider.index} />}
               {late > 0 && i === 0 && (
                 <p className="px-2 pt-1 pb-0.5 text-[11px] font-semibold tracking-[0.08em] text-bad uppercase">
                   En retard · <span className="num">{late}</span>
@@ -268,7 +277,7 @@ function Column({
               />
             </div>
           ))}
-          {col.divider && col.divider.index >= col.items.length && <Divider id={DIV + col.id} label={col.divider.label} count={0} />}
+          {col.divider && col.divider.index >= col.items.length && <Divider id={DIV + col.id} col={col.id} label={col.divider.label} count={0} />}
         </SortableContext>
         {col.onAdd && <AddLine onAdd={col.onAdd} id={col.addId} />}
       </div>
@@ -277,13 +286,14 @@ function Column({
 }
 
 /** La ligne « Plus tard » : elle se glisse comme une tâche, et tout ce qui est dessous est remis à plus tard. */
-function Divider({ id, label, count }: { id: string; label: string; count: number }) {
+function Divider({ id, col, label, count }: { id: string; col: string; label: string; count: number }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   return (
     <div
       ref={setNodeRef}
+      data-divider={col}
       style={{ transform: CSS.Translate.toString(transform), transition }}
-      className={cn("group/div flex cursor-grab touch-manipulation items-center gap-2 rounded-md px-2 py-2 outline-none select-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing", isDragging && "relative z-10")}
+      className={cn("group/div flex min-h-9 shrink-0 cursor-grab touch-manipulation items-center gap-2 rounded-md px-2 py-2 outline-none select-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing", isDragging && "relative z-10")}
       {...attributes}
       {...listeners}
       role="separator"
