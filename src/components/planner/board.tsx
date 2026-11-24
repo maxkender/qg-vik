@@ -8,7 +8,7 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ChevronsRightLeft, GripVertical } from "lucide-react";
+import { ChevronsRightLeft, GripVertical, Hourglass } from "lucide-react";
 import { AddLine, ItemCard } from "@/components/planner/item-card";
 import { orderBetween } from "@/lib/items";
 import type { Item } from "@/lib/types";
@@ -258,7 +258,12 @@ function Column({
         <SortableContext items={ids} strategy={verticalListSortingStrategy}>
           {col.items.map((item, i) => (
             <div key={item.id} className="contents">
-              {col.divider && i === col.divider.index && <Divider id={DIV + col.id} col={col.id} label={col.divider.label} count={col.items.length - col.divider.index} />}
+              {col.divider && i === col.divider.index && (
+                <>
+                  {col.onAdd && <AddLine onAdd={col.onAdd} id={col.addId} />}
+                  <Divider id={DIV + col.id} col={col.id} label={col.divider.label} count={col.items.length - col.divider.index} />
+                </>
+              )}
               {late > 0 && i === 0 && (
                 <p className="px-2 pt-1 pb-0.5 text-[11px] font-semibold tracking-[0.08em] text-bad uppercase">
                   En retard · <span className="num">{late}</span>
@@ -269,6 +274,7 @@ function Column({
               )}
               <SortableCard
                 item={item}
+                muted={Boolean(col.divider && i >= col.divider.index)}
                 columnId={col.id}
                 kids={kidsOf.get(item.id) ?? []}
                 comments={commentsOf?.get(item.id) ?? 0}
@@ -277,9 +283,14 @@ function Column({
               />
             </div>
           ))}
-          {col.divider && col.divider.index >= col.items.length && <Divider id={DIV + col.id} col={col.id} label={col.divider.label} count={0} />}
+          {col.divider && col.divider.index >= col.items.length && (
+            <>
+              {col.onAdd && <AddLine onAdd={col.onAdd} id={col.addId} />}
+              <Divider id={DIV + col.id} col={col.id} label={col.divider.label} count={0} />
+            </>
+          )}
         </SortableContext>
-        {col.onAdd && <AddLine onAdd={col.onAdd} id={col.addId} />}
+        {col.onAdd && !col.divider && <AddLine onAdd={col.onAdd} id={col.addId} />}
       </div>
     </section>
   );
@@ -293,7 +304,7 @@ function Divider({ id, col, label, count }: { id: string; col: string; label: st
       ref={setNodeRef}
       data-divider={col}
       style={{ transform: CSS.Translate.toString(transform), transition }}
-      className={cn("group/div flex min-h-9 shrink-0 cursor-grab touch-manipulation items-center gap-2 rounded-md px-2 py-2 outline-none select-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing", isDragging && "relative z-10")}
+      className={cn("group/div mt-3 mb-1 flex h-9 shrink-0 cursor-grab touch-manipulation items-center gap-2 rounded-lg border border-line-strong bg-muted px-2.5 outline-none select-none transition-colors duration-100 hover:border-foreground/40 focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing", isDragging && "relative z-10 border-foreground/60 shadow-lg")}
       {...attributes}
       {...listeners}
       role="separator"
@@ -301,17 +312,19 @@ function Divider({ id, col, label, count }: { id: string; col: string; label: st
       aria-label={`${label} : ${count} tâche${count > 1 ? "s" : ""} en dessous`}
       title="Glisse cette ligne, ou une tâche de part et d'autre"
     >
-      <GripVertical className="size-3.5 shrink-0 text-faint transition-colors duration-100 group-hover/div:text-muted-foreground" aria-hidden />
-      <span className="text-[11px] font-semibold tracking-[0.08em] whitespace-nowrap text-muted-foreground uppercase">{label}</span>
-      {count > 0 && <span className="num text-[11px] text-faint">{count}</span>}
-      <span className={cn("h-px flex-1 transition-colors duration-100", isDragging ? "bg-foreground" : "bg-line-strong")} aria-hidden />
+      <Hourglass className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+      <span className="text-[12.5px] font-semibold whitespace-nowrap">{label}</span>
+      <span className="num text-[12px] text-muted-foreground">{count}</span>
+      <GripVertical className="ml-auto size-3.5 shrink-0 text-faint transition-colors duration-100 group-hover/div:text-muted-foreground" aria-hidden />
     </div>
   );
 }
 
 function SortableCard({
-  item, columnId, kids, comments, showHorizon, onOpen,
+  item, columnId, kids, comments, showHorizon, onOpen, muted,
 }: {
+  /** Sous la ligne « Plus tard » : la carte s'efface un peu. */
+  muted?: boolean;
   item: Item;
   columnId: string;
   kids: Item[];
@@ -332,7 +345,7 @@ function SortableCard({
         setActivatorNodeRef(node);
       }}
       style={{ transform: CSS.Translate.toString(transform), transition }}
-      className={cn("touch-manipulation rounded-[10px] outline-none focus-visible:ring-2 focus-visible:ring-ring", isDragging && "opacity-30")}
+      className={cn("touch-manipulation rounded-[10px] outline-none transition-opacity duration-100 focus-visible:ring-2 focus-visible:ring-ring", muted && "opacity-55 hover:opacity-100 focus-within:opacity-100", isDragging && "opacity-30")}
       {...attributes}
       {...listeners}
       role="group"
